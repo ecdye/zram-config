@@ -23,16 +23,26 @@ _____
 In the file `/etc/ztab` `sudo nano /etc/ztab` to edit:
 `#` To comment out any line
 Add new drives with the first collumn providing the drive type and then drive details seperated by tab
+
 All algorithm in /proc/crypto are supported but only lzo/lz4 have zramctl text strings.
 lz4 is the fastest whilst deflate as much better text compression.
+
 mem_limit is compressed memory limit and will is a hard memory limit for sys admin.
+
 disk_size is virtual uncompressed size approx 220-450% depending on algorithm and input file
+
 swap_priority set zram over alternative swap devices
+
 page-cluster 0 means tuning to singular pages rather than default 3 which caches 8 for HDD tuning
+
 swappiness 80 due to improved performance of zram allows more usage without effect of rainsing from default 60
+
 zram_dir is the directory you wish to hold in zram, the original is moved to a bind mount bind_dir and is synchronised on start/stop and write commands.
+
 bind_dir is a directory where the orinal die will be mounted for sync purposes.
+
 oldlog_dir will enable logrotation to an off device directory whilst retaining only live logs in zram
+
 If you need multiple zram swaps or zram dirs just create another entry in /ect/ztab
 ```
 # swap	alg	mem_limit	disk_size	swap_priority	page-cluster	swappiness
