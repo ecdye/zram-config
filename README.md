@@ -34,7 +34,7 @@ Much higher than the compression alg is capable will waste mem as there is an ap
 
 swap_priority set zram over alternative swap devices.
 
-page-cluster 0 means tuning to singular pages rather than default 3 which caches 8 for HDD tuning.
+page-cluster 0 means tuning to singular pages rather than default 3 which caches 8 for HDD tuning, which can lower latency.
 
 swappiness 80 due to improved performance of zram allows more usage without effect of raising from default 60. Can be up to 100 but will increase process queue on intense load such as boot.
 
