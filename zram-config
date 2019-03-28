@@ -47,7 +47,7 @@ createZlog () {
 	createZdir
 	if [ ! -z "$OLDLOG_DIR" ]
 	then
-		cp -arvf /etc/logrotate.conf ./logrotate.conf.bak
+		cp -arvf /etc/logrotate.conf /usr/local/share/zram-config/logrotate.conf.bak
 		sed -i "/^weekly.*/i olddir $OLDLOG_DIR" /etc/logrotate.conf
 		sed -i "/^weekly.*/i createolddir 755 root root" /etc/logrotate.conf
 		sed -i "/^weekly.*/i renamecopy" /etc/logrotate.conf
@@ -109,6 +109,11 @@ removeZlog () {
 	DEV_NUM=$(echo "$ZRAM_DEV" | tr -dc '0-9')
 	umount -l $ZRAM_DIR/
 	umount -l $BIND_DIR/
+	rm -rf $BIND_DIR
+	if [ ! -z "$OLDLOG_DIR" ]
+	then
+		cp -arvf /usr/local/share/zram-config/logrotate.conf.bak /etc/logrotate.conf 
+	fi
 	echo "$DEV_NUM" > /sys/class/zram-control/hot_remove
 	echo "$ZRAM_DEV removed" >&1 
 }
@@ -119,6 +124,7 @@ removeZdir () {
 	DEV_NUM=$(echo "$ZRAM_DEV" | tr -dc '0-9')
 	umount -l $ZRAM_DIR/
 	umount -l $BIND_DIR/
+	rm -rf $BIND_DIR
 	echo "$DEV_NUM" > /sys/class/zram-control/hot_remove
 	echo "$ZRAM_DEV removed" >&1 
 }
@@ -133,7 +139,7 @@ removeZswap () {
 
 case "$1" in
 	start)
-		file=./ztab.conf
+		file=/etc/ztab
 		ZTAB_EMPTY=true
 		while read -r line; do
 			case "$line" in
@@ -181,8 +187,8 @@ case "$1" in
 		fi
 		;;
 	stop)
-		tac ./ztab.conf > ./ztab.conf.rev
-		file=./ztab.conf.rev
+		tac /etc/ztab > /usr/local/share/zram-config/ztab.conf.rev
+		file=/usr/local/share/zram-config/ztab.conf.rev
 		while read -r line; do
 			case "$line" in
 				"#"*)
@@ -224,4 +230,42 @@ case "$1" in
 			esac
 		done < "$file"
 		;;
+	write)
+		file=/etc/ztab
+		while read -r line; do
+			case "$line" in
+				"#"*)
+					# Skip comment line
+					continue
+					;;
+
+				"")
+					# Skip empty line
+					continue
+					;;
+
+				*)
+					set -- $line
+					ALG=$2
+					MEM_SIZE=$3
+					DISK_SIZE=$4
+					case "$1" in
+						dir)
+							echo "ztab write $1 $2 $3 $4 $5 $6 $7 $8 $9" >&1
+							ZRAM_DIR=$5
+							BIND_DIR=$6
+							syncToDisk
+							;;
+						log)
+							echo "ztab write $1 $2 $3 $4 $5 $6 $7 $8 $9" >&1
+							ZRAM_DIR=$5
+							BIND_DIR=$6
+							OLDLOG_DIR=$7
+							syncToDisk
+							;;
+					esac
+					;;
+			esac
+		done < "$file"
+		;;	
 esac
