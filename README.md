@@ -6,20 +6,20 @@ Uses Zram to minimise precious memory footprint and extremely infrequent write o
 Uses a ztab table in /etc/ztab where any combination and number of zram drives can be created.
 
 _____
-## Menu
+### Menu
 1. [Install](#install)
 2. [Config](#config)
 3. [It is working ?](#it-is-working)
 4. [Uninstall](#uninstall-)
 
-## Install
+### Install
     sudo apt-get install git
     git clone https://github.com/StuartIanNaylor/zram-config
     cd zram-config
     sudo sh install.sh
     
 
-## Customize
+### Customize
 In the file `/etc/ztab` `sudo nano /etc/ztab` to edit:
 `#` To comment out any line
 Add new drives with the first collumn providing the drive type and then drive details seperated by tab
@@ -125,13 +125,13 @@ Filename                                Type            Size    Used    Priority
 |lzf 3.6 -1	             | 2.077	| 400 MB/s	  | 860 MB/s    |
 
 
-## Uninstall
+### Uninstall
 ```
 sudo sh /usr/local/share/zram-config/uninstall.sh
 ```
 
 
-## Git Branches & Update
+### Git Branches & Update
 From the command line, enter `cd <path_to_local_repo>` so that you can enter commands for your repository.
 Enter `git add --all` at the command line to add the files or changes to the repository
 Enter `git commit -m '<commit_message>'` at the command line to commit new files/changes to the local repository. For the <commit_message> , you can enter anything that describes the changes you are committing.
