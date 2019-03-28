@@ -1,6 +1,15 @@
 # see "man logrotate" for details
 # rotate log files weekly
 olddir /opt/oldlog
+olddir /opt/oldlog
+createolddir 755 root root
+renamecopy
+olddir /opt/oldlog
+createolddir 755 root root
+renamecopy
+olddir /opt/oldlog
+createolddir 755 root root
+renamecopy
 weekly
 
 # keep 4 weeks worth of backlogs

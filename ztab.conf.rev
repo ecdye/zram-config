@@ -1,0 +1,8 @@
+log	lz4	20M		60M		/var/log	/opt/log.bind	/opt/oldlog
+# log	alg	mem_limit	disk_size	zram_dir	bind_dir	oldlog_dir
+
+dir	lz4	20M		60M		/var/backups	/opt/backups.bind
+# dir	alg	mem_limit	disk_size	zram_dir	bind_dir
+
+swap	lz4	250M		750M		75		0		80
+# swap	alg	mem_limit	disk_size	swap_priority	page-cluster	swappiness

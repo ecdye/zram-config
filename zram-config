@@ -103,10 +103,38 @@ syncToDisk () {
 	fi			
 }
 
+removeZlog () {
+	syncToDisk
+	ZRAM_DEV=$(df "$ZRAM_DIR" | tail -1 | awk '{ print $1 }')
+	DEV_NUM=$(echo "$ZRAM_DEV" | tr -dc '0-9')
+	umount -l $ZRAM_DIR/
+	umount -l $BIND_DIR/
+	echo "$DEV_NUM" > /sys/class/zram-control/hot_remove
+	echo "$ZRAM_DEV removed" >&1 
+}
+
+removeZdir () {
+	syncToDisk
+	ZRAM_DEV=$(df "$ZRAM_DIR" | tail -1 | awk '{ print $1 }')
+	DEV_NUM=$(echo "$ZRAM_DEV" | tr -dc '0-9')
+	umount -l $ZRAM_DIR/
+	umount -l $BIND_DIR/
+	echo "$DEV_NUM" > /sys/class/zram-control/hot_remove
+	echo "$ZRAM_DEV removed" >&1 
+}
+
+removeZswap () {
+	ZRAM_DEV=$(grep zram /proc/swaps | tail -1 | awk '{ print $1 }')
+	DEV_NUM=$(echo "$ZRAM_DEV" | tr -dc '0-9')
+	swapoff $ZRAM_DEV
+	echo "$DEV_NUM" > /sys/class/zram-control/hot_remove
+	echo "$ZRAM_DEV removed" >&1 
+}
 
 case "$1" in
 	start)
 		file=./ztab.conf
+		ZTAB_EMPTY=true
 		while read -r line; do
 			case "$line" in
 				"#"*)
@@ -122,6 +150,7 @@ case "$1" in
 				*)
 					set -- $line
 					echo "ztab create $1 $2 $3 $4 $5 $6 $7 $8 $9" >&1
+					ZTAB_EMPTY=false
 					ALG=$2
 					MEM_SIZE=$3
 					DISK_SIZE=$4
@@ -142,6 +171,53 @@ case "$1" in
 							BIND_DIR=$6
 							OLDLOG_DIR=$7
 							createZlog
+							;;
+					esac
+					;;
+			esac
+		done < "$file"
+		if [ "$ZTAB_EMPTY" = true ] ; then
+			echo '/etc/ztab is empty and needs to be configured' >&2
+		fi
+		;;
+	stop)
+		tac ./ztab.conf > ./ztab.conf.rev
+		file=./ztab.conf.rev
+		while read -r line; do
+			case "$line" in
+				"#"*)
+					# Skip comment line
+					continue
+					;;
+
+				"")
+					# Skip empty line
+					continue
+					;;
+
+				*)
+					set -- $line
+					echo "ztab remove $1 $2 $3 $4 $5 $6 $7 $8 $9" >&1
+					ALG=$2
+					MEM_SIZE=$3
+					DISK_SIZE=$4
+					case "$1" in
+						swap)
+							PRIORITY=$5
+							PAGE_CLUSTER=$6
+							SWAPPINESS=$7
+							removeZswap
+							;;
+						dir)
+							ZRAM_DIR=$5
+							BIND_DIR=$6
+							removeZdir
+							;;
+						log)
+							ZRAM_DIR=$5
+							BIND_DIR=$6
+							OLDLOG_DIR=$7
+							removeZlog
 							;;
 					esac
 					;;
