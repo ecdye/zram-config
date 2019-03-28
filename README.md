@@ -27,7 +27,7 @@ Add new drives with the first collumn providing the drive type and then drive de
 All algorithm in /proc/crypto are supported but only lzo/lz4 have zramctl text strings.
 lz4 is the fastest whilst deflate(zlib) has much better text compression.
 
-mem_limit is compressed memory limit and will is a hard memory limit for sys admin.
+mem_limit is compressed memory limit and will set a hard memory limit for sys admin.
 
 disk_size is virtual uncompressed size approx 220-450% of mem allocated depending on algorithm and input file.
 Much higher than the compression alg is capable will waste mem as there is an approx 0.1% mem overhead even when empty.
