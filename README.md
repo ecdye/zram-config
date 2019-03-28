@@ -39,9 +39,9 @@ swappiness 80 due to improved performance of zram allows more usage without effe
 
 zram_dir is the directory you wish to hold in zram, the original is moved to a bind mount bind_dir and is synchronised on start/stop and write commands.
 
-bind_dir is a directory where the orinal die will be mounted for sync purposes.
+bind_dir is a directory where the orinal die will be mounted for sync purposes. Usually in /opt or /var.
 
-oldlog_dir will enable logrotation to an off device directory whilst retaining only live logs in zram
+oldlog_dir will enable logrotation to an off device directory whilst retaining only live logs in zram.  Usually in /opt or /var.
 
 If you need multiple zram swaps or zram dirs just create another entry in /ect/ztab
 ```
