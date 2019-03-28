@@ -44,6 +44,8 @@ bind_dir is a directory where the orinal die will be mounted for sync purposes. 
 oldlog_dir will enable logrotation to an off device directory whilst retaining only live logs in zram.  Usually in /opt or /var.
 
 If you need multiple zram swaps or zram dirs just create another entry in /ect/ztab
+
+Stop the service `sudo service zram-config stop` edit /etc/ztab `sudo nano /etc/ztab` start the service `sudo service zram-config start`
 ```
 # swap	alg	mem_limit	disk_size	swap_priority	page-cluster	swappiness
 swap	lz4	250M		750M		75		0		80
