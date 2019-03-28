@@ -2,6 +2,7 @@
 Description=zram-config
 DefaultDependencies=no
 After=local-fs.target
+Before=systemd-journal-flush.service
 
 [Service]
 Type=oneshot
