@@ -29,7 +29,7 @@ lz4 is the fastest whilst deflate as much better text compression.
 
 mem_limit is compressed memory limit and will is a hard memory limit for sys admin.
 
-disk_size is virtual uncompressed size approx 220-450% depending on algorithm and input file
+disk_size is virtual uncompressed size approx 220-450% of mem allocated depending on algorithm and input file
 
 swap_priority set zram over alternative swap devices
 
