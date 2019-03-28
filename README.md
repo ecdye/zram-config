@@ -72,6 +72,40 @@ This will write out any updated files to persistant storage, usefull for new app
 sudo logrotate -vf /etc/logrotate.conf
 …
 Force new logrotate truncate logs and move oldlogs to oldlog_dir
+…
+pi@raspberrypi:~ $ cat /proc/mounts
+/dev/root / ext4 rw,noatime,data=ordered 0 0
+devtmpfs /dev devtmpfs rw,relatime,size=217604k,nr_inodes=54401,mode=755 0 0
+sysfs /sys sysfs rw,nosuid,nodev,noexec,relatime 0 0
+proc /proc proc rw,relatime 0 0
+tmpfs /dev/shm tmpfs rw,nosuid,nodev 0 0
+devpts /dev/pts devpts rw,nosuid,noexec,relatime,gid=5,mode=620,ptmxmode=000 0 0
+tmpfs /run tmpfs rw,nosuid,nodev,mode=755 0 0
+tmpfs /run/lock tmpfs rw,nosuid,nodev,noexec,relatime,size=5120k 0 0
+tmpfs /sys/fs/cgroup tmpfs ro,nosuid,nodev,noexec,mode=755 0 0
+cgroup /sys/fs/cgroup/systemd cgroup rw,nosuid,nodev,noexec,relatime,xattr,relea                                       se_agent=/lib/systemd/systemd-cgroups-agent,name=systemd 0 0
+cgroup /sys/fs/cgroup/freezer cgroup rw,nosuid,nodev,noexec,relatime,freezer 0 0
+cgroup /sys/fs/cgroup/net_cls cgroup rw,nosuid,nodev,noexec,relatime,net_cls 0 0
+cgroup /sys/fs/cgroup/devices cgroup rw,nosuid,nodev,noexec,relatime,devices 0 0
+cgroup /sys/fs/cgroup/cpu,cpuacct cgroup rw,nosuid,nodev,noexec,relatime,cpu,cpu                                       acct 0 0
+cgroup /sys/fs/cgroup/blkio cgroup rw,nosuid,nodev,noexec,relatime,blkio 0 0
+debugfs /sys/kernel/debug debugfs rw,relatime 0 0
+systemd-1 /proc/sys/fs/binfmt_misc autofs rw,relatime,fd=30,pgrp=1,timeout=0,min                                       proto=5,maxproto=5,direct 0 0
+sunrpc /run/rpc_pipefs rpc_pipefs rw,relatime 0 0
+mqueue /dev/mqueue mqueue rw,relatime 0 0
+configfs /sys/kernel/config configfs rw,relatime 0 0
+/dev/mmcblk0p1 /boot vfat rw,relatime,fmask=0022,dmask=0022,codepage=437,iochars                                       et=ascii,shortname=mixed,errors=remount-ro 0 0
+/dev/root /opt/backups.bind ext4 rw,noatime,data=ordered 0 0
+/dev/zram1 /var/backups ext4 rw,nosuid,nodev,noexec,relatime,data=ordered 0 0
+/dev/root /opt/log.bind ext4 rw,noatime,data=ordered 0 0
+/dev/zram2 /var/log ext4 rw,nosuid,nodev,noexec,relatime,data=ordered 0 0
+tmpfs /run/user/1000 tmpfs rw,nosuid,nodev,relatime,size=44384k,mode=700,uid=100                                       0,gid=1000 0 0
+…
+pi@raspberrypi:~ $ cat /proc/swaps
+Filename                                Type            Size    Used    Priority
+/dev/zram0                              partition       767996  0       75
+/var/swap                               file            102396  0       -2
+
 ```
 
 
