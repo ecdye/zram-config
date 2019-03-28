@@ -36,7 +36,7 @@ swap_priority set zram over alternative swap devices.
 
 page-cluster 0 means tuning to singular pages rather than default 3 which caches 8 for HDD tuning.
 
-swappiness 80 due to improved performance of zram allows more usage without effect of raising from default 60.
+swappiness 80 due to improved performance of zram allows more usage without effect of raising from default 60. Can be up to 100 but will increase process queue on intense load such as boot.
 
 zram_dir is the directory you wish to hold in zram, the original is moved to a bind mount bind_dir and is synchronised on start/stop and write commands.
 
