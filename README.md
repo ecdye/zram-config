@@ -25,7 +25,7 @@ In the file `/etc/ztab` `sudo nano /etc/ztab` to edit:
 Add new drives with the first collumn providing the drive type and then drive details seperated by tab
 
 All algorithm in /proc/crypto are supported but only lzo/lz4 have zramctl text strings.
-lz4 is the fastest whilst deflate as much better text compression.
+lz4 is the fastest whilst deflate has much better text compression.
 
 mem_limit is compressed memory limit and will is a hard memory limit for sys admin.
 
