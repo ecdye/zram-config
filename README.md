@@ -124,7 +124,7 @@ Filename                                Type            Size    Used    Priority
 
 ## Uninstall
 ```
-sudo sh /usr/local/share/zramdrive/uninstall.sh
+sudo sh /usr/local/share/zram-config/uninstall.sh
 ```
 
 
