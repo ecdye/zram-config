@@ -119,6 +119,7 @@ removeZlog () {
 	DEV_NUM=$(echo "$ZRAM_DEV" | tr -dc '0-9')
 	if [ ! -z "$ZRAM_DIR" ]
 	then
+		rm -rf $ZRAM_DIR/*
 		umount -l $ZRAM_DIR/
 	else
 		return 1
@@ -143,6 +144,7 @@ removeZdir () {
 	DEV_NUM=$(echo "$ZRAM_DEV" | tr -dc '0-9')
 	if [ ! -z "$ZRAM_DIR" ]
 	then
+		rm -rf $ZRAM_DIR/*
 		umount -l $ZRAM_DIR/
 	else
 		return 1
@@ -271,6 +273,7 @@ case "$1" in
 			esac
 		done < "$file"
 		#Only 1 log can exist also make first as then last removed
+		file=/etc/ztab
 		line=$(grep ^log $file | head -n 1)
 		if [ ! -z "$line" ]
 		then
