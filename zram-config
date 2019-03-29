@@ -108,7 +108,6 @@ removeZlog () {
 	then
 		cp -arvf /usr/local/share/zram-config/logrotate.conf.bak /etc/logrotate.conf 
 	fi
-	journalctl --flush
 	syncToDisk
 	sync
 	ZRAM_DEV=$(df "$ZRAM_DIR" | tail -1 | awk '{ print $1 }')
@@ -116,6 +115,8 @@ removeZlog () {
 	umount -l $ZRAM_DIR/
 	umount -l $BIND_DIR/
 	rm -rf $BIND_DIR
+	invoke-rc.d rsyslog rotate > /dev/null
+	journalctl --flush
 	echo "$DEV_NUM" > /sys/class/zram-control/hot_remove
 	echo "$ZRAM_DEV removed" >&1 
 }
