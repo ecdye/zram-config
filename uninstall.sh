@@ -2,9 +2,11 @@
 
 if [ "$(id -u)" -eq 0 ]
 then
-	service zram-config stop
-	systemctl disable zram-config
-	rm /etc/systemd/system/zram-config.service
+	service zram-config-stop stop
+	systemctl disable zram-config-start
+	systemctl disable zram-config-stop
+	rm /etc/systemd/system/zram-config-start.service
+	rm /etc/systemd/system/zram-config-stop.service
 	rm /usr/local/bin/zram-config
 	rm /etc/ztab
 

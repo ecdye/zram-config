@@ -1,0 +1,13 @@
+[Unit]
+Description=zram-config-stop
+After=local-fs.target
+
+[Service]
+Type=oneshot
+ExecStop=/usr/local/bin/zram-config stop
+TimeoutSec=120
+RemainAfterExit=yes
+
+[Install]
+WantedBy=basic.target
+

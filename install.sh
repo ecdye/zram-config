@@ -7,11 +7,13 @@ systemctl -q is-active zram-config  && { echo "ERROR: zram-config service is sti
 
 # zram-config install 
 install -m 755 zram-config /usr/local/bin/
-install -m 644 zram-config.service /etc/systemd/system/zram-config.service
+install -m 644 zram-config-start.service /etc/systemd/system/zram-config-start.service
+install -m 644 zram-config-stop.service /etc/systemd/system/zram-config-stop.service
 install -m 644 ztab /etc/ztab
 mkdir -p /usr/local/share/zram-config
 install -m 644 uninstall.sh /usr/local/share/zram-config/uninstall.sh
-systemctl enable zram-config
+systemctl enable zram-config-start
+systemctl enable zram-config-stop
 
 echo "#####          Reboot to activate zram-config         #####"
 echo "#####       edit /etc/ztab to configure options       #####"
