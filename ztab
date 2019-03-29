@@ -6,4 +6,3 @@ dir	lz4	20M		60M		/var/backups	/opt/backups.bind
 
 # log	alg	mem_limit	disk_size	zram_dir	bind_dir	oldlog_dir
 log	lz4	20M		60M		/var/log	/opt/log.bind	/opt/oldlog
-log	your	mum		is		fat
