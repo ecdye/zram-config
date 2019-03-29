@@ -1,0 +1,6 @@
+#!/bin/bash
+if grep ^log ztab | head -n 1
+then
+echo yep
+fi
+

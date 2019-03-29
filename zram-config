@@ -37,9 +37,11 @@ createZdir () {
 			syncFromDisk
 		else
 			echo "No mount dir in ztab" >&2
+			return 1
 		fi
 	else
 		echo "No bind dir in ztab" >&2
+		return 1
 	fi
 }
 	
@@ -81,6 +83,7 @@ createZdevice () {
 		echo "$DISK_SIZE" > /sys/block/zram$RAM_DEV/disksize
 	else
 		echo "zram$RAM_DEV no disksize" >&2
+		return 1
 	fi
 	echo "zram$RAM_DEV created comp_algorithm=$ALG mem_limit=$MEM_SIZE disksize=$DISK_SIZE" >&1
 }
@@ -91,6 +94,7 @@ syncFromDisk () {
 		echo "syncFromDisk $BIND_DIR to $ZRAM_DIR complete"  >&1
 	else
 		echo "Error syncFromDisk $BIND_DIR to $ZRAM_DIR failure" >&2
+		return 1
 	fi
 }
 
@@ -100,6 +104,7 @@ syncToDisk () {
 		echo "syncToDisk $ZRAM_DIR to $BIND_DIR complete" >&1
 	else
 		echo "Error syncFromDisk $ZRAM_DIR to $BIND_DIR failure" >&2
+		return 1
 	fi			
 }
 
@@ -112,11 +117,21 @@ removeZlog () {
 	sync
 	ZRAM_DEV=$(df "$ZRAM_DIR" | tail -1 | awk '{ print $1 }')
 	DEV_NUM=$(echo "$ZRAM_DEV" | tr -dc '0-9')
-	umount -l $ZRAM_DIR/
-	umount -l $BIND_DIR/
-	rm -rf $BIND_DIR
-	invoke-rc.d rsyslog rotate > /dev/null
-	journalctl --flush
+	if [ ! -z "$ZRAM_DIR" ]
+	then
+		umount -l $ZRAM_DIR/
+	else
+		return 1
+	fi
+	if [ ! -z "$BIND_DIR" ]
+	then
+		umount -l $BIND_DIR/
+		rm -rf $BIND_DIR
+	else
+		return 1
+	fi
+	#invoke-rc.d rsyslog rotate > /dev/null
+	#journalctl --flush
 	echo "$DEV_NUM" > /sys/class/zram-control/hot_remove
 	echo "$ZRAM_DEV removed" >&1 
 }
@@ -126,9 +141,19 @@ removeZdir () {
 	sync
 	ZRAM_DEV=$(df "$ZRAM_DIR" | tail -1 | awk '{ print $1 }')
 	DEV_NUM=$(echo "$ZRAM_DEV" | tr -dc '0-9')
-	umount -l $ZRAM_DIR/
-	umount -l $BIND_DIR/
-	rm -rf $BIND_DIR
+	if [ ! -z "$ZRAM_DIR" ]
+	then
+		umount -l $ZRAM_DIR/
+	else
+		return 1
+	fi
+	if [ ! -z "$BIND_DIR" ]
+	then
+		umount -l $BIND_DIR/
+		rm -rf $BIND_DIR
+	else
+		return 1
+	fi
 	echo "$DEV_NUM" > /sys/class/zram-control/hot_remove
 	echo "$ZRAM_DEV removed" >&1 
 }
@@ -145,6 +170,21 @@ case "$1" in
 	start)
 		file=/etc/ztab
 		ZTAB_EMPTY=true
+		#Only 1 log can exist also make first as then last removed
+		line=$(grep ^log $file | head -n 1)
+		if [ ! -z "$line" ]
+		then
+			set -- $line
+			echo "ztab create $1 $2 $3 $4 $5 $6 $7 $8 $9" >&1
+			ZTAB_EMPTY=false
+			ALG=$2
+			MEM_SIZE=$3
+			DISK_SIZE=$4
+			ZRAM_DIR=$5
+			BIND_DIR=$6
+			OLDLOG_DIR=$7
+			createZlog
+		fi
 		while read -r line; do
 			case "$line" in
 				"#"*)
@@ -156,7 +196,11 @@ case "$1" in
 					# Skip empty line
 					continue
 					;;
-
+					
+				log*)
+					# Skip empty line
+					continue
+					;;
 				*)
 					set -- $line
 					echo "ztab create $1 $2 $3 $4 $5 $6 $7 $8 $9" >&1
@@ -175,12 +219,6 @@ case "$1" in
 							ZRAM_DIR=$5
 							BIND_DIR=$6
 							createZdir
-							;;
-						log)
-							ZRAM_DIR=$5
-							BIND_DIR=$6
-							OLDLOG_DIR=$7
-							createZlog
 							;;
 					esac
 					;;
@@ -204,6 +242,11 @@ case "$1" in
 					# Skip empty line
 					continue
 					;;
+					
+				log*)
+					# Skip empty line
+					continue
+					;;
 
 				*)
 					set -- $line
@@ -223,19 +266,43 @@ case "$1" in
 							BIND_DIR=$6
 							removeZdir
 							;;
-						log)
-							ZRAM_DIR=$5
-							BIND_DIR=$6
-							OLDLOG_DIR=$7
-							removeZlog
-							;;
 					esac
 					;;
 			esac
 		done < "$file"
+		#Only 1 log can exist also make first as then last removed
+		line=$(grep ^log $file | head -n 1)
+		if [ ! -z "$line" ]
+		then
+			set -- $line
+			echo "ztab create $1 $2 $3 $4 $5 $6 $7 $8 $9" >&1
+			ZTAB_EMPTY=false
+			ALG=$2
+			MEM_SIZE=$3
+			DISK_SIZE=$4
+			ZRAM_DIR=$5
+			BIND_DIR=$6
+			OLDLOG_DIR=$7
+			removeZlog
+		fi
 		;;
 	write)
 		file=/etc/ztab
+		#Only 1 log can exist also make first as then last removed
+		line=$(grep ^log $file | head -n 1)
+		if [ ! -z "$line" ]
+		then
+			set -- $line
+			echo "ztab create $1 $2 $3 $4 $5 $6 $7 $8 $9" >&1
+			ZTAB_EMPTY=false
+			ALG=$2
+			MEM_SIZE=$3
+			DISK_SIZE=$4
+			ZRAM_DIR=$5
+			BIND_DIR=$6
+			OLDLOG_DIR=$7
+			syncToDisk
+		fi
 		while read -r line; do
 			case "$line" in
 				"#"*)
@@ -258,13 +325,6 @@ case "$1" in
 							echo "ztab write $1 $2 $3 $4 $5 $6 $7 $8 $9" >&1
 							ZRAM_DIR=$5
 							BIND_DIR=$6
-							syncToDisk
-							;;
-						log)
-							echo "ztab write $1 $2 $3 $4 $5 $6 $7 $8 $9" >&1
-							ZRAM_DIR=$5
-							BIND_DIR=$6
-							OLDLOG_DIR=$7
 							syncToDisk
 							;;
 					esac
