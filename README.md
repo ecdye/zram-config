@@ -126,6 +126,13 @@ fs_types for mke2fs.conf resolution: 'ext4', 'small'
 Discarding device blocks: done
 Filesystem label=
 …
+pi@raspberrypi:~/zram-config $ ls /opt/oldlog
+auth.log.1       debug.1           kern.log.1     term.log.1.gz
+auth.log.2.gz    dpkg.log.1        messages.1     user.log.1
+btmp.1           error.log.1       messages.2.gz  wtmp.1
+daemon.log.1     error.log.2.gz    syslog.1       zram-config.log.1
+daemon.log.2.gz  history.log.1.gz  syslog.2.gz
+…
 ```
 
 
