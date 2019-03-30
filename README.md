@@ -137,8 +137,11 @@ sudo sh /usr/local/share/zram-config/uninstall.sh
 
 ### Git Branches & Update
 From the command line, enter `cd <path_to_local_repo>` so that you can enter commands for your repository.
-Enter `git add --all` at the command line to add the files or changes to the repository
+
+Enter `git add --all` at the command line to add the files or changes to the repository.
+
 Enter `git commit -m '<commit_message>'` at the command line to commit new files/changes to the local repository. For the <commit_message> , you can enter anything that describes the changes you are committing.
+
 Enter `git push`  at the command line to copy your files from your local repository to remote.
 
 ### Reference
