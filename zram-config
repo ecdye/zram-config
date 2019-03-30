@@ -48,7 +48,7 @@ createZdir () {
 createZlog () {
 	invoke-rc.d rsyslog stop  2>&1 | tee -a $ZLOG
 	createZdir
-	invoke-rc.d rsyslog start  2>&1 | tee -a $ZLOG
+	invoke-rc.d rsyslog restart  2>&1 | tee -a $ZLOG
 	journalctl --flush  2>&1 | tee -a $ZLOG
 	if [ ! -z "$OLDLOG_DIR" ]
 	then
@@ -130,7 +130,7 @@ removeZlog () {
 	then
 		umount $BIND_DIR/ 2>&1 | tee -a $ZLOG
 		rm -rf $BIND_DIR 2>&1 | tee -a $ZLOG
-		invoke-rc.d rsyslog start 2>&1 | tee -a $ZLOG
+		invoke-rc.d rsyslog restart 2>&1 | tee -a $ZLOG
 		journalctl --flush  2>&1 | tee -a $ZLOG
 	else
 		return 1
