@@ -1,15 +1,14 @@
 [Unit]
-Description=zram-config-start
-DefaultDependencies=no
-Before=systemd-journal-flush.service
+Description=zram-config
 After=local-fs.target
-
 
 [Service]
 Type=oneshot
 ExecStart=/usr/local/bin/zram-config start
+ExecStop=/usr/local/bin/zram-config stop
 TimeoutSec=120
+RemainAfterExit=yes
 
 [Install]
-WantedBy=sysinit.target
+WantedBy=basic.target
 
