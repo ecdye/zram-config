@@ -1,12 +1,12 @@
 [Unit]
 Description=zram-config
 After=local-fs.target
-
+Before=reboot.target halt.target
 [Service]
 Type=oneshot
 ExecStart=/usr/local/bin/zram-config start
 ExecStop=/usr/local/bin/zram-config stop
-TimeoutSec=120
+TimeoutSec=180
 RemainAfterExit=yes
 
 [Install]
