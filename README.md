@@ -110,7 +110,22 @@ pi@raspberrypi:~ $ cat /proc/swaps
 Filename                                Type            Size    Used    Priority
 /dev/zram0                              partition       767996  0       75
 /var/swap                               file            102396  0       -2
-
+…
+pi@raspberrypi:~/zram-config $ cat /usr/local/share/zram-config/log/zram-config.log
+zram-config start 20190330_062747Z
+ztab create log lz4 20M 60M /var/log /opt/log.bind /opt/oldlog
+Warning: Stopping rsyslog.service, but it can still be activated by:
+  syslog.socket
+mount: /var/log bound on /opt/log.bind.
+mount: /opt/log.bind propagation flags changed.
+insmod /lib/modules/4.14.98+/kernel/mm/zsmalloc.ko
+insmod /lib/modules/4.14.98+/kernel/drivers/block/zram/zram.ko
+zram0 created comp_algorithm=lz4 mem_limit=20M disksize=60M
+mke2fs 1.43.4 (31-Jan-2017)
+fs_types for mke2fs.conf resolution: 'ext4', 'small'
+Discarding device blocks: done
+Filesystem label=
+…
 ```
 
 
