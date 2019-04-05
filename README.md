@@ -119,7 +119,7 @@ daemon.log.2.gz  history.log.1.gz  syslog.2.gz
 LZO/4 offer the best performance and for swaps they are probably the defacto choice.
 You maybe have text based low impact directories such a /var/log /var/cache where highly
 effective text compressors, such as deflate(zlib) & zstd are used in preference of disk size
-and effective compression that can be up to 200% of what a LZ may achieve.
+and effective compression that can be up to 200% of what a LZ may achieve especially with text.
 /tmp /run I am not so sure about incur any further load on what can be small blistering fast
 ram mounted tmpfs as if memory gets short then zram swaps will provide.
 That way your system is performance optimised and also memory optimised via zram swap,
