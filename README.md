@@ -151,6 +151,7 @@ singular pages are written will greatly reduce latency.
 Its a shame swapiness is not dynamically based on load as for many systems there is often a huge difference
 in boot startup to settled load.
 In some cases you may find you are reducing swapiness purely because of boot load.
+Check the tests in https://github.com/StuartIanNaylor/zram-config/tree/master/swap-performance for results.
 ### Uninstall
 ```
 sudo sh /usr/local/share/zram-config/uninstall.sh
