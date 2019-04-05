@@ -4,6 +4,9 @@ Usefull for IoT / maker projects for reducing SD, Nand and Emmc block wear via l
 Uses Zram to minimise precious memory footprint and extremely infrequent write outs and near ram speed working dirs.
 
 Uses a ztab table in /etc/ztab where any combination and number of zram drives can be created.
+This branch uses a OverlayFS mount with zram so that syncFromDisk on start is not needed.
+This should allow quicker boots and larger directories as no complete directory copy needed as its the
+lower mount in the OverlayFS.
 
 
 _____

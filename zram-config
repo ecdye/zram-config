@@ -33,8 +33,11 @@ createZdir () {
 			mount --verbose --make-private $BIND_DIR/ 2>&1 | tee -a $ZLOG
 			createZdevice
 			mke2fs -v -t ext4 /dev/zram$RAM_DEV 2>&1 | tee -a $ZLOG
-			mount --verbose --types ext4 -o nosuid,noexec,nodev /dev/zram$RAM_DEV $ZRAM_DIR/ 2>&1 | tee -a $ZLOG
-			syncFromDisk
+			mkdir -p /opt/zram$RAM_DEV 2>&1 | tee -a $ZLOG
+			mount --verbose --types ext4 -o nosuid,noexec,nodev /dev/zram$RAM_DEV /opt/zram$RAM_DEV/ 2>&1 | tee -a $ZLOG
+			mkdir -p /opt/zram$RAM_DEV/upper /opt/zram$RAM_DEV/workdir $ZRAM_DIR 2>&1 | tee -a $ZLOG
+			mount -t overlay -o lowerdir=$BIND_DIR,upperdir=/opt/zram$RAM_DEV/upper,workdir=/opt/zram$RAM_DEV/workdir overlay $ZRAM_DIR 2>&1 | tee -a $ZLOG
+			#syncFromDisk
 		else
 			echo "No mount dir in ztab" | tee -a $ZLOG
 			return 1
@@ -123,6 +126,7 @@ removeZlog () {
 	then
 		invoke-rc.d rsyslog stop 2>&1 | tee -a $ZLOG
 		umount $ZRAM_DIR/ 2>&1 | tee -a $ZLOG
+		umount /opt/$ZRAM_DEV 2>&1 | tee -a $ZLOG
 	else
 		return 1
 	fi
