@@ -10,7 +10,7 @@ Overall load
 Last 2 minutes
 Last minute
 
-
+Really it needs far more datasets to be authorative but provides an approx reflections 
 
 _____
 
@@ -19,7 +19,7 @@ LZO/4 offer the best performance and for swaps they are probably the defacto cho
 You maybe have text based low impact directories such a /var/log /var/cache where highly
 effective text compressors, such as deflate(zlib) & zstd are used in preference of disk size
 and effective compression that can be up to 200% of what a LZ may achieve.
-/tmp I am not so sure about incur any further load on what can be small blistering fast
+/tmp /run I am not so sure about incur any further load on what can be small blistering fast
 ram mounted tmpfs as if memory gets short then zram swaps will provide.
 That way your system is performance optimised and also memory optimised via zram swap,
 with compression overhead of some common working directories.
