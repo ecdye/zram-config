@@ -36,7 +36,7 @@ createZdir () {
 			mkdir -p /opt/zram$RAM_DEV 2>&1 | tee -a $ZLOG
 			mount --verbose --types ext4 -o nosuid,noexec,nodev /dev/zram$RAM_DEV /opt/zram$RAM_DEV/ 2>&1 | tee -a $ZLOG
 			mkdir -p /opt/zram$RAM_DEV/upper /opt/zram$RAM_DEV/workdir $ZRAM_DIR 2>&1 | tee -a $ZLOG
-			mount -t overlay -o lowerdir=$BIND_DIR,upperdir=/opt/zram$RAM_DEV/upper,workdir=/opt/zram$RAM_DEV/workdir overlay $ZRAM_DIR 2>&1 | tee -a $ZLOG
+			mount --verbose --types overlay -o lowerdir=$BIND_DIR,upperdir=/opt/zram$RAM_DEV/upper,workdir=/opt/zram$RAM_DEV/workdir overlay $ZRAM_DIR 2>&1 | tee -a $ZLOG
 			#syncFromDisk
 		else
 			echo "No mount dir in ztab" | tee -a $ZLOG
@@ -125,21 +125,21 @@ removeZlog () {
 	if [ ! -z "$ZRAM_DIR" ]
 	then
 		invoke-rc.d rsyslog stop 2>&1 | tee -a $ZLOG
-		umount $ZRAM_DIR/ 2>&1 | tee -a $ZLOG
-		umount /opt/$ZRAM_DEV 2>&1 | tee -a $ZLOG
+		umount --verbose $ZRAM_DIR/ 2>&1 | tee -a $ZLOG
+		umount --verbose /opt/$ZRAM_DEV 2>&1 | tee -a $ZLOG
 	else
 		return 1
 	fi
 	if [ ! -z "$BIND_DIR" ]
 	then
-		umount $BIND_DIR/ 2>&1 | tee -a $ZLOG
+		umount --verbose $BIND_DIR/ 2>&1 | tee -a $ZLOG
 		rm -rf $BIND_DIR 2>&1 | tee -a $ZLOG
-		invoke-rc.d rsyslog restart 2>&1 | tee -a $ZLOG
-		journalctl --flush  2>&1 | tee -a $ZLOG
 	else
 		return 1
 	fi
 	echo "$DEV_NUM" > /sys/class/zram-control/hot_remove 2>&1 | tee -a $ZLOG
+	invoke-rc.d rsyslog restart 2>&1 | tee -a $ZLOG
+	journalctl --flush  2>&1 | tee -a $ZLOG
 	echo "$ZRAM_DEV removed"  2>&1 | tee -a $ZLOG
 }
 
@@ -149,13 +149,13 @@ removeZdir () {
 	DEV_NUM=$(echo "$ZRAM_DEV" | tr -dc '0-9')
 	if [ ! -z "$ZRAM_DIR" ]
 	then
-		umount $ZRAM_DIR/  2>&1 | tee -a $ZLOG
+		umount --verbose $ZRAM_DIR/  2>&1 | tee -a $ZLOG
 	else
 		return 1
 	fi
 	if [ ! -z "$BIND_DIR" ]
 	then
-		umount $BIND_DIR/ 2>&1 | tee -a $ZLOG
+		umount --verbose $BIND_DIR/ 2>&1 | tee -a $ZLOG
 		rm -rf $BIND_DIR 2>&1 | tee -a $ZLOG
 	else
 		return 1
