@@ -36,7 +36,7 @@ createZdir () {
 			mkdir -p /opt/zram$RAM_DEV 2>&1 | tee -a $ZLOG
 			mount --verbose --types ext4 -o nosuid,noexec,nodev /dev/zram$RAM_DEV /opt/zram$RAM_DEV/ 2>&1 | tee -a $ZLOG
 			mkdir -p /opt/zram$RAM_DEV/upper /opt/zram$RAM_DEV/workdir $ZRAM_DIR 2>&1 | tee -a $ZLOG
-			mount --verbose --types overlay -o lowerdir=$BIND_DIR,upperdir=/opt/zram$RAM_DEV/upper,workdir=/opt/zram$RAM_DEV/workdir $ZRAM_DIR 2>&1 | tee -a $ZLOG
+			mount --verbose --types overlay -o lowerdir=$BIND_DIR,upperdir=/opt/zram$RAM_DEV/upper,workdir=/opt/zram$RAM_DEV/workdir overlay $ZRAM_DIR 2>&1 | tee -a $ZLOG
 			#syncFromDisk
 		else
 			echo "No mount dir in ztab" | tee -a $ZLOG
