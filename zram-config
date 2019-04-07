@@ -40,7 +40,7 @@ createZdir () {
 			mount --verbose --types ext4 -o nosuid,noexec,nodev /dev/zram${RAM_DEV} ${ZDIR}${TARGET_DIR}/ >>${ZLOG} 2>&1 || return 1
 			mkdir -p ${ZDIR}${TARGET_DIR}/upper ${ZDIR}${TARGET_DIR}/workdir ${TARGET_DIR} >>${ZLOG} 2>&1 || return 1
 			mount --verbose --types overlay -o lowerdir=${ZDIR}${BIND_DIR},upperdir=${ZDIR}${TARGET_DIR}/upper,workdir=${ZDIR}${TARGET_DIR}/workdir overlay ${TARGET_DIR} >>${ZLOG} 2>&1 || return 1
-			echo "dir		/dev/zram${RAM_DEV}		${TARGET_DIR}		${BIND_DIR}" >> ${ZSHARE}/zram-device-list
+			echo "${ZTYPE}		/dev/zram${RAM_DEV}		${TARGET_DIR}		${BIND_DIR}" >> ${ZSHARE}/zram-device-list
 		else
 			echo "No mount dir in ztab" >>${ZLOG}
 			return 1
@@ -53,29 +53,7 @@ createZdir () {
 	
 createZlog () {
 	invoke-rc.d rsyslog stop >>${ZLOG} 2>&1 || return 1
-	if [ ! -z "$BIND_DIR" ]
-	then
-		mkdir -p ${ZDIR}${BIND_DIR} >>${ZLOG} 2>&1 || return 1
-
-		if [ ! -z ${TARGET_DIR} ]
-		then
-			mount --verbose --bind ${TARGET_DIR}/ ${ZDIR}${BIND_DIR}/ >>${ZLOG} 2>&1 || return 1
-			mount --verbose --make-private ${ZDIR}${BIND_DIR}/ >>${ZLOG} 2>&1 || return 1
-			createZdevice || return 1
-			mke2fs -v -t ext4 /dev/zram${RAM_DEV} >>${ZLOG} 2>&1 || return 1
-			mkdir -p ${ZDIR}${TARGET_DIR} >>${ZLOG} 2>&1 || return 1
-			mount --verbose --types ext4 -o nosuid,noexec,nodev /dev/zram${RAM_DEV} ${ZDIR}${TARGET_DIR}/ >>${ZLOG} 2>&1 || return 1
-			mkdir -p ${ZDIR}${TARGET_DIR}/upper ${ZDIR}${TARGET_DIR}/workdir ${TARGET_DIR} >>${ZLOG} 2>&1 || return 1
-			mount --verbose --types overlay -o lowerdir=${ZDIR}${BIND_DIR},upperdir=${ZDIR}${TARGET_DIR}/upper,workdir=${ZDIR}${TARGET_DIR}/workdir overlay ${TARGET_DIR} >>${ZLOG} 2>&1 || return 1
-			echo "log		/dev/zram${RAM_DEV}		${TARGET_DIR}		${BIND_DIR}" >> ${ZSHARE}/zram-device-list
-		else
-			echo "No mount dir in ztab" >>${ZLOG}
-			return 1
-		fi
-	else
-		echo "No bind dir in ztab" >>${ZLOG}
-		return 1
-	fi
+	createZdir || return 1
 	invoke-rc.d rsyslog restart >>${ZLOG} 2>&1 || return 1
 	journalctl --flush >>${ZLOG} 2>&1 || return 1
 	if [ ! -z "$OLDLOG_DIR" ]
@@ -207,21 +185,6 @@ case "$1" in
 		rm -f ${ZSHARE}/zram-device-list >>${ZLOG}
 		file=/etc/ztab
 		ZTAB_EMPTY=true
-		#Only 1 log can exist also make first as then last removed
-		line=$(grep ^log $file | head -n 1)
-		if [ ! -z "$line" ]
-		then
-			set -- $line
-			echo "ztab create $1 $2 $3 $4 $5 $6 $7 $8 $9" >>${ZLOG}
-			ZTAB_EMPTY=false
-			ALG=$2
-			MEM_SIZE=$3
-			DISK_SIZE=$4
-			TARGET_DIR=$5
-			BIND_DIR=$6
-			OLDLOG_DIR=$7
-			createZlog
-		fi
 		while read -r line; do
 			case "$line" in
 				"#"*)
@@ -234,14 +197,11 @@ case "$1" in
 					continue
 					;;
 					
-				log*)
-					# Skip empty line
-					continue
-					;;
 				*)
 					set -- $line
 					echo "ztab create $1 $2 $3 $4 $5 $6 $7 $8 $9" >>${ZLOG}
 					ZTAB_EMPTY=false
+					ZTYPE=$1
 					ALG=$2
 					MEM_SIZE=$3
 					DISK_SIZE=$4
@@ -257,12 +217,19 @@ case "$1" in
 							BIND_DIR=$6
 							createZdir
 							;;
+						log)
+							TARGET_DIR=$5
+							BIND_DIR=$6
+							OLDLOG_DIR=$7
+							createZlog
+							;;
 					esac
 					;;
 			esac
 		done < "$file"
 		if [ "$ZTAB_EMPTY" = true ] ; then
 			echo '/etc/ztab is empty and needs to be configured' >>${ZLOG}
+			exit 1
 		fi
 		;;
 	stop)
@@ -280,92 +247,38 @@ case "$1" in
 					# Skip empty line
 					continue
 					;;
-					
-				log*)
-					# Skip empty line
-					continue
-					;;
-
 				*)
 					set -- $line
 					echo "ztab remove $1 $2 $3 $4" >>${ZLOG}
-
 					case "$1" in
 						swap)
+							ZTYPE=$1
 							ZRAM_DEV=$2
 							LABEL=$3
 							removeZswap
 							;;
 						dir)
+							ZTYPE=$1
 							ZRAM_DEV=$2
 							TARGET_DIR=$3
 							BIND_DIR=$4
 							removeZdir
 							;;
-					esac
-					;;
-			esac
-		done < "$file"
-		#Only 1 log can exist also make first as then last removed
-		file=${ZSHARE}/zram-device-list.rev
-		line=$(grep ^log $file | head -n 1)
-		if [ ! -z "$line" ]
-		then
-			set -- $line
-			echo "ztab remove $1 $2 $3 $4 $5 $6 $7 $8 $9" >>${ZLOG}
-			ZTAB_EMPTY=false
-			ZRAM_DEV=$2
-			TARGET_DIR=$3
-			BIND_DIR=$4
-			removeZlog
-		fi
-		rm -v ${ZSHARE}/zram-device-list.rev >>${ZLOG}
-		;;
-	write)
-		echo "zram-config write $(date +%Y-%m-%d-%H:%M:%S)" >>${ZLOG}
-		file=/etc/ztab
-		#Only 1 log can exist also make first as then last removed
-		line=$(grep ^log $file | head -n 1)
-		if [ ! -z "$line" ]
-		then
-			set -- $line
-			echo "ztab write $1 $2 $3 $4 $5 $6 $7 $8 $9" >>${ZLOG}
-			ZTAB_EMPTY=false
-			ALG=$2
-			MEM_SIZE=$3
-			DISK_SIZE=$4
-			TARGET_DIR=$5
-			BIND_DIR=$6
-			OLDLOG_DIR=$7
-			syncToDisk
-		fi
-		while read -r line; do
-			case "$line" in
-				"#"*)
-					# Skip comment line
-					continue
-					;;
-
-				"")
-					# Skip empty line
-					continue
-					;;
-
-				*)
-					set -- $line
-					ALG=$2
-					MEM_SIZE=$3
-					DISK_SIZE=$4
-					case "$1" in
-						dir)
-							echo "ztab write $1 $2 $3 $4 $5 $6 $7 $8 $9" >>${ZLOG}
-							TARGET_DIR=$5
-							BIND_DIR=$6
-							syncToDisk
+						log)
+							ZTYPE=$1
+							ZRAM_DEV=$2
+							TARGET_DIR=$3
+							BIND_DIR=$4
+							removeZlog
 							;;
 					esac
 					;;
 			esac
 		done < "$file"
-		;;	
+		rm -v ${ZSHARE}/zram-device-list.rev >>${ZLOG}
+		;;
+	*)
+		echo "Usage: zram-config {start|stop}" >&2
+		exit 1
+		;;
 esac
