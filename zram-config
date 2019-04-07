@@ -1,115 +1,140 @@
 #! /bin/bash
 
 createZswap () {
-	createZdevice
-	mkswap /dev/zram$RAM_DEV 2>&1 | tee -a $ZLOG
+	createZdevice || return 1
+	mkswap --label zram-config$RAM_DEV /dev/zram$RAM_DEV >>${ZLOG} 2>&1 || return 1
 	if [ ! -z "$PRIORITY" ]
 	then
-		swapon -v -p $PRIORITY /dev/zram$RAM_DEV 2>&1 | tee -a $ZLOG
+		swapon -v -p $PRIORITY /dev/zram$RAM_DEV >>${ZLOG} 2>&1 || return 1
 	else
-		echo "zram$RAM_DEV no swap_priority" | tee -a $ZLOG
+		echo "zram$RAM_DEV no swap_priority" >>${ZLOG}
+		return 1
 	fi	
 	if [ ! -z "$PAGE_CLUSTER" ]
 	then
-		sysctl vm.page-cluster=$PAGE_CLUSTER  2>&1 | tee -a $ZLOG
+		sysctl vm.page-cluster=$PAGE_CLUSTER >>${ZLOG} 2>&1 || return 1
 	else
-		echo "zram$RAM_DEV no page_cluster" | tee -a $ZLOG	
+		echo "zram$RAM_DEV no page_cluster" >>${ZLOG}
 	fi
 	if [ ! -z "$SWAPPINESS" ]
 	then
-		sysctl vm.swappiness=$SWAPPINESS 2>&1 | tee -a $ZLOG
+		sysctl vm.swappiness=$SWAPPINESS >>${ZLOG} 2>&1 || return 1
 	else
-		echo "zram$RAM_DEV no swappiness" | tee -a $ZLOG
+		echo "zram$RAM_DEV no swappiness" >>${ZLOG}
 	fi
+	echo "swap		/dev/zram${RAM_DEV}		zram-config${RAM_DEV}" >> ${ZSHARE}/zram-device-list
 }
 	
 createZdir () {
 	if [ ! -z "$BIND_DIR" ]
 	then
-		mkdir -p $BIND_DIR 2>&1 | tee -a $ZLOG
-		if [ ! -z "$ZRAM_DIR" ]
+		mkdir -p ${ZDIR}${BIND_DIR} >>${ZLOG} 2>&1 || return 1
+
+		if [ ! -z ${TARGET_DIR} ]
 		then
-			mount --verbose --bind $ZRAM_DIR/ $BIND_DIR/ 2>&1 | tee -a $ZLOG
-			mount --verbose --make-private $BIND_DIR/ 2>&1 | tee -a $ZLOG
-			createZdevice
-			mke2fs -v -t ext4 /dev/zram$RAM_DEV 2>&1 | tee -a $ZLOG
-			mkdir -p /opt/zram$RAM_DEV 2>&1 | tee -a $ZLOG
-			mount --verbose --types ext4 -o nosuid,noexec,nodev /dev/zram$RAM_DEV /opt/zram$RAM_DEV/ 2>&1 | tee -a $ZLOG
-			mkdir -p /opt/zram$RAM_DEV/upper /opt/zram$RAM_DEV/workdir $ZRAM_DIR 2>&1 | tee -a $ZLOG
-			mount --verbose --types overlay -o lowerdir=$BIND_DIR,upperdir=/opt/zram$RAM_DEV/upper,workdir=/opt/zram$RAM_DEV/workdir $ZRAM_DIR 2>&1 | tee -a $ZLOG
-			#syncFromDisk
+			mount --verbose --bind ${TARGET_DIR}/ ${ZDIR}${BIND_DIR}/ >>${ZLOG} 2>&1 || return 1
+			mount --verbose --make-private ${ZDIR}${BIND_DIR}/ >>${ZLOG} 2>&1 || return 1
+			createZdevice || return 1
+			mke2fs -v -t ext4 /dev/zram${RAM_DEV} >>${ZLOG} 2>&1 || return 1
+			mkdir -p ${ZDIR}${TARGET_DIR} >>${ZLOG} 2>&1 || return 1
+			mount --verbose --types ext4 -o nosuid,noexec,nodev /dev/zram${RAM_DEV} ${ZDIR}${TARGET_DIR}/ >>${ZLOG} 2>&1 || return 1
+			mkdir -p ${ZDIR}${TARGET_DIR}/upper ${ZDIR}${TARGET_DIR}/workdir ${TARGET_DIR} >>${ZLOG} 2>&1 || return 1
+			mount --verbose --types overlay -o lowerdir=${ZDIR}${BIND_DIR},upperdir=${ZDIR}${TARGET_DIR}/upper,workdir=${ZDIR}${TARGET_DIR}/workdir overlay ${TARGET_DIR} >>${ZLOG} 2>&1 || return 1
+			echo "dir		/dev/zram${RAM_DEV}		${TARGET_DIR}		${BIND_DIR}" >> ${ZSHARE}/zram-device-list
 		else
-			echo "No mount dir in ztab" | tee -a $ZLOG
+			echo "No mount dir in ztab" >>${ZLOG}
 			return 1
 		fi
 	else
-		echo "No bind dir in ztab" | tee -a $ZLOG
+		echo "No bind dir in ztab" >>${ZLOG}
 		return 1
 	fi
 }
 	
 createZlog () {
-	invoke-rc.d rsyslog stop  2>&1 | tee -a $ZLOG
-	createZdir
-	invoke-rc.d rsyslog restart  2>&1 | tee -a $ZLOG
-	journalctl --flush  2>&1 | tee -a $ZLOG
+	invoke-rc.d rsyslog stop >>${ZLOG} 2>&1 || return 1
+	if [ ! -z "$BIND_DIR" ]
+	then
+		mkdir -p ${ZDIR}${BIND_DIR} >>${ZLOG} 2>&1 || return 1
+
+		if [ ! -z ${TARGET_DIR} ]
+		then
+			mount --verbose --bind ${TARGET_DIR}/ ${ZDIR}${BIND_DIR}/ >>${ZLOG} 2>&1 || return 1
+			mount --verbose --make-private ${ZDIR}${BIND_DIR}/ >>${ZLOG} 2>&1 || return 1
+			createZdevice || return 1
+			mke2fs -v -t ext4 /dev/zram${RAM_DEV} >>${ZLOG} 2>&1 || return 1
+			mkdir -p ${ZDIR}${TARGET_DIR} >>${ZLOG} 2>&1 || return 1
+			mount --verbose --types ext4 -o nosuid,noexec,nodev /dev/zram${RAM_DEV} ${ZDIR}${TARGET_DIR}/ >>${ZLOG} 2>&1 || return 1
+			mkdir -p ${ZDIR}${TARGET_DIR}/upper ${ZDIR}${TARGET_DIR}/workdir ${TARGET_DIR} >>${ZLOG} 2>&1 || return 1
+			mount --verbose --types overlay -o lowerdir=${ZDIR}${BIND_DIR},upperdir=${ZDIR}${TARGET_DIR}/upper,workdir=${ZDIR}${TARGET_DIR}/workdir overlay ${TARGET_DIR} >>${ZLOG} 2>&1 || return 1
+			echo "log		/dev/zram${RAM_DEV}		${TARGET_DIR}		${BIND_DIR}" >> ${ZSHARE}/zram-device-list
+		else
+			echo "No mount dir in ztab" >>${ZLOG}
+			return 1
+		fi
+	else
+		echo "No bind dir in ztab" >>${ZLOG}
+		return 1
+	fi
+	invoke-rc.d rsyslog restart >>${ZLOG} 2>&1 || return 1
+	journalctl --flush >>${ZLOG} 2>&1 || return 1
 	if [ ! -z "$OLDLOG_DIR" ]
 	then
-		cp -arvf /etc/logrotate.conf /usr/local/share/zram-config/logrotate.conf.bak  2>&1 | tee -a $ZLOG
-		sed -i "/^weekly.*/i olddir $OLDLOG_DIR" /etc/logrotate.conf  2>&1 | tee -a $ZLOG
-		sed -i "/^weekly.*/i createolddir 755 root root" /etc/logrotate.conf  2>&1 | tee -a $ZLOG
-		sed -i "/^weekly.*/i renamecopy" /etc/logrotate.conf  2>&1 | tee -a $ZLOG
+		cp -arvf /etc/logrotate.conf ${ZSHARE}/logrotate.conf.bak >>${ZLOG} 2>&1 || return 1
+		sed -i "/^weekly.*/i olddir ${ZDIR}${OLDLOG_DIR}" /etc/logrotate.conf >>${ZLOG} 2>&1 || return 1
+		sed -i "/^weekly.*/i createolddir 755 root root" /etc/logrotate.conf >>${ZLOG} 2>&1 || return 1
+		sed -i "/^weekly.*/i renamecopy" /etc/logrotate.conf >>${ZLOG} 2>&1 || return 1
 	else
-		echo "createZlog no oldlog dir in ztab" | tee -a $ZLOG
+		echo "createZlog no oldlog dir in ztab" >>${ZLOG}
 	fi
 }
 	
 createZdevice () {
 	# Check Zram Class created
 	if [ ! -d "/sys/class/zram-control" ]; then
-        modprobe --verbose zram  2>&1 | tee -a $ZLOG
+        modprobe --verbose zram >>${ZLOG} 2>&1 || return 1
         RAM_DEV='0'
 	else
         RAM_DEV=$(cat /sys/class/zram-control/hot_add)
 	fi
 	if [ ! -z "$ALG" ]
 	then
-		echo "$ALG" > /sys/block/zram$RAM_DEV/comp_algorithm 2>&1 | tee -a $ZLOG
+		echo "$ALG" > /sys/block/zram$RAM_DEV/comp_algorithm
 	else
-		echo "zram$RAM_DEV no comp_algorithm" | tee -a $ZLOG
+		echo "zram$RAM_DEV no comp_algorithm" >>${ZLOG}
 	fi
 	if [ ! -z "$MEM_SIZE" ]
 	then
-		echo "$MEM_SIZE" > /sys/block/zram$RAM_DEV/mem_limit 2>&1 | tee -a $ZLOG
+		echo "$MEM_SIZE" > /sys/block/zram$RAM_DEV/mem_limit
 	else
-		echo "zram$RAM_DEV no mem_limit" | tee -a $ZLOG
+		echo "zram$RAM_DEV no mem_limit" >>${ZLOG}
 	fi
 	if [ ! -z "$DISK_SIZE" ]
 	then
-		echo "$DISK_SIZE" > /sys/block/zram$RAM_DEV/disksize 2>&1 | tee -a $ZLOG
+		echo "$DISK_SIZE" > /sys/block/zram$RAM_DEV/disksize
 	else
-		echo "zram$RAM_DEV no disksize" | tee -a $ZLOG
+		echo "zram$RAM_DEV no disksize" >>${ZLOG}
 		return 1
 	fi
-	echo "zram$RAM_DEV created comp_algorithm=$ALG mem_limit=$MEM_SIZE disksize=$DISK_SIZE" | tee -a $ZLOG
+	echo "zram$RAM_DEV created comp_algorithm=$ALG mem_limit=$MEM_SIZE disksize=$DISK_SIZE" >>${ZLOG}
 }
 
 syncFromDisk () {
-	if cp -arvf $BIND_DIR -T $ZRAM_DIR  2>&1 | tee -a $ZLOG
+	if cp -arvf ${ZDIR}${BIND_DIR} -T ${TARGET_DIR} >>${ZLOG} 2>&1 || return 1
 	then
-		echo "syncFromDisk $BIND_DIR to $ZRAM_DIR complete" | tee -a $ZLOG
+		echo "syncFromDisk ${ZDIR}$BIND_DIR to $TARGET_DIR complete" >>${ZLOG}
 	else
-		echo "Error syncFromDisk $BIND_DIR to $ZRAM_DIR failure" | tee -a $ZLOG
+		echo "Error syncFromDisk ${ZDIR}${BIND_DIR} to ${TARGET_DIR} failure" >>${ZLOG}
 		return 1
 	fi
 }
 
 syncToDisk () {
-	if cp -arvfu $ZRAM_DIR -T $BIND_DIR  2>&1 | tee -a $ZLOG
+	if cp -arvfu ${TARGET_DIR} -T ${ZDIR}${BIND_DIR} >>${ZLOG} 2>&1 || return 1
 	then
-		echo "syncToDisk $ZRAM_DIR to $BIND_DIR complete" | tee -a $ZLOG
+		echo "syncToDisk ${TARGET_DIR} to ${ZDIR}${BIND_DIR} complete" >>${ZLOG}
 	else
-		echo "Error syncFromDisk $ZRAM_DIR to $BIND_DIR failure" | tee -a $ZLOG
+		echo "Error syncFromDisk ${TARGET_DIR} to ${ZDIR}${BIND_DIR} failure" >>${ZLOG}
 		return 1
 	fi			
 }
@@ -117,66 +142,69 @@ syncToDisk () {
 removeZlog () {
 	if [ ! -z "$OLDLOG_DIR" ]
 	then
-		cp -arvf /usr/local/share/zram-config/logrotate.conf.bak /etc/logrotate.conf  2>&1 | tee -a $ZLOG
+		cp -arvf ${ZSHARE}/logrotate.conf.bak /etc/logrotate.conf >>${ZLOG} 2>&1 || return 1
 	fi
 	syncToDisk
-	ZRAM_DEV=$(df "$ZRAM_DIR" | tail -1 | awk '{ print $1 }')
-	DEV_NUM=$(echo "$ZRAM_DEV" | tr -dc '0-9')
-	if [ ! -z "$ZRAM_DIR" ]
+	DEV_NUM=$(echo ${ZRAM_DEV} | tr -dc '0-9')
+	if [ ! -z "$TARGET_DIR" ]
 	then
-		invoke-rc.d rsyslog stop 2>&1 | tee -a $ZLOG
-		umount --verbose $ZRAM_DIR/ 2>&1 | tee -a $ZLOG
-		umount --verbose /opt/$ZRAM_DEV 2>&1 | tee -a $ZLOG
+		invoke-rc.d rsyslog stop >>${ZLOG} 2>&1 || return 1
+		umount --verbose ${TARGET_DIR}/ >>${ZLOG} 2>&1 || return 1
+		umount --verbose ${ZDIR}${TARGET_DIR}/ >>${ZLOG} 2>&1 || return 1
+		rm -rv ${ZDIR}${TARGET_DIR} >>${ZLOG} 2>&1 || return 1
 	else
 		return 1
 	fi
 	if [ ! -z "$BIND_DIR" ]
 	then
-		umount --verbose $BIND_DIR/ 2>&1 | tee -a $ZLOG
-		rm -rf $BIND_DIR 2>&1 | tee -a $ZLOG
+		umount --verbose ${ZDIR}${BIND_DIR}/ >>${ZLOG} 2>&1 || return 1
+		rm -rv ${ZDIR}${BIND_DIR} >>${ZLOG} 2>&1 || return 1
 	else
 		return 1
 	fi
-	echo "$DEV_NUM" > /sys/class/zram-control/hot_remove 2>&1 | tee -a $ZLOG
-	invoke-rc.d rsyslog restart 2>&1 | tee -a $ZLOG
-	journalctl --flush  2>&1 | tee -a $ZLOG
-	echo "$ZRAM_DEV removed"  2>&1 | tee -a $ZLOG
+	invoke-rc.d rsyslog stop >>${ZLOG} 2>&1 || return 1
+	echo "$DEV_NUM" > /sys/class/zram-control/hot_remove
+	invoke-rc.d rsyslog restart >>${ZLOG} 2>&1 || return 1
+	journalctl --flush >>${ZLOG} 2>&1 || return 1
+	echo "$ZRAM_DEV removed" >>${ZLOG}
 }
 
 removeZdir () {
 	syncToDisk
-	ZRAM_DEV=$(df "$ZRAM_DIR" | tail -1 | awk '{ print $1 }')
 	DEV_NUM=$(echo "$ZRAM_DEV" | tr -dc '0-9')
-	if [ ! -z "$ZRAM_DIR" ]
+	if [ ! -z "$TARGET_DIR" ]
 	then
-		umount --verbose $ZRAM_DIR/  2>&1 | tee -a $ZLOG
+		umount --verbose ${TARGET_DIR}/ >>${ZLOG} 2>&1 || return 1
+		umount --verbose ${ZDIR}${TARGET_DIR}/ >>${ZLOG} 2>&1 || return 1
+		rm -rv ${ZDIR}${TARGET_DIR} >>${ZLOG} 2>&1 || return 1
 	else
 		return 1
 	fi
 	if [ ! -z "$BIND_DIR" ]
 	then
-		umount --verbose $BIND_DIR/ 2>&1 | tee -a $ZLOG
-		rm -rf $BIND_DIR 2>&1 | tee -a $ZLOG
+		umount --verbose ${ZDIR}${BIND_DIR}/ >>${ZLOG} 2>&1 || return 1
+		rm -rv ${ZDIR}${BIND_DIR} >>${ZLOG} 2>&1 || return 1
 	else
 		return 1
 	fi
-	echo "$DEV_NUM" > /sys/class/zram-control/hot_remove 2>&1 | tee -a $ZLOG
-	echo "$ZRAM_DEV removed" | tee -a $ZLOG  
+	echo "$DEV_NUM" > /sys/class/zram-control/hot_remove
+	echo "$ZRAM_DEV removed" >>${ZLOG}  
 }
 
 removeZswap () {
-	ZRAM_DEV=$(grep zram /proc/swaps | tail -1 | awk '{ print $1 }')
 	DEV_NUM=$(echo "$ZRAM_DEV" | tr -dc '0-9')
-	swapoff $ZRAM_DEV  2>&1 | tee -a $ZLOG
-	echo "$DEV_NUM" > /sys/class/zram-control/hot_remove 2>&1 | tee -a $ZLOG
-	echo "$ZRAM_DEV removed" | tee -a $ZLOG
+	swapoff $ZRAM_DEV >>${ZLOG} 2>&1 || return 1
+	echo "$DEV_NUM" > /sys/class/zram-control/hot_remove
+	echo "$ZRAM_DEV removed" >>${ZLOG}
 }
-
-ZLOG=/usr/local/share/zram-config/log/zram-config.log
+ZSHARE=/usr/local/share/zram-config
+ZLOG=${ZSHARE}/log/zram-config.log
+ZDIR=/opt/zram-conf
 
 case "$1" in
 	start)
-		echo "zram-config start $(date --utc +%Y%m%d_%H%M%SZ)" | tee -a $ZLOG
+		echo "zram-config start $(date +%Y-%m-%d-%H:%M:%S)" >>${ZLOG}
+		rm -f ${ZSHARE}/zram-device-list >>${ZLOG}
 		file=/etc/ztab
 		ZTAB_EMPTY=true
 		#Only 1 log can exist also make first as then last removed
@@ -184,12 +212,12 @@ case "$1" in
 		if [ ! -z "$line" ]
 		then
 			set -- $line
-			echo "ztab create $1 $2 $3 $4 $5 $6 $7 $8 $9" | tee -a $ZLOG
+			echo "ztab create $1 $2 $3 $4 $5 $6 $7 $8 $9" >>${ZLOG}
 			ZTAB_EMPTY=false
 			ALG=$2
 			MEM_SIZE=$3
 			DISK_SIZE=$4
-			ZRAM_DIR=$5
+			TARGET_DIR=$5
 			BIND_DIR=$6
 			OLDLOG_DIR=$7
 			createZlog
@@ -212,7 +240,7 @@ case "$1" in
 					;;
 				*)
 					set -- $line
-					echo "ztab create $1 $2 $3 $4 $5 $6 $7 $8 $9" | tee -a $ZLOG
+					echo "ztab create $1 $2 $3 $4 $5 $6 $7 $8 $9" >>${ZLOG}
 					ZTAB_EMPTY=false
 					ALG=$2
 					MEM_SIZE=$3
@@ -225,7 +253,7 @@ case "$1" in
 							createZswap
 							;;
 						dir)
-							ZRAM_DIR=$5
+							TARGET_DIR=$5
 							BIND_DIR=$6
 							createZdir
 							;;
@@ -234,13 +262,13 @@ case "$1" in
 			esac
 		done < "$file"
 		if [ "$ZTAB_EMPTY" = true ] ; then
-			echo '/etc/ztab is empty and needs to be configured' | tee -a $ZLOG
+			echo '/etc/ztab is empty and needs to be configured' >>${ZLOG}
 		fi
 		;;
 	stop)
-		echo "zram-config stop $(date --utc +%Y%m%d_%H%M%SZ)" | tee -a $ZLOG
-		tac /etc/ztab > /usr/local/share/zram-config/ztab.conf.rev 2>&1 | tee -a $ZLOG
-		file=/usr/local/share/zram-config/ztab.conf.rev
+		echo "zram-config stop $(date +%Y-%m-%d-%H:%M:%S)" >>${ZLOG}
+		tac ${ZSHARE}/zram-device-list > ${ZSHARE}/zram-device-list.rev
+		file=${ZSHARE}/zram-device-list.rev
 		while read -r line; do
 			case "$line" in
 				"#"*)
@@ -260,20 +288,18 @@ case "$1" in
 
 				*)
 					set -- $line
-					echo "ztab remove $1 $2 $3 $4 $5 $6 $7 $8 $9" | tee -a $ZLOG
-					ALG=$2
-					MEM_SIZE=$3
-					DISK_SIZE=$4
+					echo "ztab remove $1 $2 $3 $4" >>${ZLOG}
+
 					case "$1" in
 						swap)
-							PRIORITY=$5
-							PAGE_CLUSTER=$6
-							SWAPPINESS=$7
+							ZRAM_DEV=$2
+							LABEL=$3
 							removeZswap
 							;;
 						dir)
-							ZRAM_DIR=$5
-							BIND_DIR=$6
+							ZRAM_DEV=$2
+							TARGET_DIR=$3
+							BIND_DIR=$4
 							removeZdir
 							;;
 					esac
@@ -281,36 +307,34 @@ case "$1" in
 			esac
 		done < "$file"
 		#Only 1 log can exist also make first as then last removed
-		file=/etc/ztab
+		file=${ZSHARE}/zram-device-list.rev
 		line=$(grep ^log $file | head -n 1)
 		if [ ! -z "$line" ]
 		then
 			set -- $line
-			echo "ztab remove $1 $2 $3 $4 $5 $6 $7 $8 $9" | tee -a $ZLOG
+			echo "ztab remove $1 $2 $3 $4 $5 $6 $7 $8 $9" >>${ZLOG}
 			ZTAB_EMPTY=false
-			ALG=$2
-			MEM_SIZE=$3
-			DISK_SIZE=$4
-			ZRAM_DIR=$5
-			BIND_DIR=$6
-			OLDLOG_DIR=$7
+			ZRAM_DEV=$2
+			TARGET_DIR=$3
+			BIND_DIR=$4
 			removeZlog
 		fi
+		rm -v ${ZSHARE}/zram-device-list.rev >>${ZLOG}
 		;;
 	write)
-		echo "zram-config write $(date --utc +%Y%m%d_%H%M%SZ)" | tee -a $ZLOG
+		echo "zram-config write $(date +%Y-%m-%d-%H:%M:%S)" >>${ZLOG}
 		file=/etc/ztab
 		#Only 1 log can exist also make first as then last removed
 		line=$(grep ^log $file | head -n 1)
 		if [ ! -z "$line" ]
 		then
 			set -- $line
-			echo "ztab write $1 $2 $3 $4 $5 $6 $7 $8 $9" | tee -a $ZLOG
+			echo "ztab write $1 $2 $3 $4 $5 $6 $7 $8 $9" >>${ZLOG}
 			ZTAB_EMPTY=false
 			ALG=$2
 			MEM_SIZE=$3
 			DISK_SIZE=$4
-			ZRAM_DIR=$5
+			TARGET_DIR=$5
 			BIND_DIR=$6
 			OLDLOG_DIR=$7
 			syncToDisk
@@ -334,8 +358,8 @@ case "$1" in
 					DISK_SIZE=$4
 					case "$1" in
 						dir)
-							echo "ztab write $1 $2 $3 $4 $5 $6 $7 $8 $9" | tee -a $ZLOG
-							ZRAM_DIR=$5
+							echo "ztab write $1 $2 $3 $4 $5 $6 $7 $8 $9" >>${ZLOG}
+							TARGET_DIR=$5
 							BIND_DIR=$6
 							syncToDisk
 							;;
