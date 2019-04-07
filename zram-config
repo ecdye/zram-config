@@ -40,7 +40,7 @@ createZdir () {
 			mount --verbose --types ext4 -o nosuid,noexec,nodev /dev/zram${RAM_DEV} ${ZDIR}${TARGET_DIR}/ >>${ZLOG} 2>&1 || return 1
 			mkdir -p ${ZDIR}${TARGET_DIR}/upper ${ZDIR}${TARGET_DIR}/workdir ${TARGET_DIR} >>${ZLOG} 2>&1 || return 1
 			mount --verbose --types overlay -o lowerdir=${ZDIR}${BIND_DIR},upperdir=${ZDIR}${TARGET_DIR}/upper,workdir=${ZDIR}${TARGET_DIR}/workdir overlay ${TARGET_DIR} >>${ZLOG} 2>&1 || return 1
-			echo "dir		/dev/zram${RAM_DEV}		${TARGET_DIR}		${BIND_DIR}" >> ${ZSHARE}/zram-device-list
+			echo "${ZTYPE}		/dev/zram${RAM_DEV}		${TARGET_DIR}		${BIND_DIR}" >> ${ZSHARE}/zram-device-list
 		else
 			echo "No mount dir in ztab" >>${ZLOG}
 			return 1
@@ -53,29 +53,7 @@ createZdir () {
 	
 createZlog () {
 	invoke-rc.d rsyslog stop >>${ZLOG} 2>&1 || return 1
-	if [ ! -z "$BIND_DIR" ]
-	then
-		mkdir -p ${ZDIR}${BIND_DIR} >>${ZLOG} 2>&1 || return 1
-
-		if [ ! -z ${TARGET_DIR} ]
-		then
-			mount --verbose --bind ${TARGET_DIR}/ ${ZDIR}${BIND_DIR}/ >>${ZLOG} 2>&1 || return 1
-			mount --verbose --make-private ${ZDIR}${BIND_DIR}/ >>${ZLOG} 2>&1 || return 1
-			createZdevice || return 1
-			mke2fs -v -t ext4 /dev/zram${RAM_DEV} >>${ZLOG} 2>&1 || return 1
-			mkdir -p ${ZDIR}${TARGET_DIR} >>${ZLOG} 2>&1 || return 1
-			mount --verbose --types ext4 -o nosuid,noexec,nodev /dev/zram${RAM_DEV} ${ZDIR}${TARGET_DIR}/ >>${ZLOG} 2>&1 || return 1
-			mkdir -p ${ZDIR}${TARGET_DIR}/upper ${ZDIR}${TARGET_DIR}/workdir ${TARGET_DIR} >>${ZLOG} 2>&1 || return 1
-			mount --verbose --types overlay -o lowerdir=${ZDIR}${BIND_DIR},upperdir=${ZDIR}${TARGET_DIR}/upper,workdir=${ZDIR}${TARGET_DIR}/workdir overlay ${TARGET_DIR} >>${ZLOG} 2>&1 || return 1
-			echo "log		/dev/zram${RAM_DEV}		${TARGET_DIR}		${BIND_DIR}" >> ${ZSHARE}/zram-device-list
-		else
-			echo "No mount dir in ztab" >>${ZLOG}
-			return 1
-		fi
-	else
-		echo "No bind dir in ztab" >>${ZLOG}
-		return 1
-	fi
+	createZdir || return 1
 	invoke-rc.d rsyslog restart >>${ZLOG} 2>&1 || return 1
 	journalctl --flush >>${ZLOG} 2>&1 || return 1
 	if [ ! -z "$OLDLOG_DIR" ]
@@ -214,6 +192,7 @@ case "$1" in
 			set -- $line
 			echo "ztab create $1 $2 $3 $4 $5 $6 $7 $8 $9" >>${ZLOG}
 			ZTAB_EMPTY=false
+			ZTYPE=$1
 			ALG=$2
 			MEM_SIZE=$3
 			DISK_SIZE=$4
@@ -242,6 +221,7 @@ case "$1" in
 					set -- $line
 					echo "ztab create $1 $2 $3 $4 $5 $6 $7 $8 $9" >>${ZLOG}
 					ZTAB_EMPTY=false
+					ZTYPE=$1
 					ALG=$2
 					MEM_SIZE=$3
 					DISK_SIZE=$4
