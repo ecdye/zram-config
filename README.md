@@ -7,6 +7,8 @@ Uses a ztab table in /etc/ztab where any combination and number of zram drives c
 This branch uses a OverlayFS mount with zram so that syncFromDisk on start is not needed.
 This should allow quicker boots and larger directories as no complete directory copy needed as its the
 lower mount in the OverlayFS.
+https://github.com/kmxz/overlayfs-tools should be a git clone operation and forgot to add to .gitignore, but
+many thanks to kmxz for the overlay merge tool.
 
 
 _____
