@@ -101,7 +101,7 @@ mergeOverlay () {
 	echo "overlay --lowerdir=$ZDIR$BIND_DIR --upperdir=$ZDIR$ZRAM_DEV/upper" >>${ZLOG}
 	cd /usr/local/lib/zram-config/
 	./overlay merge -l "${ZDIR}${BIND_DIR}" -u "${ZDIR}${ZRAM_DEV}/upper" >>${ZLOG} 2>&1 || return 1
-	sh *.sh  >>${ZLOG} 2>&1 || return 1
+	sh -x *.sh  >>${ZLOG} 2>&1 || return 1
 	rm -v *.sh  >>${ZLOG} 2>&1 || return 1
 	
 }
@@ -117,7 +117,14 @@ removeZlog () {
 	if [ ! -z "$TARGET_DIR" ]
 	then
 		invoke-rc.d rsyslog stop >>${ZLOG} 2>&1 || return 1
-		umount --verbose ${TARGET_DIR}/ >>${ZLOG} 2>&1 || return 1
+		if umount --verbose ${TARGET_DIR}/
+		then
+			echo "umount ${TARGET_DIR}/" >>${ZLOG}
+		else
+		sleep .1
+			invoke-rc.d rsyslog stop
+			umount --verbose -l ${TARGET_DIR}/ >>${ZLOG} 2>&1 || return 1
+		fi
 	else
 		return 1
 	fi
@@ -150,7 +157,13 @@ removeZdir () {
 	DEV_NUM=$(echo "$ZRAM_DEV" | tr -dc '0-9')
 	if [ ! -z "$TARGET_DIR" ]
 	then
-		umount --verbose ${TARGET_DIR}/ >>${ZLOG} 2>&1 || return 1
+		if umount --verbose ${TARGET_DIR}/
+		then
+			echo "umount ${TARGET_DIR}/" >>${ZLOG}
+		else
+			sleep .1
+			umount --verbose -l ${TARGET_DIR}/ >>${ZLOG} 2>&1 || return 1
+		fi
 	else
 		return 1
 	fi
