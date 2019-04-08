@@ -11,6 +11,7 @@ then
 
 	echo "zram-config is uninstalled, removing the uninstaller in progress"
 	rm -rf /usr/local/share/zram-config
+	rm -rf /usr/local/lib/zram-config
 	echo "##### Reboot isn't needed #####"
 else
 	echo "You need to be ROOT (sudo can be used)"

@@ -22,7 +22,7 @@ createZswap () {
 	else
 		echo "zram$RAM_DEV no swappiness" >>${ZLOG}
 	fi
-	echo "swap		/dev/zram${RAM_DEV}		zram-config${RAM_DEV}" >> ${ZSHARE}/zram-device-list
+	echo "swap		/zram${RAM_DEV}		zram-config${RAM_DEV}" >> ${ZSHARE}/zram-device-list
 }
 	
 createZdir () {
@@ -36,11 +36,11 @@ createZdir () {
 			mount --verbose --make-private ${ZDIR}${BIND_DIR}/ >>${ZLOG} 2>&1 || return 1
 			createZdevice || return 1
 			mke2fs -v -t ext4 /dev/zram${RAM_DEV} >>${ZLOG} 2>&1 || return 1
-			mkdir -p ${ZDIR}${TARGET_DIR} >>${ZLOG} 2>&1 || return 1
-			mount --verbose --types ext4 -o nosuid,noexec,nodev /dev/zram${RAM_DEV} ${ZDIR}${TARGET_DIR}/ >>${ZLOG} 2>&1 || return 1
-			mkdir -p ${ZDIR}${TARGET_DIR}/upper ${ZDIR}${TARGET_DIR}/workdir ${TARGET_DIR} >>${ZLOG} 2>&1 || return 1
-			mount --verbose --types overlay -o lowerdir=${ZDIR}${BIND_DIR},upperdir=${ZDIR}${TARGET_DIR}/upper,workdir=${ZDIR}${TARGET_DIR}/workdir overlay ${TARGET_DIR} >>${ZLOG} 2>&1 || return 1
-			echo "${ZTYPE}		/dev/zram${RAM_DEV}		${TARGET_DIR}		${BIND_DIR}" >> ${ZSHARE}/zram-device-list
+			mkdir -p ${ZDIR}/zram${RAM_DEV} >>${ZLOG} 2>&1 || return 1
+			mount --verbose --types ext4 -o nosuid,noexec,nodev /dev/zram${RAM_DEV} ${ZDIR}/zram${RAM_DEV}/ >>${ZLOG} 2>&1 || return 1
+			mkdir -p ${ZDIR}/zram${RAM_DEV}/upper ${ZDIR}/zram${RAM_DEV}/workdir ${TARGET_DIR} >>${ZLOG} 2>&1 || return 1
+			mount --verbose --types overlay -o lowerdir=${ZDIR}${BIND_DIR},upperdir=${ZDIR}/zram${RAM_DEV}/upper,workdir=${ZDIR}/zram${RAM_DEV}/workdir overlay ${TARGET_DIR} >>${ZLOG} 2>&1 || return 1
+			echo "${ZTYPE}		/zram${RAM_DEV}		${TARGET_DIR}		${BIND_DIR}" >> ${ZSHARE}/zram-device-list
 		else
 			echo "No mount dir in ztab" >>${ZLOG}
 			return 1
@@ -97,24 +97,13 @@ createZdevice () {
 	echo "zram$RAM_DEV created comp_algorithm=$ALG mem_limit=$MEM_SIZE disksize=$DISK_SIZE" >>${ZLOG}
 }
 
-syncFromDisk () {
-	if cp -arvf ${ZDIR}${BIND_DIR} -T ${TARGET_DIR} >>${ZLOG} 2>&1 || return 1
-	then
-		echo "syncFromDisk ${ZDIR}$BIND_DIR to $TARGET_DIR complete" >>${ZLOG}
-	else
-		echo "Error syncFromDisk ${ZDIR}${BIND_DIR} to ${TARGET_DIR} failure" >>${ZLOG}
-		return 1
-	fi
-}
-
-syncToDisk () {
-	if cp -arvfu ${TARGET_DIR} -T ${ZDIR}${BIND_DIR} >>${ZLOG} 2>&1 || return 1
-	then
-		echo "syncToDisk ${TARGET_DIR} to ${ZDIR}${BIND_DIR} complete" >>${ZLOG}
-	else
-		echo "Error syncFromDisk ${TARGET_DIR} to ${ZDIR}${BIND_DIR} failure" >>${ZLOG}
-		return 1
-	fi			
+mergeOverlay () {
+	echo "overlay --lowerdir=$ZDIR$BIND_DIR --upperdir=$ZDIR$ZRAM_DEV/upper" >>${ZLOG}
+	cd /usr/local/lib/zram-config/
+	./overlay merge -l "${ZDIR}${BIND_DIR}" -u "${ZDIR}${ZRAM_DEV}/upper" >>${ZLOG} 2>&1 || return 1
+	sh *.sh  >>${ZLOG} 2>&1 || return 1
+	rm -v *.sh  >>${ZLOG} 2>&1 || return 1
+	
 }
 
 removeZlog () {
@@ -122,14 +111,22 @@ removeZlog () {
 	then
 		cp -arvf ${ZSHARE}/logrotate.conf.bak /etc/logrotate.conf >>${ZLOG} 2>&1 || return 1
 	fi
-	syncToDisk
+	echo "$ZRAM_DEV" >>${ZLOG}
+	#syncToDisk
 	DEV_NUM=$(echo ${ZRAM_DEV} | tr -dc '0-9')
 	if [ ! -z "$TARGET_DIR" ]
 	then
 		invoke-rc.d rsyslog stop >>${ZLOG} 2>&1 || return 1
 		umount --verbose ${TARGET_DIR}/ >>${ZLOG} 2>&1 || return 1
-		umount --verbose ${ZDIR}${TARGET_DIR}/ >>${ZLOG} 2>&1 || return 1
-		rm -rv ${ZDIR}${TARGET_DIR} >>${ZLOG} 2>&1 || return 1
+	else
+		return 1
+	fi
+	mergeOverlay >>${ZLOG} 2>&1 || return 1
+	if [ ! -z "$ZRAM_DEV" ]
+	then
+		#rm -rv ${TARGET_DIR} >>${ZLOG} 2>&1 || return 1
+		umount --verbose ${ZDIR}${ZRAM_DEV}/ >>${ZLOG} 2>&1 || return 1
+		rm -rv ${ZDIR}${ZRAM_DEV} >>${ZLOG} 2>&1 || return 1
 	else
 		return 1
 	fi
@@ -144,17 +141,25 @@ removeZlog () {
 	echo "$DEV_NUM" > /sys/class/zram-control/hot_remove
 	invoke-rc.d rsyslog restart >>${ZLOG} 2>&1 || return 1
 	journalctl --flush >>${ZLOG} 2>&1 || return 1
-	echo "$ZRAM_DEV removed" >>${ZLOG}
+	echo "/dev$ZRAM_DEV removed" >>${ZLOG}
 }
 
 removeZdir () {
-	syncToDisk
+	echo "$ZRAM_DEV" >>${ZLOG} 
+	#syncToDisk
 	DEV_NUM=$(echo "$ZRAM_DEV" | tr -dc '0-9')
 	if [ ! -z "$TARGET_DIR" ]
 	then
 		umount --verbose ${TARGET_DIR}/ >>${ZLOG} 2>&1 || return 1
-		umount --verbose ${ZDIR}${TARGET_DIR}/ >>${ZLOG} 2>&1 || return 1
-		rm -rv ${ZDIR}${TARGET_DIR} >>${ZLOG} 2>&1 || return 1
+	else
+		return 1
+	fi
+	mergeOverlay >>${ZLOG} 2>&1 || return 1
+	if [ ! -z "$ZRAM_DEV" ]
+	then
+		#rm -rv ${TARGET_DIR} >>${ZLOG} 2>&1 || return 1
+		umount --verbose ${ZDIR}${ZRAM_DEV}/ >>${ZLOG} 2>&1 || return 1
+		rm -rv ${ZDIR}${ZRAM_DEV} >>${ZLOG} 2>&1 || return 1
 	else
 		return 1
 	fi
@@ -166,18 +171,19 @@ removeZdir () {
 		return 1
 	fi
 	echo "$DEV_NUM" > /sys/class/zram-control/hot_remove
-	echo "$ZRAM_DEV removed" >>${ZLOG}  
+	echo "/dev$ZRAM_DEV removed" >>${ZLOG}  
 }
 
 removeZswap () {
 	DEV_NUM=$(echo "$ZRAM_DEV" | tr -dc '0-9')
-	swapoff $ZRAM_DEV >>${ZLOG} 2>&1 || return 1
+	swapoff /dev$ZRAM_DEV >>${ZLOG} 2>&1 || return 1
 	echo "$DEV_NUM" > /sys/class/zram-control/hot_remove
-	echo "$ZRAM_DEV removed" >>${ZLOG}
+	echo "/dev$ZRAM_DEV removed" >>${ZLOG}
 }
+
 ZSHARE=/usr/local/share/zram-config
 ZLOG=${ZSHARE}/log/zram-config.log
-ZDIR=/opt/zram-conf
+ZDIR=/opt/zram
 
 case "$1" in
 	start)

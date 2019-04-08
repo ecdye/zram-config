@@ -4,6 +4,11 @@ systemctl -q is-active zram-config  && { echo "ERROR: zram-config service is sti
 [ "$(id -u)" -eq 0 ] || { echo "You need to be ROOT (sudo can be used)"; exit 1; }
 [ -d /usr/local/bin/zram-config ] && { echo "zram-config is already installed, uninstall first"; exit 1; }
 
+git clone https://github.com/kmxz/overlayfs-tools
+cd overlayfs-tools
+make
+cd ..
+
 
 # zram-config install 
 install -m 755 zram-config /usr/local/bin/
@@ -13,6 +18,8 @@ mkdir -p /usr/local/share/zram-config
 mkdir -p /usr/local/share/zram-config/log
 install -m 644 uninstall.sh /usr/local/share/zram-config/uninstall.sh
 install -m 644 zram-config.logrotate /etc/logrotate.d/zram-config
+mkdir -p /usr/local/lib/zram-config/
+install -m 755 overlayfs-tools/overlay /usr/local/lib/zram-config/overlay
 systemctl enable zram-config
 
 echo "#####          Reboot to activate zram-config         #####"
