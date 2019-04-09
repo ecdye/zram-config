@@ -58,7 +58,7 @@ Stop the service `sudo service zram-config stop` edit /etc/ztab `sudo nano /etc/
 swap	lz4	250M		750M		75		0		80
 
 # dir	alg	mem_limit	disk_size	zram_dir	bind_dir
-dir	lz4	20M		60M		/var/backups	/opt/backups.bind
+dir	lz4	20M		60M		/home/pi/MagicMirror	/opt/magicmirror.bind
 
 # log	alg	mem_limit	disk_size	zram_dir	bind_dir	oldlog_dir
 log	lz4	20M		60M		/var/log	/opt/log.bind	/opt/oldlog
