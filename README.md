@@ -54,14 +54,14 @@ If you need multiple zram swaps or zram dirs just create another entry in /ect/z
 
 Stop the service `sudo service zram-config stop` edit /etc/ztab `sudo nano /etc/ztab` start the service `sudo service zram-config start`
 ```
-# swap	alg	mem_limit	disk_size	swap_priority	page-cluster	swappiness
-swap	lz4	250M		750M		75		0		80
+# swap  alg     mem_limit       disk_size       swap_priority   page-cluster    swappiness
+swap    lz4     400M            1200M           75              0               90
 
-# dir	alg	mem_limit	disk_size	zram_dir	bind_dir
-dir	lz4	20M		60M		/home/pi/MagicMirror	/opt/magicmirror.bind
+# dir   alg     mem_limit       disk_size       target_dir              bind_dir
+dir     lz4     50M             150M            /home/pi/MagicMirror    /magicmirror.bind
 
-# log	alg	mem_limit	disk_size	zram_dir	bind_dir	oldlog_dir
-log	lz4	20M		60M		/var/log	/opt/log.bind	/opt/oldlog
+# log   alg     mem_limit       disk_size       target_dir              bind_dir                oldlog_dir
+log     lz4     20M             60M             /var/log                /log.bind               /oldlog
 ```
 
 
