@@ -68,57 +68,75 @@ log	lz4	20M		60M		/var/log	/opt/log.bind	/opt/oldlog
 
 ### It is working?
 ```
-pi@raspberrypi:~/zramdrive $ zramctl
-NAME       ALGORITHM DISKSIZE  DATA  COMPR TOTAL STREAMS MOUNTPOINT
-/dev/zram0 lz4            15M    5M 348.4K  772K       1 /var/log
-/dev/zram1 lz4         650.2M    4K    64B    4K       1 [SWAP]
-/dev/zram2 lz4            60M  4.7M 295.5K  568K       1 /var/backups
-…
-sudo zram-config write
-…
-This will write out any updated files to persistant storage.
-Usefull for new app installs with new logs without need for start/stop or reboot.
-Can be used with a cron job for periodic backup of live logs.
-…
-sudo logrotate -vf /etc/logrotate.conf
-…
-Force new logrotate truncate logs and move oldlogs to oldlog_dir
-…
-pi@raspberrypi:~ $ cat /proc/mounts
-/dev/root / ext4 rw,noatime,data=ordered 0 0
-/dev/root /opt/backups.bind ext4 rw,noatime,data=ordered 0 0
-/dev/zram1 /var/backups ext4 rw,nosuid,nodev,noexec,relatime,data=ordered 0 0
-/dev/root /opt/log.bind ext4 rw,noatime,data=ordered 0 0
-/dev/zram2 /var/log ext4 rw,nosuid,nodev,noexec,relatime,data=ordered 0 0
-tmpfs /run/user/1000 tmpfs rw,nosuid,nodev,relatime,size=44384k,mode=700,uid=100                                       0,gid=1000 0 0
-…
-pi@raspberrypi:~ $ cat /proc/swaps
-Filename                                Type            Size    Used    Priority
-/dev/zram0                              partition       767996  0       75
-/var/swap                               file            102396  0       -2
-…
-pi@raspberrypi:~/zram-config $ cat /usr/local/share/zram-config/log/zram-config.log
-zram-config start 20190330_062747Z
-ztab create log lz4 20M 60M /var/log /opt/log.bind /opt/oldlog
-Warning: Stopping rsyslog.service, but it can still be activated by:
-  syslog.socket
-mount: /var/log bound on /opt/log.bind.
-mount: /opt/log.bind propagation flags changed.
-insmod /lib/modules/4.14.98+/kernel/mm/zsmalloc.ko
-insmod /lib/modules/4.14.98+/kernel/drivers/block/zram/zram.ko
-zram0 created comp_algorithm=lz4 mem_limit=20M disksize=60M
-mke2fs 1.43.4 (31-Jan-2017)
-fs_types for mke2fs.conf resolution: 'ext4', 'small'
-Discarding device blocks: done
-Filesystem label=
-…
-pi@raspberrypi:~/zram-config $ ls /opt/oldlog
-auth.log.1       debug.1           kern.log.1     term.log.1.gz
-auth.log.2.gz    dpkg.log.1        messages.1     user.log.1
-btmp.1           error.log.1       messages.2.gz  wtmp.1
-daemon.log.1     error.log.2.gz    syslog.1       zram-config.log.1
-daemon.log.2.gz  history.log.1.gz  syslog.2.gz
-…
+pi@raspberrypi:~ $ zramctl
+NAME       ALGORITHM DISKSIZE  DATA COMPR TOTAL STREAMS MOUNTPOINT
+/dev/zram0 lz4           1.2G    4K   76B    4K       4 [SWAP]
+/dev/zram1 lz4           150M 16.3M 25.1K  208K       4 /opt/zram/zram1
+/dev/zram2 lz4            60M  7.5M  1.2M  1.7M       4 /opt/zram/zram2
+```
+```
+pi@raspberrypi:~ $ df
+Filesystem     1K-blocks    Used Available Use% Mounted on
+/dev/root       14803620 2558152  11611220  19% /
+devtmpfs          470116       0    470116   0% /dev
+tmpfs             474724  223868    250856  48% /dev/shm
+tmpfs             474724   12284    462440   3% /run
+tmpfs               5120       4      5116   1% /run/lock
+tmpfs             474724       0    474724   0% /sys/fs/cgroup
+/dev/mmcblk0p1     44220   22390     21831  51% /boot
+/dev/zram1        132384     280    121352   1% /opt/zram/zram1
+overlay1          132384     280    121352   1% /home/pi/MagicMirror
+/dev/zram2         55408    3460     47648   7% /opt/zram/zram2
+overlay2           55408    3460     47648   7% /var/log
+tmpfs              94944       0     94944   0% /run/user/1000
+```
+```
+cat /etc/ztab
+# swap  alg     mem_limit       disk_size       swap_priority   page-cluster    swappiness
+swap    lz4     400M            1200M           75              0               90
+
+# dir   alg     mem_limit       disk_size       target_dir              bind_dir
+dir     lz4     50M             150M            /home/pi/MagicMirror    /magicmirror.bind
+
+# log   alg     mem_limit       disk_size       target_dir              bind_dir                oldlog_dir
+log     lz4     20M             60M             /var/log                /log.bind               /oldlog
+```
+```
+pi@raspberrypi:~ $ free -h
+              total        used        free      shared  buff/cache   available
+Mem:           927M        206M        184M        233M        535M        434M
+Swap:          1.3G          0B        1.3G
+```
+```
+pi@raspberrypi:~ $ swapon
+NAME       TYPE      SIZE USED PRIO
+/dev/zram0 partition 1.2G   0B   75
+/var/swap  file      100M   0B   -2
+```
+```
+pi@raspberrypi:/opt/zram $ ls
+log.bind  magicmirror.bind  oldlog  zram1  zram2
+```
+```
+pi@raspberrypi:/opt/zram $ top
+top - 23:18:21 up  1:28,  2 users,  load average: 0.31, 0.29, 0.29
+Tasks: 114 total,   1 running,  68 sleeping,   0 stopped,   0 zombie
+%Cpu(s):  1.9 us,  0.1 sy,  0.0 ni, 98.0 id,  0.0 wa,  0.0 hi,  0.0 si,  0.0 st
+KiB Mem :   949448 total,   153464 free,   223452 used,   572532 buff/cache
+KiB Swap:  1331192 total,  1331192 free,        0 used.   412052 avail Mem
+
+  PID USER      PR  NI    VIRT    RES    SHR S  %CPU %MEM     TIME+ COMMAND
+ 1215 pi        20   0  600844 325968 287276 S   5.3 34.3   8:09.51 chromium-browse
+ 2536 pi        20   0    8104   3204   2728 R   1.6  0.3   0:00.11 top
+  970 pi        20   0  775108 156128 112876 S   1.0 16.4  11:17.06 chromium-browse
+ 1611 pi        20   0   11656   3772   3056 S   0.3  0.4   0:00.30 sshd
+    1 root      20   0   27072   5964   4824 S   0.0  0.6   0:02.51 systemd
+    2 root      20   0       0      0      0 S   0.0  0.0   0:00.00 kthreadd
+    4 root       0 -20       0      0      0 I   0.0  0.0   0:00.00 kworker/0:0H
+    6 root       0 -20       0      0      0 I   0.0  0.0   0:00.00 mm_percpu_wq
+    7 root      20   0       0      0      0 S   0.0  0.0   0:00.24 ksoftirqd/0
+    8 root      20   0       0      0      0 I   0.0  0.0   0:00.87 rcu_sched
+    9 root      20   0       0      0      0 I   0.0  0.0   0:00.00 rcu_bh
 ```
 
 ### Performance
