@@ -173,5 +173,7 @@ Enter `git commit -m '<commit_message>'` at the command line to commit new files
 
 Enter `git push`  at the command line to copy your files from your local repository to remote.
 
+Please feel free to clone, copy and hack, post idea, issues, join and support a community.
+
 ### Reference
 https://www.kernel.org/doc/Documentation/blockdev/zram.txt
