@@ -1,7 +1,7 @@
 # zram-config
 Complete zram config utility for swap, directory &amp; log 
 Usefull for IoT / maker projects for reducing SD, Nand and Emmc block wear via log operations.
-Uses Zram to minimise precious memory footprint and extremely infrequent write outs and near ram speed working dirs.
+Uses Zram to minimise precious memory footprint and extremely infrequent write outs and near ram speed working dirs with memory compression ratios depending on compression alg chosen.
 
 Uses a ztab table in /etc/ztab where any combination and number of zram drives can be created.
 This branch uses a OverlayFS mount with zram so that syncFromDisk on start is not needed.
