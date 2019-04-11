@@ -196,6 +196,7 @@ removeZswap () {
 
 enableZephemeral () {
 	if [ "$ZEPHEMERAL" = false ] ; then
+		mkinitramfs -o /boot/initrd
 		sudo sed -i '/root=PARTUUID/ s|$| init=/bin/ro-root.sh|' /boot/cmdline.txt
 		echo "initramfs initrd followkernel" >> /boot/config.txt
 		echo "ramfsfile=initrd" >> /boot/config.txt
