@@ -67,7 +67,7 @@ log     lz4     20M             60M             /var/log                /log.bin
 Zram-config also allows a 'kiosk mode' where `sudo zram-config enable-ephemeral` on reboot will load the whole root into a ro OverlayFS with zram writeable upper. 
 `sudo zram-config disable-ephemeral` and reboot to return to a normal system.
 You may need to reboot after the rpi-update and then mkinitramfs -o /boot/initrd as a newer kernel maybe updated.
-Check the 'Without NFS' section of https://blockdev.io/read-only-rpi/
+Check the 'Without NFS' section of https://blockdev.io/read-only-rpi/ as any problems you may have to remove the SD card and edit /boot/cmdline.txt removing the `init=/bin/ro-root.sh` entry.
 
 
 ### It is working?
