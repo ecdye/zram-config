@@ -10,7 +10,7 @@ cd overlayfs-tools
 make
 cd ..
 
-BRANCH=next rpi-update
+#BRANCH=next rpi-update
 
 # zram-config install 
 install -m 755 zram-config /usr/local/bin/
