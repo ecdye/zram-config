@@ -65,6 +65,7 @@ log     lz4     20M             60M             /var/log                /log.bin
 ```
 Zram-config also allows a 'kiosk mode' where `sudo zram-config enable-ephemeral` on reboot will load the whole root into zram. There is no sync and zdir/zlog entries will be ignored as already included.
 `sudo zram-config disable-ephemeral` and reboot to return to a normal system.
+https://blockdev.io/read-only-rpi/ and thanks to the original sources for another great script.
 
 
 ### It is working?
