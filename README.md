@@ -64,7 +64,7 @@ dir     lz4     50M             150M            /home/pi/MagicMirror    /magicmi
 # log   alg     mem_limit       disk_size       target_dir              bind_dir                oldlog_dir
 log     lz4     20M             60M             /var/log                /log.bind               /oldlog
 ```
-Zram-config also allows a 'kiosk mode' where `sudo zram-config enable-ephemeral` on reboot will load the whole root into zram. 
+Zram-config also allows a 'kiosk mode' where `sudo zram-config enable-ephemeral` on reboot will load the whole root into a ro OverlayFS with zram writeable upper. 
 `sudo zram-config disable-ephemeral` and reboot to return to a normal system.
 
 
