@@ -194,9 +194,42 @@ removeZswap () {
 	echo "/dev$ZRAM_DEV removed" >>${ZLOG}
 }
 
+enableZephemeral () {
+	if [ "$ZEPHEMERAL" = false ] ; then
+		sudo sed -i '/root=PARTUUID/ s|$| init=/bin/ro-root.sh|' /boot/cmdline.txt
+		echo "initramfs initrd followkernel" >> /boot/config.txt
+		echo "ramfsfile=initrd" >> /boot/config.txt
+		echo "ramfsaddr=-1" >> /boot/config.txt
+		cp $ZSHARE/ro-root.sh /bin/ro-root.sh
+		chown root:root /bin/ro-root.sh
+		chmod a+x /bin/ro-root.sh
+		echo "Zephemeral enabled, after reboot all writes & changes will not be persistent"
+	else
+		echo "Zephemeral is already enabled"
+	fi
+}
+
+disableZephemeral () {
+	if [ "$ZEPHEMERAL" = true ] ; then
+		sed -i 's| init=/bin/ro-root.sh||g'  /boot/cmdline.txt
+		sed -i '/initramfs initrd followkernel/d' /boot/config.txt
+		sed -i '/ramfsfile=initrd/d' /boot/config.txt
+		sed -i '/ramfsaddr=-1/d' /boot/config.txt
+		rm /bin/ro-root.sh
+		echo "Zephemeral enabled, after reboot system will be write and change enabled"
+	else
+		echo "Zephemeral is already disabled"
+	fi
+}
+
 ZSHARE=/usr/local/share/zram-config
 ZLOG=${ZSHARE}/log/zram-config.log
 ZDIR=/opt/zram
+if grep -q init=/bin/ro-root.sh /boot/cmdline.txt;then
+ZEPHEMERAL=true
+else
+ZEPHEMERAL=false
+fi
 
 case "$1" in
 	start)
@@ -234,13 +267,17 @@ case "$1" in
 						dir)
 							TARGET_DIR=$5
 							BIND_DIR=$6
-							createZdir
+							if [ "$ZEPHEMERAL" = false ] ; then
+								createZdir
+							fi
 							;;
 						log)
 							TARGET_DIR=$5
 							BIND_DIR=$6
 							OLDLOG_DIR=$7
-							createZlog
+							if [ "$ZEPHEMERAL" = false ] ; then
+								createZlog
+							fi
 							;;
 					esac
 					;;
@@ -281,14 +318,18 @@ case "$1" in
 							ZRAM_DEV=$2
 							TARGET_DIR=$3
 							BIND_DIR=$4
-							removeZdir
+							if [ "$ZEPHEMERAL" = false ] ; then
+								removeZdir
+							fi
 							;;
 						log)
 							ZTYPE=$1
 							ZRAM_DEV=$2
 							TARGET_DIR=$3
 							BIND_DIR=$4
-							removeZlog
+							if [ "$ZEPHEMERAL" = false ] ; then
+								removeZlog
+							fi
 							;;
 					esac
 					;;
@@ -296,8 +337,17 @@ case "$1" in
 		done < "$file"
 		rm -v ${ZSHARE}/zram-device-list.rev >>${ZLOG}
 		;;
+		
+	enable-ephemeral)
+		enableZephemeral
+		;;
+		
+	disable-ephemeral)
+		disableZephemeral
+		;;
+		
 	*)
-		echo "Usage: zram-config {start|stop}" >&2
+		echo "Usage: zram-config {start|stop|enable-ephemeral|disable-ephemeral}" >&2
 		exit 1
 		;;
 esac
