@@ -217,7 +217,7 @@ disableZephemeral () {
 		sed -i '/ramfsfile=initrd/d' /boot/config.txt
 		sed -i '/ramfsaddr=-1/d' /boot/config.txt
 		rm /bin/ro-root.sh
-		echo "Zephemeral enabled, after reboot system will be write and change enabled"
+		echo "Zephemeral disabled, after reboot system will be write and change enabled"
 	else
 		echo "Zephemeral is already disabled"
 	fi
