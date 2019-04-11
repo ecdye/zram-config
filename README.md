@@ -10,6 +10,8 @@ lower mount in the OverlayFS.
 https://github.com/kmxz/overlayfs-tools should be a git clone operation and forgot to add to .gitignore, but
 many thanks to kmxz for the overlay merge tool.
 
+Zram-config also allows a 'kiosk mode' where sudo zram-config enable-ephemeral on reboot will load the whole root into zram. There is no sync and zdir/zlog entries will be ignored as already included. sudo zram-config disable-ephemeral and reboot to return to a normal system. https://blockdev.io/read-only-rpi/ and thanks to the original sources for another great script.
+
 
 _____
 ### Menu
@@ -63,9 +65,8 @@ dir     lz4     50M             150M            /home/pi/MagicMirror    /magicmi
 # log   alg     mem_limit       disk_size       target_dir              bind_dir                oldlog_dir
 log     lz4     20M             60M             /var/log                /log.bind               /oldlog
 ```
-Zram-config also allows a 'kiosk mode' where `sudo zram-config enable-ephemeral` on reboot will load the whole root into zram. There is no sync and zdir/zlog entries will be ignored as already included.
+Zram-config also allows a 'kiosk mode' where `sudo zram-config enable-ephemeral` on reboot will load the whole root into zram. 
 `sudo zram-config disable-ephemeral` and reboot to return to a normal system.
-https://blockdev.io/read-only-rpi/ and thanks to the original sources for another great script.
 
 
 ### It is working?
