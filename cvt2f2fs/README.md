@@ -12,14 +12,21 @@ Script you have to hack slightly as it runs rpi-update and pulls in the kernel u
 Buster is only a couple of month away but the biggest problem is that if the kernel version and f2fs version beome out of sync you will get errors.
 You can log in via a normal sudo just do things in order and run
 sudo cvt2f2fs
+
 after reboot
+
 sudo cvt2f2fs --phase2
+
 after reboot
+
 sudo cvt2f2fs --phase3
+
 after reboot
+
 sudo cvt2f2fs --phase4
 
 So then you need to get f2fs-tools for buster as the script will run rpi-update.
+
 sudo vi /etc/apt/sources.list.d/10-buster.list
 
 deb http://mirrordirector.raspbian.org/raspbian/ buster main contrib non-free rpi
@@ -37,17 +44,22 @@ Pin-Priority: 750
 sudo apt-get update
 
 Now we can grab things from buster when we want
+
 sudo apt-get install -t buster f2fs-tools
 
 You need to do the above as you will notice in syslog `fsck.f2fs: invalid option -- 'y'` 
+
 Systemd seems to be trying to run with an invalid option
+
 The above fixes that and fsck.f2fs will run and report everything is fine.
+
 Thing is it will do that on every boot as the system thinks there is something wrong with the superblock.
 
 I thought OK dunno why this script is doing an rpi-update anyway and I know there where a lot of f2fs commits in 4.18 but lets hack the
-not to do the rpi-update bit.
-Strangely you get the same syslog messages invalid option -- 'y'` as the initramfs fsck.f2fs fails as it would seem the tools & kernel
-in stretch are not in version sync.
+cript not to do the rpi-update bit.
+Strangely you get the same syslog messages `invalid option -- 'y'` as the initramfs fsck.f2fs fails as it would seem the tools & kernel
+in Raspbian Stretch are not in version sync.
+
 I presume that we have had kernel updates but not f2fs-tools updates.
 
 Haven't done much more as f2fs was like I say an after thought that what is a huge over-provision of 10-20% is only approx 1-2gb
