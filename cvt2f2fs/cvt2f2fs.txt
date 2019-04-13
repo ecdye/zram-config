@@ -1,0 +1,16 @@
+The cvt2f2fs script will convert a Raspian ext4 filesystem on an SD card to F2FS.
+
+!!! MAKE A BACKUP COPY OF THE SD CARD BEFORE ATTEMPTING THIS PROCEDURE !!!
+
+1. Disconnect all USB devices from the Raspberry Pi.
+
+2. Connect a USB flash drive with sufficient capacity to hold the SD card contents.
+   !!! ALL EXISTING DATA ON THE USB FLASH DRIVE WILL BE DESTROYED !!!
+
+3. Log in as root
+
+4. Run ./cvt2f2fs
+
+5. Log in as root following the reboots which occur at the completion of Phases 1, 2, and 3
+
+6. When Phase 4 completes, the SD card should be using an F2FS filesystem instead of ext4
