@@ -73,6 +73,8 @@ f2fs has a optimised discard policy built in by default, but every example i see
 I keep thinking if it is inherant to the file system surely we don't use the discard method that say ext4 would use.
 But it is confusing why with f2fs its specified at mkfs.f2fs -t 1 /dev/mmcblk0p2 and is the default.
 Dunno it doesn't make sense to need mount or fstab discard entries when its already set on creation?
+Or discard on mount or fstab will either use standard discard methods or if set via creation it will use the f2fs discard policy but you can turn that off by removing the mount or fstab discard option?
 
 Anyone who uses f2fs please maybe explain as I will be adopting prob will wait for buster this summer but thought I would post and ask.
+It bugging me that there doesn't seem to be a clear rationale for this.
 
