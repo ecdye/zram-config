@@ -56,7 +56,7 @@ The above fixes that and fsck.f2fs will run and report everything is fine.
 Thing is it will do that on every boot as the system thinks there is something wrong with the superblock.
 
 I thought OK dunno why this script is doing an rpi-update anyway and I know there where a lot of f2fs commits in 4.18 but lets hack the
-cript not to do the rpi-update bit.
+script not to do the rpi-update bit.
 Strangely you get the same syslog messages `invalid option -- 'y'` as the initramfs fsck.f2fs fails as it would seem the tools & kernel
 in Raspbian Stretch are not in version sync.
 
