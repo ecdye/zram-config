@@ -7,7 +7,7 @@ then
 	rm /etc/systemd/system/zram-config.service
 	rm /usr/local/bin/zram-config
 	rm /etc/ztab
-	rm /etc/logrotate.d/zram-config
+	rm /etc/logrotate.d/00_zram-config
 
 	echo "zram-config is uninstalled, removing the uninstaller in progress"
 	rm -rf /usr/local/share/zram-config
