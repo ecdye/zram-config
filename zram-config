@@ -61,10 +61,9 @@ createZlog () {
 	journalctl --flush >>${ZLOG} 2>&1 || return 1
 	if [ ! -z "$OLDLOG_DIR" ]
 	then
-		cp -arvf /etc/logrotate.conf ${ZSHARE}/logrotate.conf.bak >>${ZLOG} 2>&1 || return 1
-		sed -i "/^weekly.*/i olddir ${ZDIR}${OLDLOG_DIR}" /etc/logrotate.conf >>${ZLOG} 2>&1 || return 1
-		sed -i "/^weekly.*/i createolddir 755 root root" /etc/logrotate.conf >>${ZLOG} 2>&1 || return 1
-		sed -i "/^weekly.*/i renamecopy" /etc/logrotate.conf >>${ZLOG} 2>&1 || return 1
+		echo "olddir "${ZDIR}${OLDLOG_DIR} > /etc/logrotate.d/00_oldlog
+		echo "createolddir 755 root root"  >> /etc/logrotate.d/00_oldlog
+		echo "renamecopy" >> /etc/logrotate.d/00_oldlog
 	else
 		echo "createZlog no oldlog dir in ztab" >>${ZLOG}
 	fi
@@ -112,7 +111,7 @@ mergeOverlay () {
 removeZlog () {
 	if [ ! -z "$OLDLOG_DIR" ]
 	then
-		cp -arvf ${ZSHARE}/logrotate.conf.bak /etc/logrotate.conf >>${ZLOG} 2>&1 || return 1
+		rm /etc/logrotate.d/00_oldlog
 	fi
 	echo "$ZRAM_DEV" >>${ZLOG}
 	#syncToDisk
