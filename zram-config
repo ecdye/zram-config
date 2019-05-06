@@ -61,7 +61,7 @@ createZlog () {
 	journalctl --flush >>${ZLOG} 2>&1 || return 1
 	if [ ! -z "$OLDLOG_DIR" ]
 	then
-		echo "olddir "${ZDIR}${OLDLOG_DIR} > /etc/logrotate.d/00_oldlog
+		echo "olddir "${OLDLOG_DIR} > /etc/logrotate.d/00_oldlog
 		echo "createolddir 755 root root"  >> /etc/logrotate.d/00_oldlog
 		echo "renamecopy" >> /etc/logrotate.d/00_oldlog
 	else
