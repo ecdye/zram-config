@@ -1,7 +1,3 @@
-olddir /opt/zram/log.old
-createolddir 755 root root
-renamecopy
-
 /usr/local/share/zram-config/log/zram-config.log
 {
 	rotate 4
