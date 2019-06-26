@@ -1,228 +1,236 @@
-#! /bin/bash
+#! /bin/bash -x
 
 createZswap () {
-	createZdevice || return 1
-	mkswap --label zram-config$RAM_DEV /dev/zram$RAM_DEV >>${ZLOG} 2>&1 || return 1
-	if [ ! -z "$PRIORITY" ]
-	then
-		swapon -v -p $PRIORITY /dev/zram$RAM_DEV >>${ZLOG} 2>&1 || return 1
-	else
-		echo "zram$RAM_DEV no swap_priority" >>${ZLOG}
-		return 1
-	fi	
-	if [ ! -z "$PAGE_CLUSTER" ]
-	then
-		sysctl vm.page-cluster=$PAGE_CLUSTER >>${ZLOG} 2>&1 || return 1
-	else
-		echo "zram$RAM_DEV no page_cluster" >>${ZLOG}
-	fi
-	if [ ! -z "$SWAPPINESS" ]
-	then
-		sysctl vm.swappiness=$SWAPPINESS >>${ZLOG} 2>&1 || return 1
-	else
-		echo "zram$RAM_DEV no swappiness" >>${ZLOG}
-	fi
-	echo "swap		/zram${RAM_DEV}		zram-config${RAM_DEV}" >> ${ZSHARE}/zram-device-list
+        createZdevice || return 1
+        mkswap --label zram-config$RAM_DEV /dev/zram$RAM_DEV >>${ZLOG} 2>&1 || return 1
+        if [ ! -z "$PRIORITY" ]
+        then
+                swapon -v -p $PRIORITY /dev/zram$RAM_DEV >>${ZLOG} 2>&1 || return 1
+        else
+                echo "zram$RAM_DEV no swap_priority" >>${ZLOG}
+                return 1
+        fi
+        if [ ! -z "$PAGE_CLUSTER" ]
+        then
+                sysctl vm.page-cluster=$PAGE_CLUSTER >>${ZLOG} 2>&1 || return 1
+        else
+                echo "zram$RAM_DEV no page_cluster" >>${ZLOG}
+        fi
+        if [ ! -z "$SWAPPINESS" ]
+        then
+                sysctl vm.swappiness=$SWAPPINESS >>${ZLOG} 2>&1 || return 1
+        else
+                echo "zram$RAM_DEV no swappiness" >>${ZLOG}
+        fi
+        echo "swap              /zram${RAM_DEV}         zram-config${RAM_DEV}" >> ${ZSHARE}/zram-device-list
 }
-	
-createZdir () {
-	if [ ! -z "$BIND_DIR" ]
-	then
-		mkdir -p ${ZDIR}${BIND_DIR} >>${ZLOG} 2>&1 || return 1
 
-		if [ ! -z ${TARGET_DIR} ]
-		then
-			mount --verbose --bind ${TARGET_DIR}/ ${ZDIR}${BIND_DIR}/ >>${ZLOG} 2>&1 || return 1
-			mount --verbose --make-private ${ZDIR}${BIND_DIR}/ >>${ZLOG} 2>&1 || return 1
-			dirMountOpt=$(awk -v a=${ZDIR}${BIND_DIR} '$2 == a {print $4}' /proc/mounts)
-			dirFsType=$(awk -v a=${ZDIR}${BIND_DIR} '$2 == a {print $3}' /proc/mounts)
-			createZdevice || return 1
-			mke2fs -v -t ${dirFsType} /dev/zram${RAM_DEV} >>${ZLOG} 2>&1 || return 1
-			mkdir -p ${ZDIR}/zram${RAM_DEV} >>${ZLOG} 2>&1 || return 1
-			echo ${dirMountOpt}  >>${ZLOG}
-			mount --verbose --types ${dirFsType} -o ${dirMountOpt} /dev/zram${RAM_DEV} ${ZDIR}/zram${RAM_DEV}/ >>${ZLOG} 2>&1 || return 1
-			mkdir -p ${ZDIR}/zram${RAM_DEV}/upper ${ZDIR}/zram${RAM_DEV}/workdir ${TARGET_DIR} >>${ZLOG} 2>&1 || return 1
-			mount --verbose --types overlay -o lowerdir=${ZDIR}${BIND_DIR},upperdir=${ZDIR}/zram${RAM_DEV}/upper,workdir=${ZDIR}/zram${RAM_DEV}/workdir overlay${RAM_DEV} ${TARGET_DIR} >>${ZLOG} 2>&1 || return 1
-			echo "${ZTYPE}		/zram${RAM_DEV}		${TARGET_DIR}		${BIND_DIR}" >> ${ZSHARE}/zram-device-list
-		else
-			echo "No mount dir in ztab" >>${ZLOG}
-			return 1
-		fi
-	else
-		echo "No bind dir in ztab" >>${ZLOG}
-		return 1
-	fi
+createZdir () {
+        if [ ! -z "$BIND_DIR" ]
+        then
+                mkdir -p ${ZDIR}${BIND_DIR} >>${ZLOG} 2>&1 || return 1
+
+                if [ ! -z ${TARGET_DIR} ]
+                then
+                        mount --verbose --bind ${TARGET_DIR}/ ${ZDIR}${BIND_DIR}/ >>${ZLOG} 2>&1 || return 1
+                        mount --verbose --make-private ${ZDIR}${BIND_DIR}/ >>${ZLOG} 2>&1 || return 1
+                        dirMountOpt=$(awk -v a=${ZDIR}${BIND_DIR} '$2 == a {print $4}' /proc/mounts)
+                        dirFsType=$(awk -v a=${ZDIR}${BIND_DIR} '$2 == a {print $3}' /proc/mounts)
+                        createZdevice || return 1
+                        mke2fs -v -t ${dirFsType} /dev/zram${RAM_DEV} >>${ZLOG} 2>&1 || return 1
+                        mkdir -p ${ZDIR}/zram${RAM_DEV} >>${ZLOG} 2>&1 || return 1
+                        echo ${dirMountOpt}  >>${ZLOG}
+                        mount --verbose --types ${dirFsType} -o ${dirMountOpt} /dev/zram${RAM_DEV} ${ZDIR}/zram${RAM_DEV}/ >>${ZLOG} 2>&1 || return 1
+                        mkdir -p ${ZDIR}/zram${RAM_DEV}/upper ${ZDIR}/zram${RAM_DEV}/workdir ${TARGET_DIR} >>${ZLOG} 2>&1 || return 1
+                        mount --verbose --types overlay -o lowerdir=${ZDIR}${BIND_DIR},upperdir=${ZDIR}/zram${RAM_DEV}/upper,workdir=${ZDIR}/zram${RAM_DEV}/workdir overlay${RAM_DEV} ${TARGET_DIR} >>${ZLOG} 2>&1 || return 1
+                        echo "${ZTYPE}          /zram${RAM_DEV}         ${TARGET_DIR}           ${BIND_DIR}" >> ${ZSHARE}/zram-device-list
+                else
+                        echo "No mount dir in ztab" >>${ZLOG}
+                        return 1
+                fi
+        else
+                echo "No bind dir in ztab" >>${ZLOG}
+                return 1
+        fi
 }
-	
+
 createZlog () {
-	invoke-rc.d rsyslog stop >>${ZLOG} 2>&1 || return 1
-	createZdir || return 1
-	invoke-rc.d rsyslog restart >>${ZLOG} 2>&1 || return 1
-	journalctl --flush >>${ZLOG} 2>&1 || return 1
-	if [ ! -z "$OLDLOG_DIR" ]
-	then
-		echo "olddir "${OLDLOG_DIR} > /etc/logrotate.d/00_oldlog
-		echo "createolddir 755 root root"  >> /etc/logrotate.d/00_oldlog
-		echo "renamecopy" >> /etc/logrotate.d/00_oldlog
-	else
-		echo "createZlog no oldlog dir in ztab" >>${ZLOG}
-	fi
+        invoke-rc.d rsyslog stop >>${ZLOG} 2>&1 || return 1
+        createZdir || return 1
+        invoke-rc.d rsyslog restart >>${ZLOG} 2>&1 || return 1
+        journalctl --flush >>${ZLOG} 2>&1 || return 1
+        if [ ! -z "$OLDLOG_DIR" ]
+        then
+                echo "olddir "${OLDLOG_DIR} > /etc/logrotate.d/00_oldlog
+                echo "createolddir 755 root root"  >> /etc/logrotate.d/00_oldlog
+                echo "renamecopy" >> /etc/logrotate.d/00_oldlog
+        else
+                echo "createZlog no oldlog dir in ztab" >>${ZLOG}
+        fi
 }
-	
+
 createZdevice () {
-	# Check Zram Class created
-	if [ ! -d "/sys/class/zram-control" ]; then
+        # Check Zram Class created
+        if [ ! -d "/sys/class/zram-control" ]; then
         modprobe --verbose zram >>${ZLOG} 2>&1 || return 1
         RAM_DEV='0'
-	else
+        else
         RAM_DEV=$(cat /sys/class/zram-control/hot_add)
-	fi
-	if [ ! -z "$ALG" ]
-	then
-		echo "$ALG" > /sys/block/zram$RAM_DEV/comp_algorithm
-	else
-		echo "zram$RAM_DEV no comp_algorithm" >>${ZLOG}
-	fi
-	if [ ! -z "$MEM_SIZE" ]
-	then
-		echo "$MEM_SIZE" > /sys/block/zram$RAM_DEV/mem_limit
-	else
-		echo "zram$RAM_DEV no mem_limit" >>${ZLOG}
-	fi
-	if [ ! -z "$DISK_SIZE" ]
-	then
-		echo "$DISK_SIZE" > /sys/block/zram$RAM_DEV/disksize
-	else
-		echo "zram$RAM_DEV no disksize" >>${ZLOG}
-		return 1
-	fi
-	echo "zram$RAM_DEV created comp_algorithm=$ALG mem_limit=$MEM_SIZE disksize=$DISK_SIZE" >>${ZLOG}
+        fi
+        if [ ! -z "$ALG" ]
+        then
+                echo "$ALG" > /sys/block/zram$RAM_DEV/comp_algorithm
+        else
+                echo "zram$RAM_DEV no comp_algorithm" >>${ZLOG}
+        fi
+        if [ ! -z "$MEM_SIZE" ]
+        then
+                echo "$MEM_SIZE" > /sys/block/zram$RAM_DEV/mem_limit
+        else
+                echo "zram$RAM_DEV no mem_limit" >>${ZLOG}
+        fi
+        if [ ! -z "$DISK_SIZE" ]
+        then
+                echo "$DISK_SIZE" > /sys/block/zram$RAM_DEV/disksize
+        else
+                echo "zram$RAM_DEV no disksize" >>${ZLOG}
+                return 1
+        fi
+        echo "zram$RAM_DEV created comp_algorithm=$ALG mem_limit=$MEM_SIZE disksize=$DISK_SIZE" >>${ZLOG}
 }
 
 mergeOverlay () {
-	echo "overlay --lowerdir=$ZDIR$BIND_DIR --upperdir=$ZDIR$ZRAM_DEV/upper" >>${ZLOG}
-	cd /usr/local/lib/zram-config/
-	./overlay merge -l "${ZDIR}${BIND_DIR}" -u "${ZDIR}${ZRAM_DEV}/upper" >>${ZLOG} 2>&1 || return 1
-	sh -x *.sh  >>${ZLOG} 2>&1 || return 1
-	rm -v *.sh  >>${ZLOG} 2>&1 || return 1
-	
+        echo "overlay --lowerdir=$ZDIR$BIND_DIR --upperdir=$ZDIR$ZRAM_DEV/upper" >>${ZLOG}
+        cd /usr/local/lib/zram-config/
+        echo y | ./overlay merge -l "${ZDIR}${BIND_DIR}" -u "${ZDIR}${ZRAM_DEV}/upper" >>${ZLOG} 2>&1 || return 1
+        sh -x *.sh  >>${ZLOG} 2>&1 || return 1
+        rm -v *.sh  >>${ZLOG} 2>&1 || return 1
+
+}
+
+syncOverlay () {
+        echo "overlay --lowerdir=$ZDIR$BIND_DIR --upperdir=$ZDIR$ZRAM_DEV/upper" >>${ZLOG}
+        cd /usr/local/lib/zram-config/
+        echo y | ./overlay diff -l "${ZDIR}${BIND_DIR}" -u "${ZDIR}${ZRAM_DEV}/upper" >>${ZLOG} 2>&1 || return 1
+        ls -l *.sh
+        cat *.sh
+        sh -x *.sh  >>${ZLOG} 2>&1 || return 1
+        rm -v *.sh  >>${ZLOG} 2>&1 || return 1
 }
 
 removeZlog () {
-	if [ ! -z "$OLDLOG_DIR" ]
-	then
-		rm /etc/logrotate.d/00_oldlog
-	fi
-	echo "$ZRAM_DEV" >>${ZLOG}
-	#syncToDisk
-	DEV_NUM=$(echo ${ZRAM_DEV} | tr -dc '0-9')
-	if [ ! -z "$TARGET_DIR" ]
-	then
-		invoke-rc.d rsyslog stop >>${ZLOG} 2>&1 || return 1
-		if umount --verbose ${TARGET_DIR}/
-		then
-			echo "umount ${TARGET_DIR}/" >>${ZLOG}
-		else
-		sleep .1
-			invoke-rc.d rsyslog stop
-			umount --verbose -l ${TARGET_DIR}/ >>${ZLOG} 2>&1 || return 1
-		fi
-	else
-		return 1
-	fi
-	mergeOverlay >>${ZLOG} 2>&1 || return 1
-	if [ ! -z "$ZRAM_DEV" ]
-	then
-		#rm -rv ${TARGET_DIR} >>${ZLOG} 2>&1 || return 1
-		umount --verbose ${ZDIR}${ZRAM_DEV}/ >>${ZLOG} 2>&1 || return 1
-		rm -rv ${ZDIR}${ZRAM_DEV} >>${ZLOG} 2>&1 || return 1
-	else
-		return 1
-	fi
-	if [ ! -z "$BIND_DIR" ]
-	then
-		umount --verbose ${ZDIR}${BIND_DIR}/ >>${ZLOG} 2>&1 || return 1
-		rm -rv ${ZDIR}${BIND_DIR} >>${ZLOG} 2>&1 || return 1
-	else
-		return 1
-	fi
-	invoke-rc.d rsyslog stop >>${ZLOG} 2>&1 || return 1
-	echo "$DEV_NUM" > /sys/class/zram-control/hot_remove
-	invoke-rc.d rsyslog restart >>${ZLOG} 2>&1 || return 1
-	journalctl --flush >>${ZLOG} 2>&1 || return 1
-	echo "/dev$ZRAM_DEV removed" >>${ZLOG}
+        if [ ! -z "$OLDLOG_DIR" ]
+        then
+                rm /etc/logrotate.d/00_oldlog
+        fi
+        echo "$ZRAM_DEV" >>${ZLOG}
+        DEV_NUM=$(echo ${ZRAM_DEV} | tr -dc '0-9')
+        if [ ! -z "$TARGET_DIR" ]
+        then
+                invoke-rc.d rsyslog stop >>${ZLOG} 2>&1 || return 1
+                if umount --verbose ${TARGET_DIR}/
+                then
+                        echo "umount ${TARGET_DIR}/" >>${ZLOG}
+                else
+                sleep .1
+                        invoke-rc.d rsyslog stop
+                        umount --verbose -l ${TARGET_DIR}/ >>${ZLOG} 2>&1 || return 1
+                fi
+        else
+                return 1
+        fi
+        mergeOverlay >>${ZLOG} 2>&1 || return 1
+        if [ ! -z "$ZRAM_DEV" ]
+        then
+                #rm -rv ${TARGET_DIR} >>${ZLOG} 2>&1 || return 1
+                umount --verbose ${ZDIR}${ZRAM_DEV}/ >>${ZLOG} 2>&1 || return 1
+                rm -rv ${ZDIR}${ZRAM_DEV} >>${ZLOG} 2>&1 || return 1
+        else
+                return 1
+        fi
+        if [ ! -z "$BIND_DIR" ]
+        then
+                umount --verbose ${ZDIR}${BIND_DIR}/ >>${ZLOG} 2>&1 || return 1
+                rm -rv ${ZDIR}${BIND_DIR} >>${ZLOG} 2>&1 || return 1
+        else
+                return 1
+        fi
+        invoke-rc.d rsyslog stop >>${ZLOG} 2>&1 || return 1
+        echo "$DEV_NUM" > /sys/class/zram-control/hot_remove
+        invoke-rc.d rsyslog restart >>${ZLOG} 2>&1 || return 1
+        journalctl --flush >>${ZLOG} 2>&1 || return 1
+        echo "/dev$ZRAM_DEV removed" >>${ZLOG}
 }
 
 removeZdir () {
-	echo "$ZRAM_DEV" >>${ZLOG} 
-	#syncToDisk
-	DEV_NUM=$(echo "$ZRAM_DEV" | tr -dc '0-9')
-	if [ ! -z "$TARGET_DIR" ]
-	then
-		if umount --verbose ${TARGET_DIR}/
-		then
-			echo "umount ${TARGET_DIR}/" >>${ZLOG}
-		else
-			sleep .1
-			umount --verbose -l ${TARGET_DIR}/ >>${ZLOG} 2>&1 || return 1
-		fi
-	else
-		return 1
-	fi
-	mergeOverlay >>${ZLOG} 2>&1 || return 1
-	if [ ! -z "$ZRAM_DEV" ]
-	then
-		#rm -rv ${TARGET_DIR} >>${ZLOG} 2>&1 || return 1
-		umount --verbose ${ZDIR}${ZRAM_DEV}/ >>${ZLOG} 2>&1 || return 1
-		rm -rv ${ZDIR}${ZRAM_DEV} >>${ZLOG} 2>&1 || return 1
-	else
-		return 1
-	fi
-	if [ ! -z "$BIND_DIR" ]
-	then
-		umount --verbose ${ZDIR}${BIND_DIR}/ >>${ZLOG} 2>&1 || return 1
-		rm -rv ${ZDIR}${BIND_DIR} >>${ZLOG} 2>&1 || return 1
-	else
-		return 1
-	fi
-	echo "$DEV_NUM" > /sys/class/zram-control/hot_remove
-	echo "/dev$ZRAM_DEV removed" >>${ZLOG}  
+        echo "$ZRAM_DEV" >>${ZLOG}
+        DEV_NUM=$(echo "$ZRAM_DEV" | tr -dc '0-9')
+        if [ ! -z "$TARGET_DIR" ]
+        then
+                if umount --verbose ${TARGET_DIR}/
+                then
+                        echo "umount ${TARGET_DIR}/" >>${ZLOG}
+                else
+                        sleep .1
+                        umount --verbose -l ${TARGET_DIR}/ >>${ZLOG} 2>&1 || return 1
+                fi
+        else
+                return 1
+        fi
+        mergeOverlay >>${ZLOG} 2>&1 || return 1
+        if [ ! -z "$ZRAM_DEV" ]
+        then
+                #rm -rv ${TARGET_DIR} >>${ZLOG} 2>&1 || return 1
+                umount --verbose ${ZDIR}${ZRAM_DEV}/ >>${ZLOG} 2>&1 || return 1
+                rm -rv ${ZDIR}${ZRAM_DEV} >>${ZLOG} 2>&1 || return 1
+        else
+                return 1
+        fi
+        if [ ! -z "$BIND_DIR" ]
+        then
+                umount --verbose ${ZDIR}${BIND_DIR}/ >>${ZLOG} 2>&1 || return 1
+                rm -rv ${ZDIR}${BIND_DIR} >>${ZLOG} 2>&1 || return 1
+        else
+                return 1
+        fi
+        echo "$DEV_NUM" > /sys/class/zram-control/hot_remove
+        echo "/dev$ZRAM_DEV removed" >>${ZLOG}
 }
 
 removeZswap () {
-	DEV_NUM=$(echo "$ZRAM_DEV" | tr -dc '0-9')
-	swapoff /dev$ZRAM_DEV >>${ZLOG} 2>&1 || return 1
-	echo "$DEV_NUM" > /sys/class/zram-control/hot_remove
-	echo "/dev$ZRAM_DEV removed" >>${ZLOG}
+        DEV_NUM=$(echo "$ZRAM_DEV" | tr -dc '0-9')
+        swapoff /dev$ZRAM_DEV >>${ZLOG} 2>&1 || return 1
+        echo "$DEV_NUM" > /sys/class/zram-control/hot_remove
+        echo "/dev$ZRAM_DEV removed" >>${ZLOG}
 }
 
 enableZephemeral () {
-	if [ "$ZEPHEMERAL" = false ] ; then
-		mkinitramfs -o /boot/initrd
-		sudo sed -i '/root=PARTUUID/ s|$| init=/bin/ro-root.sh|' /boot/cmdline.txt
-		echo "initramfs initrd followkernel" >> /boot/config.txt
-		echo "ramfsfile=initrd" >> /boot/config.txt
-		echo "ramfsaddr=-1" >> /boot/config.txt
-		cp $ZSHARE/ro-root.sh /bin/ro-root.sh
-		chown root:root /bin/ro-root.sh
-		chmod a+x /bin/ro-root.sh
-		echo "Zephemeral enabled, after reboot all writes & changes will not be persistent"
-	else
-		echo "Zephemeral is already enabled"
-	fi
+        if [ "$ZEPHEMERAL" = false ] ; then
+                mkinitramfs -o /boot/initrd
+                sudo sed -i '/root=PARTUUID/ s|$| init=/bin/ro-root.sh|' /boot/cmdline.txt
+                echo "initramfs initrd followkernel" >> /boot/config.txt
+                echo "ramfsfile=initrd" >> /boot/config.txt
+                echo "ramfsaddr=-1" >> /boot/config.txt
+                cp $ZSHARE/ro-root.sh /bin/ro-root.sh
+                chown root:root /bin/ro-root.sh
+                chmod a+x /bin/ro-root.sh
+                echo "Zephemeral enabled, after reboot all writes & changes will not be persistent"
+        else
+                echo "Zephemeral is already enabled"
+        fi
 }
 
 disableZephemeral () {
-	if [ "$ZEPHEMERAL" = true ] ; then
-		sed -i 's| init=/bin/ro-root.sh||g'  /boot/cmdline.txt
-		sed -i '/initramfs initrd followkernel/d' /boot/config.txt
-		sed -i '/ramfsfile=initrd/d' /boot/config.txt
-		sed -i '/ramfsaddr=-1/d' /boot/config.txt
-		rm /bin/ro-root.sh
-		echo "Zephemeral disabled, after reboot system will be write and change enabled"
-	else
-		echo "Zephemeral is already disabled"
-	fi
+        if [ "$ZEPHEMERAL" = true ] ; then
+                sed -i 's| init=/bin/ro-root.sh||g'  /boot/cmdline.txt
+                sed -i '/initramfs initrd followkernel/d' /boot/config.txt
+                sed -i '/ramfsfile=initrd/d' /boot/config.txt
+                sed -i '/ramfsaddr=-1/d' /boot/config.txt
+                rm /bin/ro-root.sh
+                echo "Zephemeral disabled, after reboot system will be write and change enabled"
+        else
+                echo "Zephemeral is already disabled"
+        fi
 }
 
 ZSHARE=/usr/local/share/zram-config
@@ -235,122 +243,157 @@ ZEPHEMERAL=false
 fi
 
 case "$1" in
-	start)
-		echo "zram-config start $(date +%Y-%m-%d-%H:%M:%S)" >>${ZLOG}
-		rm -f ${ZSHARE}/zram-device-list >>${ZLOG}
-		file=/etc/ztab
-		ZTAB_EMPTY=true
-		while read -r line; do
-			case "$line" in
-				"#"*)
-					# Skip comment line
-					continue
-					;;
+        start)
+                echo "zram-config start $(date +%Y-%m-%d-%H:%M:%S)" >>${ZLOG}
+                rm -f ${ZSHARE}/zram-device-list >>${ZLOG}
+                file=/etc/ztab
+                ZTAB_EMPTY=true
+                while read -r line; do
+                        case "$line" in
+                                "#"*)
+                                        # Skip comment line
+                                        continue
+                                        ;;
 
-				"")
-					# Skip empty line
-					continue
-					;;
-					
-				*)
-					set -- $line
-					echo "ztab create $1 $2 $3 $4 $5 $6 $7 $8 $9" >>${ZLOG}
-					ZTAB_EMPTY=false
-					ZTYPE=$1
-					ALG=$2
-					MEM_SIZE=$3
-					DISK_SIZE=$4
-					case "$1" in
-						swap)
-							PRIORITY=$5
-							PAGE_CLUSTER=$6
-							SWAPPINESS=$7
-							createZswap
-							;;
-						dir)
-							TARGET_DIR=$5
-							BIND_DIR=$6
-							if [ "$ZEPHEMERAL" = false ] ; then
-								createZdir
-							fi
-							;;
-						log)
-							TARGET_DIR=$5
-							BIND_DIR=$6
-							OLDLOG_DIR=$7
-							if [ "$ZEPHEMERAL" = false ] ; then
-								createZlog
-							fi
-							;;
-					esac
-					;;
-			esac
-		done < "$file"
-		if [ "$ZTAB_EMPTY" = true ] ; then
-			echo '/etc/ztab is empty and needs to be configured' >>${ZLOG}
-			exit 1
-		fi
-		;;
-	stop)
-		echo "zram-config stop $(date +%Y-%m-%d-%H:%M:%S)" >>${ZLOG}
-		tac ${ZSHARE}/zram-device-list > ${ZSHARE}/zram-device-list.rev
-		file=${ZSHARE}/zram-device-list.rev
-		while read -r line; do
-			case "$line" in
-				"#"*)
-					# Skip comment line
-					continue
-					;;
+                                "")
+                                        # Skip empty line
+                                        continue
+                                        ;;
 
-				"")
-					# Skip empty line
-					continue
-					;;
-				*)
-					set -- $line
-					echo "ztab remove $1 $2 $3 $4" >>${ZLOG}
-					case "$1" in
-						swap)
-							ZTYPE=$1
-							ZRAM_DEV=$2
-							LABEL=$3
-							removeZswap
-							;;
-						dir)
-							ZTYPE=$1
-							ZRAM_DEV=$2
-							TARGET_DIR=$3
-							BIND_DIR=$4
-							if [ "$ZEPHEMERAL" = false ] ; then
-								removeZdir
-							fi
-							;;
-						log)
-							ZTYPE=$1
-							ZRAM_DEV=$2
-							TARGET_DIR=$3
-							BIND_DIR=$4
-							if [ "$ZEPHEMERAL" = false ] ; then
-								removeZlog
-							fi
-							;;
-					esac
-					;;
-			esac
-		done < "$file"
-		rm -v ${ZSHARE}/zram-device-list.rev >>${ZLOG}
-		;;
-		
-	enable-ephemeral)
-		enableZephemeral
-		;;
-		
-	disable-ephemeral)
-		disableZephemeral
-		;;
-		
-	*)
-		echo "Usage: zram-config {start|stop|enable-ephemeral|disable-ephemeral}" >&2
-		exit 1
-		;;
+                                *)
+                                        set -- $line
+                                        echo "ztab create $1 $2 $3 $4 $5 $6 $7 $8 $9" >>${ZLOG}
+                                        ZTAB_EMPTY=false
+                                        ZTYPE=$1
+                                        ALG=$2
+                                        MEM_SIZE=$3
+                                        DISK_SIZE=$4
+                                        case "$1" in
+                                                swap)
+                                                        PRIORITY=$5
+                                                        PAGE_CLUSTER=$6
+                                                        SWAPPINESS=$7
+                                                        createZswap
+                                                        ;;
+                                                dir)
+                                                        TARGET_DIR=$5
+                                                        BIND_DIR=$6
+                                                        if [ "$ZEPHEMERAL" = false ] ; then
+                                                                createZdir
+                                                        fi
+                                                        ;;
+                                                log)
+                                                        TARGET_DIR=$5
+                                                        BIND_DIR=$6
+                                                        OLDLOG_DIR=$7
+                                                        if [ "$ZEPHEMERAL" = false ] ; then
+                                                                createZlog
+                                                        fi
+                                                        ;;
+                                        esac
+                                        ;;
+                        esac
+                done < "$file"
+                if [ "$ZTAB_EMPTY" = true ] ; then
+                        echo '/etc/ztab is empty and needs to be configured' >>${ZLOG}
+                        exit 1
+                fi
+                ;;
+        stop)
+                echo "zram-config stop $(date +%Y-%m-%d-%H:%M:%S)" >>${ZLOG}
+                tac ${ZSHARE}/zram-device-list > ${ZSHARE}/zram-device-list.rev
+                file=${ZSHARE}/zram-device-list.rev
+                while read -r line; do
+                        case "$line" in
+                                "#"*)
+                                        # Skip comment line
+                                        continue
+                                        ;;
+
+                                "")
+                                        # Skip empty line
+                                        continue
+                                        ;;
+                                *)
+                                        set -- $line
+                                        echo "ztab remove $1 $2 $3 $4" >>${ZLOG}
+                                        case "$1" in
+                                                swap)
+                                                        ZTYPE=$1
+                                                        ZRAM_DEV=$2
+                                                        LABEL=$3
+                                                        removeZswap
+                                                        ;;
+                                                dir)
+                                                        ZTYPE=$1
+                                                        ZRAM_DEV=$2
+                                                        TARGET_DIR=$3
+                                                        BIND_DIR=$4
+                                                        if [ "$ZEPHEMERAL" = false ] ; then
+                                                                removeZdir
+                                                        fi
+                                                        ;;
+                                                log)
+                                                        ZTYPE=$1
+                                                        ZRAM_DEV=$2
+                                                        TARGET_DIR=$3
+                                                        BIND_DIR=$4
+                                                        if [ "$ZEPHEMERAL" = false ] ; then
+                                                                removeZlog
+                                                        fi
+                                                        ;;
+                                        esac
+                                        ;;
+                        esac
+                done < "$file"
+                rm -v ${ZSHARE}/zram-device-list.rev >>${ZLOG}
+                ;;
+
+        enable-ephemeral)
+                enableZephemeral
+                ;;
+
+        disable-ephemeral)
+                disableZephemeral
+                ;;
+
+        sync)
+                echo "zram-config stop $(date +%Y-%m-%d-%H:%M:%S)" >>${ZLOG}
+                tac ${ZSHARE}/zram-device-list > ${ZSHARE}/zram-device-list.rev
+                file=${ZSHARE}/zram-device-list.rev
+                while read -r line; do
+                        case "$line" in
+                                "#"*)
+                                        # Skip comment line
+                                        continue
+                                        ;;
+
+                                "")
+                                        # Skip empty line
+                                        continue
+                                        ;;
+                                *)
+                                        set -- $line
+                                        echo "ztab sync $1 $2 $3 $4" >>${ZLOG}
+                                        case "$1" in
+                                                dir|log)
+                                                        ZTYPE=$1
+                                                        ZRAM_DEV=$2
+                                                        TARGET_DIR=$3
+                                                        BIND_DIR=$4
+                                                        if [ "$ZEPHEMERAL" = false ] ; then
+                                                                syncOverlay
+                                                        fi
+                                                        ;;
+                                        esac
+                                        ;;
+                        esac
+                done < "$file"
+                rm -v ${ZSHARE}/zram-device-list.rev >>${ZLOG}
+                ;;
+
+        *)
+                echo "Usage: zram-config {start|stop|sync|enable-ephemeral|disable-ephemeral}" >&2
+                exit 1
+                ;;
 esac
