@@ -108,6 +108,14 @@ mergeOverlay () {
 	
 }
 
+syncOverlay () {
+	echo "overlay --lowerdir=$ZDIR$BIND_DIR --upperdir=$ZDIR$ZRAM_DEV/upper" >>${ZLOG}
+	cd /usr/local/lib/zram-config/
+	echo y | ./overlay diff -l "${ZDIR}${BIND_DIR}" -u "${ZDIR}${ZRAM_DEV}/upper" >>${ZLOG} 2>&1 || return 1
+	sh -x *.sh  >>${ZLOG} 2>&1 || return 1
+	rm -v *.sh  >>${ZLOG} 2>&1 || return 1
+}
+
 removeZlog () {
 	if [ ! -z "$OLDLOG_DIR" ]
 	then
@@ -341,6 +349,40 @@ case "$1" in
 		rm -v ${ZSHARE}/zram-device-list.rev >>${ZLOG}
 		;;
 		
+	sync)
+		echo "zram-config stop $(date +%Y-%m-%d-%H:%M:%S)" >>${ZLOG}
+		tac ${ZSHARE}/zram-device-list > ${ZSHARE}/zram-device-list.rev
+		file=${ZSHARE}/zram-device-list.rev
+		while read -r line; do
+			case "$line" in
+				"#"*)
+					# Skip comment line
+					continue
+        				;;
+				"")
+					# Skip comment line
+					continue
+        				;;
+				*)
+					set -- $line
+					echo "ztab sync $1 $2 $3 $4" >>${ZLOG}
+					case "$1" in
+						dir|log)
+							ZTYPE=$1
+							ZRAM_DEV=$2
+							TARGET_DIR=$3
+							BIND_DIR=$4
+							if [ "$ZEPHEMERAL" = false ] ; then
+								syncOverlay
+							fi
+							;;
+					esac
+					;;
+			esac
+		done < "$file"
+		rm -v ${ZSHARE}/zram-device-list.rev >>${ZLOG}
+		;;
+		
 	enable-ephemeral)
 		enableZephemeral
 		;;
@@ -350,7 +392,7 @@ case "$1" in
 		;;
 		
 	*)
-		echo "Usage: zram-config {start|stop|enable-ephemeral|disable-ephemeral}" >&2
+		echo "Usage: zram-config {start|stop|sync|enable-ephemeral|disable-ephemeral}" >&2
 		exit 1
 		;;
 esac
