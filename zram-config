@@ -111,7 +111,7 @@ mergeOverlay () {
 syncOverlay () {
 	echo "overlay --lowerdir=$ZDIR$BIND_DIR --upperdir=$ZDIR$ZRAM_DEV/upper" >>${ZLOG}
 	cd /usr/local/lib/zram-config/
-	echo y | ./overlay diff -l "${ZDIR}${BIND_DIR}" -u "${ZDIR}${ZRAM_DEV}/upper" >>${ZLOG} 2>&1 || return 1
+	echo y | ./overlay merge -l "${ZDIR}${BIND_DIR}" -u "${ZDIR}${ZRAM_DEV}/upper" >>${ZLOG} 2>&1 || return 1
 	sh -x *.sh  >>${ZLOG} 2>&1 || return 1
 	rm -v *.sh  >>${ZLOG} 2>&1 || return 1
 }
