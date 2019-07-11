@@ -4,11 +4,41 @@ systemctl -q is-active zram-config  && { echo "ERROR: zram-config service is sti
 [ "$(id -u)" -eq 0 ] || { echo "You need to be ROOT (sudo can be used)"; exit 1; }
 [ -d /usr/local/bin/zram-config ] && { echo "zram-config is already installed, uninstall first"; exit 1; }
 
+InstallXattr () {
 apt-get install libattr1-dev
 git clone https://github.com/kmxz/overlayfs-tools
 cd overlayfs-tools
 make
 cd ..
+
+}
+
+InstallAttr () {
+apt-get install libattr1-dev
+git clone -b fix_xattr_lib_include https://github.com/Izual750/overlayfs-tools
+cd overlayfs-tools
+make
+cd ..
+}
+
+
+version=$(uname -r)
+major=`echo $version | cut -d. -f1`
+minor=`echo $version | cut -d. -f2`
+
+if [ "$major" -ge "4" ]
+then
+        if  [ "$minor" -ge "19" ]
+	then
+		InstallAttr
+	else
+		InstallXattr
+	fi
+else
+	InstallXattr
+fi
+
+
 
 #BRANCH=next rpi-update
 

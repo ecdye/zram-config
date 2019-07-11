@@ -15,10 +15,10 @@
 # Stop the service sudo service zram-config stop edit /etc/ztab sudo nano /etc/ztab start the service sudo service zram-config start
 
 # swap	alg	mem_limit	disk_size	swap_priority	page-cluster	swappiness
-swap	lz4	200M		600M		75		0		90
+swap	lz4	250M		750M		75		0		80
 
 # dir	alg	mem_limit	disk_size	target_dir		bind_dir
 #dir	lz4	50M		150M		/home/pi		/pi.bind
 
 # log	alg	mem_limit	disk_size	target_dir		bind_dir		oldlog_dir
-#log	lz4	50M		150M		/var/log		/log.bind		/opt/zram/oldlog
+log	lz4	50M		150M		/var/log		/log.bind		/opt/zram/oldlog
