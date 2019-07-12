@@ -32,10 +32,15 @@ then
 	then
 		InstallAttr
 	else
-		InstallXattr
+		if [ "$major" -ge "5" ]
+        	then
+                	InstallAttr
+        	else
+                	InstallXattr
+        	fi
 	fi
 else
-	InstallXattr
+		InstallXattr
 fi
 
 
