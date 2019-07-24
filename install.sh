@@ -22,27 +22,12 @@ cd ..
 }
 
 
-version=$(uname -r)
-major=`echo $version | cut -d. -f1`
-minor=`echo $version | cut -d. -f2`
-
-if [ "$major" -ge "4" ]
+if ldconfig -p | grep libattr
 then
-        if  [ "$minor" -ge "19" ]
-	then
-		InstallAttr
-	else
-		if [ "$major" -ge "5" ]
-        	then
-                	InstallAttr
-        	else
-                	InstallXattr
-        	fi
-	fi
+        InstallAttr
 else
-		InstallXattr
+        InstallXattr
 fi
-
 
 
 #BRANCH=next rpi-update
