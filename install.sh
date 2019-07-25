@@ -1,13 +1,7 @@
 #!/bin/bash
 
-systemctl -q is-active zram-config  && { echo "ERROR: zram-config service is still running. Please run \"sudo service zram-config stop\" to stop it and u$
-[ "$(id -u)" -eq 0 ] || { echo "You need to be ROOT (sudo can be used)"; exit 1; }
-[ -d /usr/local/bin/zram-config ] && { echo "zram-config is already installed, uninstall first"; exit 1; }
 
-
-apt-get -y install libattr1-dev
-
-git clone https://github.com/StuartIanNaylor/overlayfs-tools
+git clone https://github.com/StuartIanNaylor/overlayfs-tools -b Arch
 cd overlayfs-tools
 make
 cd ..
