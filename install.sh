@@ -3,8 +3,14 @@
 systemctl -q is-active zram-config  && { echo "ERROR: zram-config service is still running. Please run \"sudo service zram-config stop\" to stop it and uninstall"; exit 1; }
 [ "$(id -u)" -eq 0 ] || { echo "You need to be ROOT (sudo can be used)"; exit 1; }
 [ -d /usr/local/bin/zram-config ] && { echo "zram-config is already installed, uninstall first"; exit 1; }
+
 apt-get -y install libattr1-dev
-git clone https://github.com/StuartIanNaylor/overlayfs-tools
+if grep -q "buster" /etc/os-release
+then
+	git clone https://github.com/StuartIanNaylor/overlayfs-tools -b Arch
+else
+	git clone https://github.com/StuartIanNaylor/overlayfs-tools
+fi
 cd overlayfs-tools
 make
 cd ..
