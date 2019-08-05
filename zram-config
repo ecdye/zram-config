@@ -32,17 +32,25 @@ createZdir () {
 
 		if [ ! -z ${TARGET_DIR} ]
 		then
+			dirPerm=$(stat stat -c "%a" ${TARGET_DIR})
+			dirUser=$(stat stat -c "%u" ${TARGET_DIR})
+			dirGroup=$(stat stat -c "%g" ${TARGET_DIR})
+			echo "dirPerm "${TARGET_DIR}" "$dirPerm" "$dirUser":"$dirGroup >> ${ZLOG}
 			mount --verbose --bind ${TARGET_DIR}/ ${ZDIR}${BIND_DIR}/ >>${ZLOG} 2>&1 || return 1
 			mount --verbose --make-private ${ZDIR}${BIND_DIR}/ >>${ZLOG} 2>&1 || return 1
 			dirMountOpt=$(awk -v a=${ZDIR}${BIND_DIR} '$2 == a {print $4}' /proc/mounts)
 			dirFsType=$(awk -v a=${ZDIR}${BIND_DIR} '$2 == a {print $3}' /proc/mounts)
+			echo "dirMountOpt "$dirMountOpt" dirFsType " $dirFsType >> ${ZLOG}
 			createZdevice || return 1
 			mke2fs -v -t ${dirFsType} /dev/zram${RAM_DEV} >>${ZLOG} 2>&1 || return 1
 			mkdir -p ${ZDIR}/zram${RAM_DEV} >>${ZLOG} 2>&1 || return 1
-			echo ${dirMountOpt}  >>${ZLOG}
 			mount --verbose --types ${dirFsType} -o ${dirMountOpt} /dev/zram${RAM_DEV} ${ZDIR}/zram${RAM_DEV}/ >>${ZLOG} 2>&1 || return 1
+			chown $dirUser:$dirGroup ${ZDIR}/zram${RAM_DEV} >>${ZLOG} 2>&1 || return 1
+			chmod $dirPerm ${ZDIR}/zram${RAM_DEV} >>${ZLOG} 2>&1 || return 1
 			mkdir -p ${ZDIR}/zram${RAM_DEV}/upper ${ZDIR}/zram${RAM_DEV}/workdir ${TARGET_DIR} >>${ZLOG} 2>&1 || return 1
 			mount --verbose --types overlay -o lowerdir=${ZDIR}${BIND_DIR},upperdir=${ZDIR}/zram${RAM_DEV}/upper,workdir=${ZDIR}/zram${RAM_DEV}/workdir overlay${RAM_DEV} ${TARGET_DIR} >>${ZLOG} 2>&1 || return 1
+			chown $dirUser:$dirGroup ${TARGET_DIR} >>${ZLOG} 2>&1 || return 1
+			chmod $dirPerm ${TARGET_DIR} >>${ZLOG} 2>&1 || return 1			
 			echo "${ZTYPE}		/zram${RAM_DEV}		${TARGET_DIR}		${BIND_DIR}" >> ${ZSHARE}/zram-device-list
 		else
 			echo "No mount dir in ztab" >>${ZLOG}
