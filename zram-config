@@ -245,7 +245,7 @@ fi
 case "$1" in
 	start)
 		echo "zram-config start $(date +%Y-%m-%d-%H:%M:%S)" >>${ZLOG}
-		rm -f ${ZSHARE}/zram-device-list >>${ZLOG}
+		rm -f ${ZSHARE}/zram-device-list.new >>${ZLOG}
 		file=/etc/ztab
 		ZTAB_EMPTY=true
 		while read -r line; do
@@ -268,6 +268,18 @@ case "$1" in
 					ALG=$2
 					MEM_SIZE=$3
 					DISK_SIZE=$4
+					if [ "$1" = "swap" ]; then
+                                                entry=$(egrep "^swap" ${ZSHARE}/zram-device-list)
+                                        else
+                                                entry=$(egrep "$1.*$5" ${ZSHARE}/zram-device-list)
+                                        fi
+                                        if [ -n "$entry" ]; then
+                                                echo "entry $entry already exists as zram."
+                                                echo $entry >> ${ZSHARE}/zram-device-list.new
+                                                continue
+                                        fi
+                                        mv ${ZSHARE}/zram-device-list.new ${ZSHARE}/zram-device-list
+
 					case "$1" in
 						swap)
 							PRIORITY=$5
@@ -346,7 +358,7 @@ case "$1" in
 					;;
 			esac
 		done < "$file"
-		rm -v ${ZSHARE}/zram-device-list.rev >>${ZLOG}
+		rm -fv ${ZSHARE}/zram-device-list.rev ${ZSHARE}/zram-device-list >>${ZLOG}
 		;;
 		
 	enable-ephemeral)
