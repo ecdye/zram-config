@@ -11,6 +11,12 @@ https://github.com/kmxz/overlayfs-tools many thanks to kmxz for the overlay merg
 
 Zram-config also allows a 'kiosk mode' where `sudo zram-config enable-ephemeral` on reboot will load the whole root into zram. There is no sync and zdir/zlog entries will be ignored as already included via the whole ro-root and zram upper. `sudo zram-config disable-ephemeral` and reboot to return to a normal system. https://blockdev.io/read-only-rpi/ and thanks to the original sources for another great script.
 
+The rationale for zram-config is that many distro `zram-config` packages are actually broken even by name as often they are a zram-swap-config.
+But even then they do not check for other zram services or change the parameters of swap from HD based to ram optimised ones.
+If you want just zram-swap then use https://github.com/StuartIanNaylor/zram-swap-config as an alternative 
+Both are examples for distros to get there zram packages updated as zram uses a hot-plug method and is multi-stream but also with swap you are using ram and not HD so param changes to optimise are a really good idea.
+
+Also if the OverlayFS guys would actually make some official merge/snapshot tools and not just leave it as just enough for Docker that would be massively useful and if anyone fancies shouting out that call please do.
 
 _____
 ### Menu
