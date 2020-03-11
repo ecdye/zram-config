@@ -1,3 +1,7 @@
+If its just zram-swap you need then use https://github.com/StuartIanNaylor/zram-swap-config this is an example that zram is more than just swap.
+Also uses the hot swap methods of zram so it can co-exist with other zram services and optimises swap for memory rather than default disk cache.
+Zram-swap-config will auto configure on 50% of ram by default has same optimisation but swap only.
+
 # zram-config
 Complete zram config utility for swap, directory &amp; log 
 Usefull for IoT / maker projects for reducing SD, Nand and Emmc block wear via log operations.
