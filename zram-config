@@ -9,7 +9,7 @@ createZswap () {
 	else
 		echo "zram$RAM_DEV no swap_priority" >>${ZLOG}
 		return 1
-	fi	
+	fi
 	if [ ! -z "$PAGE_CLUSTER" ]
 	then
 		sysctl vm.page-cluster=$PAGE_CLUSTER >>${ZLOG} 2>&1 || return 1
@@ -24,7 +24,7 @@ createZswap () {
 	fi
 	echo "swap		/zram${RAM_DEV}		zram-config${RAM_DEV}" >> ${ZSHARE}/zram-device-list
 }
-	
+
 createZdir () {
 	if [ ! -z "$BIND_DIR" ]
 	then
@@ -50,7 +50,7 @@ createZdir () {
 			mkdir -p ${ZDIR}/zram${RAM_DEV}/upper ${ZDIR}/zram${RAM_DEV}/workdir ${TARGET_DIR} >>${ZLOG} 2>&1 || return 1
 			mount --verbose --types overlay -o redirect_dir=on,lowerdir=${ZDIR}${BIND_DIR},upperdir=${ZDIR}/zram${RAM_DEV}/upper,workdir=${ZDIR}/zram${RAM_DEV}/workdir overlay${RAM_DEV} ${TARGET_DIR} >>${ZLOG} 2>&1 || return 1
 			chown $dirUser:$dirGroup ${TARGET_DIR} >>${ZLOG} 2>&1 || return 1
-			chmod $dirPerm ${TARGET_DIR} >>${ZLOG} 2>&1 || return 1			
+			chmod $dirPerm ${TARGET_DIR} >>${ZLOG} 2>&1 || return 1
 			echo "${ZTYPE}		/zram${RAM_DEV}		${TARGET_DIR}		${BIND_DIR}" >> ${ZSHARE}/zram-device-list
 		else
 			echo "No mount dir in ztab" >>${ZLOG}
@@ -61,7 +61,7 @@ createZdir () {
 		return 1
 	fi
 }
-	
+
 createZlog () {
 	invoke-rc.d rsyslog stop >>${ZLOG} 2>&1 || return 1
 	createZdir || return 1
@@ -76,7 +76,7 @@ createZlog () {
 		echo "createZlog no oldlog dir in ztab" >>${ZLOG}
 	fi
 }
-	
+
 createZdevice () {
 	# Check Zram Class created
 	if [ ! -d "/sys/class/zram-control" ]; then
@@ -113,7 +113,7 @@ mergeOverlay () {
 	./overlay merge -l "${ZDIR}${BIND_DIR}" -u "${ZDIR}${ZRAM_DEV}/upper" >>${ZLOG} 2>&1 || return 1
 	sh -x *.sh  >>${ZLOG} 2>&1 || return 1
 	rm -v *.sh  >>${ZLOG} 2>&1 || return 1
-	
+
 }
 
 removeZlog () {
@@ -162,7 +162,7 @@ removeZlog () {
 }
 
 removeZdir () {
-	echo "$ZRAM_DEV" >>${ZLOG} 
+	echo "$ZRAM_DEV" >>${ZLOG}
 	#syncToDisk
 	DEV_NUM=$(echo "$ZRAM_DEV" | tr -dc '0-9')
 	if [ ! -z "$TARGET_DIR" ]
@@ -194,7 +194,7 @@ removeZdir () {
 		return 1
 	fi
 	echo "$DEV_NUM" > /sys/class/zram-control/hot_remove
-	echo "/dev$ZRAM_DEV removed" >>${ZLOG}  
+	echo "/dev$ZRAM_DEV removed" >>${ZLOG}
 }
 
 removeZswap () {
@@ -246,6 +246,7 @@ case "$1" in
 	start)
 		echo "zram-config start $(date +%Y-%m-%d-%H:%M:%S)" >>${ZLOG}
 		rm -f ${ZSHARE}/zram-device-list.new >>${ZLOG}
+		rm -f ${ZSHARE}/zram-device-list >>${ZLOG}
 		file=/etc/ztab
 		ZTAB_EMPTY=true
 		while read -r line; do
@@ -259,7 +260,7 @@ case "$1" in
 					# Skip empty line
 					continue
 					;;
-					
+
 				*)
 					set -- $line
 					echo "ztab create $1 $2 $3 $4 $5 $6 $7 $8 $9" >>${ZLOG}
@@ -360,15 +361,15 @@ case "$1" in
 		done < "$file"
 		rm -fv ${ZSHARE}/zram-device-list.rev ${ZSHARE}/zram-device-list >>${ZLOG}
 		;;
-		
+
 	enable-ephemeral)
 		enableZephemeral
 		;;
-		
+
 	disable-ephemeral)
 		disableZephemeral
 		;;
-		
+
 	*)
 		echo "Usage: zram-config {start|stop|enable-ephemeral|disable-ephemeral}" >&2
 		exit 1
