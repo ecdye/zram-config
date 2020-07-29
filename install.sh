@@ -4,7 +4,7 @@ systemctl -q is-active zram-config  && { echo "ERROR: zram-config service is sti
 [ "$(id -u)" -eq 0 ] || { echo "You need to be ROOT (sudo can be used)"; exit 1; }
 [ -d /usr/local/bin/zram-config ] && { echo "zram-config is already installed, uninstall first"; exit 1; }
 
-apt-get -y install libattr1-dev
+apt-get -y install libattr1-dev make gcc
 if grep -q "buster" /etc/os-release
 then
 	git clone https://github.com/StuartIanNaylor/overlayfs-tools -b Arch
