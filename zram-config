@@ -22,7 +22,7 @@ createZswap () {
 	else
 		echo "zram$RAM_DEV no swappiness" >>${ZLOG}
 	fi
-	echo "swap		/zram${RAM_DEV}		zram-config${RAM_DEV}" >> ${ZSHARE}/zram-device-list
+	echo "swap		/zram${RAM_DEV}		zram-config${RAM_DEV}" >> /tmp/zram-device-list
 }
 	
 createZdir () {
@@ -51,7 +51,7 @@ createZdir () {
 			mount --verbose --types overlay -o redirect_dir=on,lowerdir=${ZDIR}${BIND_DIR},upperdir=${ZDIR}/zram${RAM_DEV}/upper,workdir=${ZDIR}/zram${RAM_DEV}/workdir overlay${RAM_DEV} ${TARGET_DIR} >>${ZLOG} 2>&1 || return 1
 			chown $dirUser:$dirGroup ${TARGET_DIR} >>${ZLOG} 2>&1 || return 1
 			chmod $dirPerm ${TARGET_DIR} >>${ZLOG} 2>&1 || return 1			
-			echo "${ZTYPE}		/zram${RAM_DEV}		${TARGET_DIR}		${BIND_DIR}" >> ${ZSHARE}/zram-device-list
+			echo "${ZTYPE}		/zram${RAM_DEV}		${TARGET_DIR}		${BIND_DIR}" >> /tmp/zram-device-list
 		else
 			echo "No mount dir in ztab" >>${ZLOG}
 			return 1
@@ -245,7 +245,7 @@ fi
 case "$1" in
 	start)
 		echo "zram-config start $(date +%Y-%m-%d-%H:%M:%S)" >>${ZLOG}
-		rm -f ${ZSHARE}/zram-device-list.new >>${ZLOG}
+		rm -f /tmp/zram-device-list.new >>${ZLOG}
 		file=/etc/ztab
 		ZTAB_EMPTY=true
 		while read -r line; do
@@ -269,16 +269,16 @@ case "$1" in
 					MEM_SIZE=$3
 					DISK_SIZE=$4
 					if [ "$1" = "swap" ]; then
-                                                entry=$(egrep "^swap" ${ZSHARE}/zram-device-list)
+                                                entry=$(egrep "^swap" /tmp/zram-device-list)
                                         else
-                                                entry=$(egrep "$1.*$5" ${ZSHARE}/zram-device-list)
+                                                entry=$(egrep "$1.*$5" /tmp/zram-device-list)
                                         fi
                                         if [ -n "$entry" ]; then
                                                 echo "entry $entry already exists as zram."
-                                                echo $entry >> ${ZSHARE}/zram-device-list.new
+                                                echo $entry >> /tmp/zram-device-list.new
                                                 continue
                                         fi
-                                        mv ${ZSHARE}/zram-device-list.new ${ZSHARE}/zram-device-list
+                                        mv /tmp/zram-device-list.new /tmp/zram-device-list
 
 					case "$1" in
 						swap)
@@ -313,8 +313,8 @@ case "$1" in
 		;;
 	stop)
 		echo "zram-config stop $(date +%Y-%m-%d-%H:%M:%S)" >>${ZLOG}
-		tac ${ZSHARE}/zram-device-list > ${ZSHARE}/zram-device-list.rev
-		file=${ZSHARE}/zram-device-list.rev
+		tac /tmp/zram-device-list > /tmp/zram-device-list.rev
+		file=/tmp/zram-device-list.rev
 		while read -r line; do
 			case "$line" in
 				"#"*)
@@ -358,7 +358,7 @@ case "$1" in
 					;;
 			esac
 		done < "$file"
-		rm -fv ${ZSHARE}/zram-device-list.rev ${ZSHARE}/zram-device-list >>${ZLOG}
+		rm -fv /tmp/zram-device-list.rev /tmp/zram-device-list >>${ZLOG}
 		;;
 		
 	enable-ephemeral)
