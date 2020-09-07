@@ -1,14 +1,14 @@
 [Unit]
 Description=zram-config
 After=local-fs.target
-Before=reboot.target halt.target
+Before=reboot.target halt.target shutdown.target poweroff.target
+
 [Service]
 Type=oneshot
-ExecStart=/usr/local/bin/zram-config start
-ExecStop=/usr/local/bin/zram-config stop
-TimeoutSec=180
+TimeoutSec=300
 RemainAfterExit=yes
+ExecStart=/usr/local/sbin/zram-config "start"
+ExecStart=/usr/local/sbin/zram-config "stop"
 
 [Install]
 WantedBy=basic.target
-
