@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-
+# shellcheck disable=SC2140,SC2210
 set -x
 
 TMPDIR=/tmp
@@ -363,14 +363,11 @@ case "$1" in
 					echo "ztab remove ${1} ${2} ${3} ${4}" >> "$ZLOG"
 					case "$1" in
 						swap)
-							ZTYPE="$1"
 							ZRAM_DEV="$2"
-							LABEL="$3"
 							removeZswap
 							;;
 
 						dir)
-							ZTYPE="$1"
 							ZRAM_DEV="$2"
 							TARGET_DIR="$3"
 							BIND_DIR="$4"
@@ -380,7 +377,6 @@ case "$1" in
 							;;
 
 						log)
-							ZTYPE="$1"
 							ZRAM_DEV="$2"
 							TARGET_DIR="$3"
 							BIND_DIR="$4"

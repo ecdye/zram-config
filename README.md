@@ -1,36 +1,36 @@
-If its just zram-swap you need then use <https://github.com/StuartIanNaylor/zram-swap-config> this is an example that zram is more than just swap.
-Also uses the hot swap methods of zram so it can co-exist with other zram services and optimizes swap for memory rather than default disk cache.
-zram-swap-config will auto configure on 50% of ram by default has same optimization but swap only.
-
 # zram-config
+![ShellCheck](https://github.com/ecdye/zram-config/workflows/shellcheck/badge.svg?branch=master)
 
-Complete zram-config utility for swap, directories, and logs
-Useful for IoT / maker projects for reducing SD, NAND and eMMC block wear via log operations.
-Uses zram to minimize precious memory footprint and extremely infrequent write outs and near ram speed working directories with memory compression ratios depending on the compression algorithm chosen.
+## Overview
 
-Uses a ztab table in `/etc/ztab` where any combination and number of zram drives can be created.
-This branch uses a OverlayFS mount with zram so that syncFromDisk on start is not needed.
-This should allow for faster boots and larger directories as no complete directory copy needed as its the lower mount in the OverlayFS.
-<https://github.com/kmxz/overlayfs-tools> many thanks to kmxz for the overlay merge tool.
+This is a complete zram-config utility for swap, directories, and logs to reduce SD, NAND and eMMC block wear.
+zram-config implements zram to prevent frequent writing to the disk and allow near ram speed acess to working directories with varying compression ratios depending on the compression algorithm.
 
-zram-config also allows a 'kiosk mode' where `sudo zram-config enable-ephemeral` on reboot will load the whole root into zram.
-There is no sync and zdir/zlog entries will be ignored as already included via the whole ro-root and zram upper.
-Run `sudo zram-config disable-ephemeral` and reboot to return to a normal system.
-Credit to <https://blockdev.io/read-only-rpi/> and thanks to the original sources for another great script.
+A ztab table in `/etc/ztab` is used to configure where any combination and number of zram drives are to be created.
+This project uses an OverlayFS mount with zram so that syncFromDisk on start is not needed.
+In theory this should allow for faster boots and larger directories as no complete directory copy is needed as it is the lower mount in the OverlayFS.
+Many thanks go to @kmxz for the [overlayfs-tools](https://github.com/kmxz/overlayfs-tools) used to make this possible.
 
-The rationale for zram-config is that many distros' `zram-config` packages are actually broken even by name as often they are a zram-swap-config.
-But even then they do not check for other zram services or change the parameters of swap from HD based to ram optimized ones.
-If you want just zram-swap then use <https://github.com/StuartIanNaylor/zram-swap-config> as an alternative.
-Both are examples for distros to get their zram packages updated as zram uses a hot-plug method and is multi-stream but also with swap you are using ram and not HD so param changes to optimize are a really good idea.
+zram-config also allows a 'kiosk mode' which allows loading the entire system root into zram.
 
-Also if the OverlayFS guys would actually make some official merge/snapshot tools and not just leave it as just enough for Docker that would be massively useful and if anyone fancies shouting out that call please do.
+The rationale for zram-config is that many distributions' `zram-config` packages are actually broken, even by name, as often they are a zram-swap-config package in reality.
+But even then they do not check for other zram services or change the parameters of swap from HD based configurations to ram optimized ones.
+If all you are looking for is a zram-swap utility see [zram-swap-config](https://github.com/StuartIanNaylor/zram-swap-config).
 
-### Menu
+Both [zram-swap-config](https://github.com/StuartIanNaylor/zram-swap-config) and [this](https://github.com/ecdye/zram-config) project are examples for distributions to get their zram packages updated.
 
-1) [Install](#install)
-2) [Config](#customize)
-3) [It is working?](#it-is-working)
-4) [Uninstall](#uninstall)
+Also if the OverlayFS guys would actually make some official merge/snapshot tools and not just leave it as just enough for Docker that would be massively useful, and if anyone fancies shouting out that call please do.
+
+## A Brief Usage Guide
+
+### Table of Contents
+
+1. [Install](#install)
+2. [Configure](#customize)
+   - [Example configuration](#example-configuration)
+3. [Is it working?](#is-it-working)
+4. [Kiosk mode](#kiosk-mode)
+5. [Uninstall](#uninstall)
 
 
 ### Install
@@ -39,10 +39,12 @@ Also if the OverlayFS guys would actually make some official merge/snapshot tool
 sudo apt-get install git
 git clone https://github.com/StuartIanNaylor/zram-config
 cd zram-config
-sudo .install.sh
+sudo ./install.bash
 ```
 
-### Customize
+### Configure
+
+All configuration is done in the `/etc/ztab` file.
 
 Use `#` to comment out any line, add new drives with the first column providing the drive type and then drive details separated by tab characters.
 
@@ -72,6 +74,8 @@ If you need multiple zram swaps or zram directories, just create another entry i
 To do this safely, first stop zram using `systemctl stop zram-config.service`, then edit `/etc/ztab`.
 Once finished, restart zram using `systemctl restart zram-config.service`.
 
+#### Example configuration
+
 ```
 # swap  alg     mem_limit       disk_size       swap_priority   page-cluster    swappiness
 swap    lz4     400M            1200M           75              0               90
@@ -83,7 +87,9 @@ dir     lz4     50M             150M            /home/pi/MagicMirror    /magicmi
 log     lz4     20M             60M             /var/log                /log.bind               /oldlog
 ```
 
-### It is working?
+### Is it working?
+
+Run `zramctl` in your preferred shell and if you see and output similar to below, yes it is working.
 
 ```
 pi@raspberrypi:~ $ zramctl
@@ -92,6 +98,9 @@ NAME       ALGORITHM DISKSIZE  DATA COMPR TOTAL STREAMS MOUNTPOINT
 /dev/zram1 lz4           150M 16.3M 25.1K  208K       4 /opt/zram/zram1
 /dev/zram2 lz4            60M  7.5M  1.2M  1.7M       4 /opt/zram/zram2
 ```
+
+To view more information on zram usage take a look at the following commands and their corresponding output.
+
 ```
 pi@raspberrypi:~ $ df
 Filesystem     1K-blocks    Used Available Use% Mounted on
@@ -107,17 +116,6 @@ overlay1          132384     280    121352   1% /home/pi/MagicMirror
 /dev/zram2         55408    3460     47648   7% /opt/zram/zram2
 overlay2           55408    3460     47648   7% /var/log
 tmpfs              94944       0     94944   0% /run/user/1000
-```
-```
-cat /etc/ztab
-# swap  alg     mem_limit       disk_size       swap_priority   page-cluster    swappiness
-swap    lz4     400M            1200M           75              0               90
-
-# dir   alg     mem_limit       disk_size       target_dir              bind_dir
-dir     lz4     50M             150M            /home/pi/MagicMirror    /magicmirror.bind
-
-# log   alg     mem_limit       disk_size       target_dir              bind_dir                oldlog_dir
-log     lz4     20M             60M             /var/log                /log.bind               /oldlog
 ```
 ```
 pi@raspberrypi:~ $ free -h
@@ -157,14 +155,17 @@ KiB Swap:  1331192 total,  1331192 free,        0 used.   412052 avail Mem
     9 root      20   0       0      0      0 I   0.0  0.0   0:00.00 rcu_bh
 ```
 
-### enable-ephemeral
+### Kiosk mode
 
-zram-config also allows a 'kiosk mode' where `sudo zram-config enable-ephemeral` on reboot will load the whole root into zram.
-There is no sync and zdir/zlog entries will be ignored as already included via the whole ro-root and zram upper.
-Run `sudo zram-config disable-ephemeral` and reboot to return to a normal system.
+zram-config also allows a 'kiosk mode' which allows loading the entire system root into zram.
+To enter this mode run `sudo zram-config enable-ephemeral` and reboot.
+There is no sync and zdir/zlog entries will be ignored as they are already included.
+To exit this mode run `sudo zram-config disable-ephemeral` and reboot.
+
 Credit to <https://blockdev.io/read-only-rpi/> and thanks to the original sources for another great script.
+
 You may need to reboot after the rpi-update and then mkinitramfs -o /boot/initrd as a newer kernel maybe updated.
-Check the 'Without NFS' section of <https://blockdev.io/read-only-rpi/> as any problems you may have to remove the SD card and edit `/boot/cmdline.txt` removing the `init=/bin/ro-root.sh` entry.
+Check the 'Without NFS' section of <https://blockdev.io/read-only-rpi/> as many problems you may have require removal of the SD card and editing `/boot/cmdline.txt` removing the `init=/bin/ro-root.sh` entry.
 
 ```
 pi@raspberrypi:~/zram-config $ df
@@ -191,8 +192,8 @@ NAME       ALGORITHM DISKSIZE  DATA  COMPR TOTAL STREAMS MOUNTPOINT
 ### Performance
 
 LZO/4 offer the best performance and for swaps they are probably the best choices.
-You maybe have text based low impact directories such as `/var/log` or `/var/cache` where highly effective text compressors, such as deflate(zlib) and zstd are used in preference, with effective compression that can be up to 200% of what a LZ may achieve especially with text.
-With `/tmp` and `/run`, I am not so sure about incurring any further load on what can be small blisteringly fast ram mounted tmpfs as, if memory gets short, then zram swap will provide extra.
+You might have text based low impact directories such as `/var/log` or `/var/cache` where highly effective text compressors, such as deflate(zlib) and zstd preferable, with effective compression that can be up to 200% of what a LZ may achieve especially with text.
+With `/tmp` and `/run`, I am not so sure about incurring any further load on what can be a small blisteringly fast ram mounted tmpfs as, if memory gets short, then zram swap will provide extra.
 That way your system is performance optimized and also memory optimized via zram swap, with compression overhead of some common working directories.
 The choice is yours though and its very dependent on the loading you commonly run with.
 It is only at intense load the slight overhead of zram compression becomes noticeable.
@@ -215,7 +216,7 @@ Employing near memory based swaps needs tuning for near memory based swaps and t
 Depending on the average load zram will benefit from a setting of 80-100 and changing page-cache to 0 so that singular pages are written will greatly reduce latency.
 It is a shame swapiness is not dynamically based on load as for many systems there is often a huge difference in boot startup to settled load.
 In some cases you may find you are reducing swapiness purely because of boot load.
-Check the tests in <https://github.com/StuartIanNaylor/zram-config/tree/master/swap-performance> for results.
+Check the tests in <https://github.com/ecdye/zram-config/tree/master/swap-performance> for results.
 
 ### Uninstall
 
