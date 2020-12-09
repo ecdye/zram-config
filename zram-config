@@ -277,6 +277,48 @@ serviceConfiguration() {
 				fi
 			fi
 		else
+			if dpkg -s 'grafana' &> /dev/null && [[ $(systemctl is-active grafana-server.service) == "active" ]]; then
+				export grafanaActive="true"
+				if ! systemctl --no-block stop grafana-server.service; then
+					log "ERROR" "Failed to stop grafana service."
+					return 1
+				fi
+			fi
+			if dpkg -s 'influxdb' &> /dev/null && [[ $(systemctl is-active influxdb.service) == "active" ]]; then
+				export influxdbActive="true"
+				if ! systemctl --no-block stop influxdb.service; then
+					log "ERROR" "Failed to stop influxdb service."
+					return 1
+				fi
+			fi
+			if dpkg -s 'mosquitto' &> /dev/null && [[ $(systemctl is-active mosquitto.service) == "active" ]]; then
+				export mosquittoActive="true"
+				if ! systemctl --no-block stop mosquitto.service; then
+					log "ERROR" "Failed to stop mosquitto service."
+					return 1
+				fi
+			fi
+			if dpkg -s 'nginx' &> /dev/null && [[ $(systemctl is-active nginx.service) == "active" ]]; then
+				export nginxActive="true"
+				if ! systemctl --no-block stop nginx.service; then
+					log "ERROR" "Failed to stop nginx service."
+					return 1
+				fi
+			fi
+			if dpkg -s 'samba' &> /dev/null && [[ $(systemctl is-active smbd.service) == "active" ]]; then
+				export sambaActive="true"
+				if ! systemctl --no-block stop smbd.service nmbd.service; then
+					log "ERROR" "Failed to stop samba services."
+					return 1
+				fi
+			fi
+			if dpkg -s 'openhab' &> /dev/null && [[ $(systemctl is-active openhab.service) == "active" ]]; then
+				export openhabActive="true"
+				if ! systemctl --no-block stop openhab.service; then
+					log "ERROR" "Failed to stop openHAB service."
+					return 1
+				fi
+			fi
 			if [[ $(systemctl is-active rsyslog.service) == "active" ]]; then
 				export rsyslogActive="true"
 				if ! systemctl --no-block stop syslog.socket; then
@@ -313,6 +355,42 @@ serviceConfiguration() {
 		if [[ -n $syslogActiveAlpine ]]; then
 			if ! rc-service syslog start; then
 				log "ERROR" "Failed to start syslog service."
+				return 1
+			fi
+		fi
+		if [[ -n $openhabActive ]]; then
+			if ! systemctl --no-block restart openhab.service; then
+				log "ERROR" "Failed to restart openHAB service."
+				return 1
+			fi
+		fi
+		if [[ -n $sambaActive ]]; then
+			if ! systemctl --no-block restart smbd.service nmbd.service; then
+				log "ERROR" "Failed to restart samba services."
+				return 1
+			fi
+		fi
+		if [[ -n $nginxActive ]]; then
+			if ! systemctl --no-block restart nginx.service; then
+				log "ERROR" "Failed to restart nginx service."
+				return 1
+			fi
+		fi
+		if [[ -n $mosquittoActive ]]; then
+			if ! systemctl --no-block restart mosquitto.service; then
+				log "ERROR" "Failed to restart mosquitto service."
+				return 1
+			fi
+		fi
+		if [[ -n $influxdbActive ]]; then
+			if ! systemctl --no-block restart influxdb.service; then
+				log "ERROR" "Failed to restart influxdb service."
+				return 1
+			fi
+		fi
+		if [[ -n $grafanaActive ]]; then
+			if ! systemctl --no-block restart grafana-server.service; then
+				log "ERROR" "Failed to restart grafana service."
 				return 1
 			fi
 		fi
