@@ -9,7 +9,7 @@ zram-config implements zram to prevent frequent writing to the disk and allow ne
 A ztab table in `/etc/ztab` is used to configure where any combination and number of zram drives are to be created.
 This project uses an OverlayFS mount with zram so that syncFromDisk on start is not needed.
 In theory this should allow for faster boots and larger directories as no complete directory copy is needed as it is the lower mount in the OverlayFS.
-Many thanks go to @kmxz for the [overlayfs-tools](https://github.com/kmxz/overlayfs-tools) used to make this possible.
+Many thanks go to [@kmxz](https://github.com/kmxz) for the [overlayfs-tools](https://github.com/kmxz/overlayfs-tools) used to make this possible.
 
 zram-config also allows a 'kiosk mode' which allows loading the entire system root into zram.
 
@@ -37,7 +37,7 @@ Also if the OverlayFS guys would actually make some official merge/snapshot tool
 
 ```
 sudo apt-get install git
-git clone https://github.com/StuartIanNaylor/zram-config
+git clone https://github.com/ecdye/zram-config
 cd zram-config
 sudo ./install.bash
 ```
