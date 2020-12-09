@@ -1,5 +1,5 @@
 # zram-config
-![ShellCheck](https://github.com/ecdye/zram-config/workflows/shellcheck/badge.svg?branch=master)
+![ShellCheck](https://github.com/ecdye/zram-config/workflows/ShellCheck/badge.svg)
 
 ## Overview
 

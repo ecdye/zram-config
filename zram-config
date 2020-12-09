@@ -81,8 +81,8 @@ createZdir() {
 			mount --verbose --bind "${TARGET_DIR}/" "${ZDIR}${BIND_DIR}/" >> "$ZLOG" 2>&1 || return 1
 			mount --verbose --make-private "${ZDIR}${BIND_DIR}/" >> "$ZLOG" 2>&1 || return 1
 
-			dirMountOpt="$(awk -v a=${ZDIR}${BIND_DIR} '$2 == a {print $4}' /proc/mounts | head -1)"
-			dirFSType="$(awk -v a=${ZDIR}${BIND_DIR} '$2 == a {print $3}' /proc/mounts | head -1)"
+			dirMountOpt="$(awk -v a="${ZDIR}${BIND_DIR}" '$2 == a {print $4}' /proc/mounts | head -1)"
+			dirFSType="$(awk -v a="${ZDIR}${BIND_DIR}" '$2 == a {print $3}' /proc/mounts | head -1)"
 
 			echo "dirMountOpt: ${dirMountOpt}; dirFsType: ${dirFSType}" >> "$ZLOG"
 			createZdevice || return 1
@@ -234,9 +234,7 @@ enableZephemeral() {
 	if [[ $ZEPHEMERAL == "false" ]]; then
 		mkinitramfs -o /boot/initrd
 		sed -i '/root=PARTUUID/ s|$| init=/bin/ro-root.sh|' /boot/cmdline.txt
-		echo "initramfs initrd followkernel" >> /boot/config.txt
-		echo "ramfsfile=initrd" >> /boot/config.txt
-		echo "ramfsaddr=-1" >> /boot/config.txt
+		echo -e "initramfs initrd followkernel\\nramfsfile=initrd\\nramfsaddr=-1" >> /boot/config.txt
 		cp "${ZSHARE}/ro-root.sh" /bin/ro-root.sh
 		chown root:root /bin/ro-root.sh
 		chmod a+x /bin/ro-root.sh
@@ -287,6 +285,7 @@ case "$1" in
 					;;
 
 				*)
+					# shellcheck disable=SC2086
 					set -- $line
 					echo "ztab create ${1} ${2} ${3} ${4} ${5} ${6} ${7} ${8} ${9}" >> "$ZLOG"
 					ZTAB_EMPTY="false"
@@ -359,6 +358,7 @@ case "$1" in
 					;;
 
 				*)
+					# shellcheck disable=SC2086
 					set -- $line
 					echo "ztab remove ${1} ${2} ${3} ${4}" >> "$ZLOG"
 					case "$1" in
