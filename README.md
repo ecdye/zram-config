@@ -1,4 +1,5 @@
 # zram-config
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 ![ShellCheck](https://github.com/ecdye/zram-config/workflows/ShellCheck/badge.svg)
 
 ## Overview
@@ -13,7 +14,7 @@ Many thanks go to [@kmxz](https://github.com/kmxz) for the [overlayfs-tools](htt
 
 zram-config also allows a 'kiosk mode' which allows loading the entire system root into zram.
 
-The rationale for zram-config is that many distributions' `zram-config` packages are actually broken, even by name, as often they are a zram-swap-config package in reality.
+The rationale for zram-config is that many distributions have `zram-config` packages that are actually broken, even by name, as often they are a zram-swap-config package in reality.
 But even then they do not check for other zram services or change the parameters of swap from HD based configurations to ram optimized ones.
 If all you are looking for is a zram-swap utility see [zram-swap-config](https://github.com/StuartIanNaylor/zram-swap-config).
 
