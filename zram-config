@@ -204,6 +204,30 @@ serviceConfiguration() {
 				rc-service syslog stop &>> "$ZLOG" || return 1
 			fi
 		else
+			if dpkg -s 'grafana' &> /dev/null && [[ $(systemctl is-active grafana-server.service) == "active" ]]; then
+				export grafanaActive="true"
+				systemctl --no-block stop grafana-server.service >> "$ZLOG" 2>&1 || return 1
+			fi
+			if dpkg -s 'influxdb' &> /dev/null && [[ $(systemctl is-active influxdb.service) == "active" ]]; then
+				export influxdbActive="true"
+				systemctl --no-block stop influxdb.service >> "$ZLOG" 2>&1 || return 1
+			fi
+			if dpkg -s 'mosquitto' &> /dev/null && [[ $(systemctl is-active mosquitto.service) == "active" ]]; then
+				export mosquittoActive="true"
+				systemctl --no-block stop mosquitto.service >> "$ZLOG" 2>&1 || return 1
+			fi
+			if dpkg -s 'nginx' &> /dev/null && [[ $(systemctl is-active nginx.service) == "active" ]]; then
+				export nginxActive="true"
+				systemctl --no-block stop nginx.service >> "$ZLOG" 2>&1 || return 1
+			fi
+			if dpkg -s 'samba' &> /dev/null && [[ $(systemctl is-active smbd.service) == "active" ]]; then
+				export sambaActive="true"
+				systemctl --no-block stop smbd.service nmbd.service >> "$ZLOG" 2>&1 || return 1
+			fi
+			if dpkg -s 'openhab' &> /dev/null && [[ $(systemctl is-active openhab.service) == "active" ]]; then
+				export openhabActive="true"
+				systemctl --no-block stop openhab.service >> "$ZLOG" 2>&1 || return 1
+			fi
 			if [[ $(systemctl is-active rsyslog.service) == "active" ]]; then
 				export rsyslogActive="true"
 				systemctl --no-block stop syslog.socket &>> "$ZLOG" || return 1
@@ -224,6 +248,24 @@ serviceConfiguration() {
 		fi
 		if [[ -n $syslogActiveAlpine ]]; then
 			rc-service syslog start &>> "$ZLOG" || return 1
+		fi
+		if [[ -n $openhabActive ]]; then
+			systemctl --no-block restart openhab.service >> "$ZLOG" 2>&1 || return 1
+		fi
+		if [[ -n $sambaActive ]]; then
+			systemctl --no-block restart smbd.service nmbd.service >> "$ZLOG" 2>&1 || return 1
+		fi
+		if [[ -n $nginxActive ]]; then
+			systemctl --no-block restart nginx.service >> "$ZLOG" 2>&1 || return 1
+		fi
+		if [[ -n $mosquittoActive ]]; then
+			systemctl --no-block restart mosquitto.service >> "$ZLOG" 2>&1 || return 1
+		fi
+		if [[ -n $influxdbActive ]]; then
+			systemctl --no-block restart influxdb.service >> "$ZLOG" 2>&1 || return 1
+		fi
+		if [[ -n $grafanaActive ]]; then
+			systemctl --no-block restart grafana-server.service >> "$ZLOG" 2>&1 || return 1
 		fi
 	fi
 }
