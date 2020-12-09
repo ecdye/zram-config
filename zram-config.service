@@ -8,7 +8,7 @@ Type=oneshot
 TimeoutSec=300
 RemainAfterExit=yes
 ExecStart=/usr/local/sbin/zram-config "start"
-ExecStart=/usr/local/sbin/zram-config "stop"
+ExecStop=/usr/local/sbin/zram-config "stop"
 
 [Install]
 WantedBy=basic.target
