@@ -217,7 +217,7 @@ Employing near memory based swaps needs tuning for near memory based swaps and t
 Depending on the average load zram will benefit from a setting of 80-100 and changing page-cache to 0 so that singular pages are written will greatly reduce latency.
 It is a shame swapiness is not dynamically based on load as for many systems there is often a huge difference in boot startup to settled load.
 In some cases you may find you are reducing swapiness purely because of boot load.
-Check the tests in <https://github.com/ecdye/zram-config/tree/master/swap-performance> for results.
+Check the tests in <https://github.com/ecdye/zram-config/tree/main/swap-performance> for results.
 
 ### Uninstall
 

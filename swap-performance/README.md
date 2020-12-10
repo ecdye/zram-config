@@ -10,7 +10,7 @@ Overall load
 Last 2 minutes
 Last minute
 
-Really it needs far more datasets to be authorative but provides an approx reflections 
+Really it needs far more datasets to be authorative but provides an approx reflections
 
 _____
 
@@ -50,7 +50,7 @@ singular pages are written will greatly reduce latency.
 Its a shame swapiness is not dynamically based on load as for many systems there is often a huge difference
 in boot startup to settled load.
 In some cases you may find you are reducing swapiness purely because of boot load.
-https://github.com/StuartIanNaylor/zram-swap-config/tree/Swapiness-load-balancer has a branch with a crude 
+https://github.com/StuartIanNaylor/zram-swap-config/tree/Swapiness-load-balancer has a branch with a crude
 dynamic swapiness load balancer as reduction in swapiness can help intense load period but lose when load
 is less.
 Currently there is a LibreOffice spreadsheet for a Pi-3B(2015) and will also add Pi-Zero & Pi-3B+ tests later.
