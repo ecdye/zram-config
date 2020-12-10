@@ -38,7 +38,7 @@ Also if the OverlayFS guys would actually make some official merge/snapshot tool
 
 ```
 sudo apt-get install git
-git clone https://github.com/ecdye/zram-config
+git clone --recurse-submodules https://github.com/ecdye/zram-config
 cd zram-config
 sudo ./install.bash
 ```

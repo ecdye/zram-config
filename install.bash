@@ -17,7 +17,6 @@ if ! dpkg -s 'make' 'libattr1-dev' &> /dev/null; then
   apt-get install --yes make libattr1-dev || exit 1
 fi
 
-git clone https://github.com/kmxz/overlayfs-tools
 cd overlayfs-tools || exit 1
 make
 cd ..
