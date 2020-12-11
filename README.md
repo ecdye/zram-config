@@ -5,7 +5,7 @@
 ## Overview
 
 This is a complete zram-config utility for swap, directories, and logs to reduce SD, NAND and eMMC block wear.
-zram-config implements zram to prevent frequent writing to the disk and allow near ram speed acess to working directories with varying compression ratios depending on the compression algorithm.
+zram-config implements zram to prevent frequent writing to the disk and allow near ram speed access to working directories with varying compression ratios depending on the compression algorithm.
 
 A ztab table in `/etc/ztab` is used to configure where any combination and number of zram drives are to be created.
 This project uses an OverlayFS mount with zram so that syncFromDisk on start is not needed.
@@ -49,7 +49,7 @@ All configuration is done in the `/etc/ztab` file.
 
 Use `#` to comment out any line, add new drives with the first column providing the drive type and then drive details separated by tab characters.
 
-All algorithms in `/proc/crypto` are supported but only lzo and lz4 have zramctl text strings; lz4 is the fastest with deflate(zlib) having much better text compression.
+All algorithms in `/proc/crypto` are supported but only lzo, lzo-rle, lz4, and zstd have zramctl text strings; lz4 is the fastest with deflate(zlib) having much better text compression.
 
 `mem_limit` is the compressed memory limit and will set a hard memory limit for the system admin.
 
@@ -78,14 +78,15 @@ Once finished, restart zram using `systemctl restart zram-config.service`.
 #### Example configuration
 
 ```
-# swap  alg     mem_limit       disk_size       swap_priority   page-cluster    swappiness
-swap    lz4     400M            1200M           75              0               90
+# swap	alg		mem_limit	disk_size	swap_priority	page-cluster	swappiness
+swap	lzo-rle		250M		750M		75		0		80
 
-# dir   alg     mem_limit       disk_size       target_dir              bind_dir
-dir     lz4     50M             150M            /home/pi/MagicMirror    /magicmirror.bind
+# dir	alg		mem_limit	disk_size	target_dir		bind_dir
+#dir	lzo-rle		50M		150M		/home/pi		/pi.bind
 
-# log   alg     mem_limit       disk_size       target_dir              bind_dir                oldlog_dir
-log     lz4     20M             60M             /var/log                /log.bind               /oldlog
+# log	alg		mem_limit	disk_size	target_dir		bind_dir		oldlog_dir
+log	lzo-rle		50M		150M		/var/log		/log.bind		/opt/zram/oldlog
+
 ```
 
 ### Is it working?
@@ -165,8 +166,8 @@ To exit this mode run `sudo zram-config disable-ephemeral` and reboot.
 
 Credit to <https://blockdev.io/read-only-rpi/> and thanks to the original sources for another great script.
 
-You may need to reboot after the rpi-update and then mkinitramfs -o /boot/initrd as a newer kernel maybe updated.
-Check the 'Without NFS' section of <https://blockdev.io/read-only-rpi/> as many problems you may have require removal of the SD card and editing `/boot/cmdline.txt` removing the `init=/bin/ro-root.sh` entry.
+You may need to reboot after the rpi-update and then mkinitramfs -o /boot/initrd as a newer kernel maybe available.
+Check the 'Without NFS' section of <https://blockdev.io/read-only-rpi/> as many problems you may have require removal of the SD card and editing `/boot/cmdline.txt` to remove the `init=/bin/ro-root.sh` entry.
 
 ```
 pi@raspberrypi:~/zram-config $ df
@@ -192,13 +193,11 @@ NAME       ALGORITHM DISKSIZE  DATA  COMPR TOTAL STREAMS MOUNTPOINT
 
 ### Performance
 
-LZO/4 offer the best performance and for swaps they are probably the best choices.
-You might have text based low impact directories such as `/var/log` or `/var/cache` where highly effective text compressors, such as deflate(zlib) and zstd preferable, with effective compression that can be up to 200% of what a LZ may achieve especially with text.
-With `/tmp` and `/run`, I am not so sure about incurring any further load on what can be a small blisteringly fast ram mounted tmpfs as, if memory gets short, then zram swap will provide extra.
-That way your system is performance optimized and also memory optimized via zram swap, with compression overhead of some common working directories.
-The choice is yours though and its very dependent on the loading you commonly run with.
-It is only at intense load the slight overhead of zram compression becomes noticeable.
-A Pi-Zero obviously shows far more effect than a Pi-3B+ LZO-RLE has rolled out in the latest kernels and is the new default for zram, however I still don't know if that will change my own personal pick of LZ4.
+LZO-RLE offers the best performance and is probably the best choice, and from kernel 5.1 and onward it is the default.
+You might have text based low impact directories such as `/var/log` or `/var/cache` where highly effective text compressors, such as deflate(zlib) and zstd are optimal, with effective compression that can be up to 200% of what a LZO may achieve especially with text.
+With `/tmp` and `/run`, zram is unnecessary because of the blisteringly fast ram mounted `tmpfs` and, if memory gets short, then zram swap will provide extra.
+It is only under intense loads that the slight overhead of zram compression becomes noticeable.
+
 Until I can find another comparative benchmark that includes all this list is a good yardstick.
 
 | Compressor name  | Ratio | Compression | Decompress. |
@@ -212,12 +211,10 @@ Until I can find another comparative benchmark that includes all this list is a 
 | snappy 1.1.4     | 2.091 | 530 MB/s    | 1800 MB/s   |
 | lzf 3.6 -1       | 2.077 | 400 MB/s    | 860 MB/s    |
 
-With swaps zram changes what are static assumptions of HHD providing swaps in terms of swapiness and page-cache where default swapiness is 60 and page-cache is 3 to buffer page-writes of 8.
-Employing near memory based swaps needs tuning for near memory based swaps and the current defaults are far from optimized.
-Depending on the average load zram will benefit from a setting of 80-100 and changing page-cache to 0 so that singular pages are written will greatly reduce latency.
-It is a shame swapiness is not dynamically based on load as for many systems there is often a huge difference in boot startup to settled load.
-In some cases you may find you are reducing swapiness purely because of boot load.
-Check the tests in <https://github.com/ecdye/zram-config/tree/main/swap-performance> for results.
+With swap, zram changes what is normally a static assumption that a HD is providing the swap using `swapiness` and `page-cache` where default `swapiness` is 60 and page-cache is 3.
+Depending on the average load zram will benefit from a setting of 80-100 for `swapiness` and changing `page-cache` to 0 so that singular pages are written which will greatly reduce latency.
+It is a shame `swapiness` is not dynamically based on load as for many systems there is often a huge difference in boot startup to settled load.
+In some cases you may find you are reducing `swapiness` purely because of boot load.
 
 ### Uninstall
 
@@ -231,9 +228,9 @@ From the command line, enter `cd <path_to_local_repo>` so that you can enter com
 
 Enter `git add --all` at the command line to add the files or changes to the repository.
 
-Enter `git commit -m '<commit_message>'` at the command line to commit new files/changes to the local repository. For the <commit_message> , you can enter anything that describes the changes you are committing.
+Enter `git commit -ms '<commit_message>'` at the command line to commit new files/changes to the local repository. For the <commit_message> , you can enter anything that describes the changes you are committing.
 
-Enter `git push`  at the command line to copy your files from your local repository to remote.
+Enter `git push` at the command line to copy your files from your local repository to the remote.
 
 Please feel free to clone, copy and hack, post idea, issues, join and support a community.
 
