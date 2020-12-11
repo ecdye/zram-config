@@ -86,7 +86,6 @@ swap	lzo-rle		250M		750M		75		0		80
 
 # log	alg		mem_limit	disk_size	target_dir		bind_dir		oldlog_dir
 log	lzo-rle		50M		150M		/var/log		/log.bind		/opt/zram/oldlog
-
 ```
 
 ### Is it working?
