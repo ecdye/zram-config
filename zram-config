@@ -140,8 +140,6 @@ removeZlog() {
 	fi
 
 	echo "$ZRAM_DEV" >> "$ZLOG"
-	local DEV_NUM
-	DEV_NUM="$(echo "$ZRAM_DEV" | tr -dc '0-9')"
 
 	if [[ -n $TARGET_DIR ]]; then
 		if [[ $(systemctl is-active rsyslog.service) == "active" ]]; then
@@ -158,15 +156,18 @@ removeZlog() {
 	mergeOverlay >> "$ZLOG" 2>&1 || return 1
 
 	if [[ -n $ZRAM_DEV ]]; then
-		umount --verbose "${ZDIR}${ZRAM_DEV}/" >> "$ZLOG" 2>&1 || return 1
-		umount "overlay${DEV_NUM}" >> "$ZLOG" 2>&1 || return 1
+		if ! (umount --verbose "${ZDIR}${ZRAM_DEV}/" >> "$ZLOG" 2>&1); then
+			umount --verbose --lazy "${ZDIR}${ZRAM_DEV}/" >> "$ZLOG" 2>&1 || return 1
+		fi
 		rm -rfv "${ZDIR}${ZRAM_DEV}" >> "$ZLOG" 2>&1 || return 1
 	else
 		return 1
 	fi
 
 	if [[ -n $BIND_DIR ]]; then
-		umount --verbose "${ZDIR}${BIND_DIR}/" >> "$ZLOG" 2>&1 || return 1
+		if ! (umount --verbose "${ZDIR}${BIND_DIR}/" >> "$ZLOG" 2>&1); then
+			umount --verbose --lazy "${ZDIR}${BIND_DIR}/" >> "$ZLOG" 2>&1 || return 1
+		fi
 		rm -rfv "${ZDIR}${BIND_DIR}" >> "$ZLOG" 2>&1 || return 1
 	else
 		return 1
@@ -176,7 +177,6 @@ removeZlog() {
 		systemctl stop rsyslog.service >> "$ZLOG" 2>&1 || return 1
 	fi
 
-	echo "$DEV_NUM" > /sys/class/zram-control/hot_remove
 	zramctl -r "/dev${ZRAM_DEV}" >> "$ZLOG" 2>&1 || return 1
 
 	systemctl restart rsyslog.service >> "$ZLOG" 2>&1 || return 1
@@ -187,8 +187,6 @@ removeZlog() {
 
 removeZdir() {
 	echo "$ZRAM_DEV" >> "$ZLOG"
-	local DEV_NUM
-	DEV_NUM="$(echo "$ZRAM_DEV" | tr -dc '0-9')"
 
 	if [[ -n "$TARGET_DIR" ]]; then
 		if ! (umount --verbose "${TARGET_DIR}/" >> "$ZLOG" 2>&1); then
@@ -201,32 +199,33 @@ removeZdir() {
 	mergeOverlay >> "$ZLOG" 2>&1 || return 1
 
 	if [[ -n $ZRAM_DEV ]]; then
-		umount --verbose "${ZDIR}${ZRAM_DEV}/" >> "$ZLOG" 2>&1 || return 1
-		umount "overlay${DEV_NUM}" >> "$ZLOG" 2>&1 || return 1
+		if ! (umount --verbose "${ZDIR}${ZRAM_DEV}/" >> "$ZLOG" 2>&1); then
+			umount --verbose --lazy "${ZDIR}${ZRAM_DEV}/" >> "$ZLOG" 2>&1 || return 1
+		fi
 		rm -rfv "${ZDIR}${ZRAM_DEV}" >> "$ZLOG" 2>&1 || return 1
 	else
 		return 1
 	fi
 
 	if [[ -n $BIND_DIR ]]; then
-		umount --verbose "${ZDIR}${BIND_DIR}/" >> "$ZLOG" 2>&1 || return 1
+		if ! (umount --verbose "${ZDIR}${BIND_DIR}/" >> "$ZLOG" 2>&1); then
+			umount --verbose --lazy "${ZDIR}${BIND_DIR}/" >> "$ZLOG" 2>&1 || return 1
+		fi
 		rm -rfv "${ZDIR}${BIND_DIR}" >> "$ZLOG" 2>&1 || return 1
 	else
 		return 1
 	fi
 
-	echo "$DEV_NUM" > /sys/class/zram-control/hot_remove
 	zramctl -r "/dev${ZRAM_DEV}" >> "$ZLOG" 2>&1 || return 1
+
 	echo "/dev$ZRAM_DEV removed" >> "$ZLOG"
 }
 
 removeZswap() {
-	local DEV_NUM
-	DEV_NUM="$(echo "$ZRAM_DEV" | tr -dc '0-9')"
-
 	swapoff "/dev${ZRAM_DEV}" >> "$ZLOG" 2>&1 || return 1
-	echo "$DEV_NUM" > /sys/class/zram-control/hot_remove
+
 	zramctl -r "/dev${ZRAM_DEV}" >> "$ZLOG" 2>&1 || return 1
+
 	echo "/dev$ZRAM_DEV removed" >> "$ZLOG"
 }
 
