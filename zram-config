@@ -253,11 +253,11 @@ serviceConfiguration() {
 		fi
 	elif [[ $1 == "start" ]]; then
 		echo "Restarting services that interfere with zram device configuration" >> "$ZLOG"
-		if [[ -n $rsyslogActive ]]; then
-			systemctl restart syslog.socket rsyslog.service >> "$ZLOG" 2>&1 || return 1
-		fi
 		if [[ -n $journaldActive ]]; then
 			systemctl restart systemd-journald.socket systemd-journald-audit.socket systemd-journald-dev-log.socket systemd-journald.service >> "$ZLOG" 2>&1 || return 1
+		fi
+		if [[ -n $rsyslogActive ]]; then
+			systemctl restart syslog.socket rsyslog.service >> "$ZLOG" 2>&1 || return 1
 		fi
 	fi
 }
