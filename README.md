@@ -218,7 +218,7 @@ In some cases you may find you are reducing `swapiness` purely because of boot l
 ### Uninstall
 
 ```
-sudo /usr/local/share/zram-config/uninstall.sh
+sudo /usr/local/share/zram-config/uninstall.bash
 ```
 
 ### Git Branches & Update

@@ -2,7 +2,7 @@
 # shellcheck disable=SC2140,SC2210
 set -x
 
-TMPDIR=/tmp
+TMPDIR="/tmp"
 
 createZdevice() {
 	# Check Zram Class created
@@ -108,13 +108,7 @@ createZdir() {
 }
 
 createZlog() {
-	if [[ $(systemctl is-active rsyslog.service) == "active" ]]; then
-		systemctl stop rsyslog.service >> "$ZLOG" 2>&1 || return 1
-	fi
-
 	createZdir
-
-	systemctl restart rsyslog.service >> "$ZLOG" 2>&1 || return 1
 
 	journalctl --flush >> "$ZLOG" 2>&1 || return 1
 
@@ -142,10 +136,6 @@ removeZlog() {
 	echo "$ZRAM_DEV" >> "$ZLOG"
 
 	if [[ -n $TARGET_DIR ]]; then
-		if [[ $(systemctl is-active rsyslog.service) == "active" ]]; then
-			systemctl stop rsyslog.service >> "$ZLOG" 2>&1 || return 1
-		fi
-
 		if ! (umount --verbose "${TARGET_DIR}/" >> "$ZLOG" 2>&1); then
 			umount --verbose --lazy "${TARGET_DIR}/" >> "$ZLOG" 2>&1 || return 1
 		fi
@@ -173,13 +163,7 @@ removeZlog() {
 		return 1
 	fi
 
-	if [[ $(systemctl is-active rsyslog.service) == "active" ]]; then
-		systemctl stop rsyslog.service >> "$ZLOG" 2>&1 || return 1
-	fi
-
 	zramctl -r "/dev${ZRAM_DEV}" >> "$ZLOG" 2>&1 || return 1
-
-	systemctl restart rsyslog.service >> "$ZLOG" 2>&1 || return 1
 
 	journalctl --flush >> "$ZLOG" 2>&1 || return 1
 	echo "/dev$ZRAM_DEV removed" >> "$ZLOG"
@@ -256,6 +240,28 @@ disableZephemeral() {
 	fi
 }
 
+serviceConfiguration() {
+	if [[ $1 == "stop" ]]; then
+		echo "Stopping services that interfere with zram device configuration" >> "$ZLOG"
+		if [[ $(systemctl is-active rsyslog.service) == "active" ]]; then
+			export rsyslogActive="true"
+			systemctl stop syslog.socket rsyslog.service >> "$ZLOG" 2>&1 || return 1
+		fi
+		if [[ $(systemctl is-active systemd-journald.service) == "active" ]]; then
+			export journaldActive="true"
+			systemctl stop systemd-journald.socket systemd-journald-audit.socket systemd-journald-dev-log.socket systemd-journald.service >> "$ZLOG" 2>&1 || return 1
+		fi
+	elif [[ $1 == "start" ]]; then
+		echo "Restarting services that interfere with zram device configuration" >> "$ZLOG"
+		if [[ -n $rsyslogActive ]]; then
+			systemctl restart syslog.socket rsyslog.service >> "$ZLOG" 2>&1 || return 1
+		fi
+		if [[ -n $journaldActive ]]; then
+			systemctl restart systemd-journald.socket systemd-journald-audit.socket systemd-journald-dev-log.socket systemd-journald.service >> "$ZLOG" 2>&1 || return 1
+		fi
+	fi
+}
+
 ZSHARE="/usr/local/share/zram-config"
 ZLOG="${ZSHARE}/log/zram-config.log"
 ZDIR="/opt/zram"
@@ -327,6 +333,7 @@ case "$1" in
 							BIND_DIR="$6"
 							OLDLOG_DIR="$7"
 							if [[ $ZEPHEMERAL == "false" ]]; then
+								serviceConfiguration "stop"
 								createZlog
 							fi
 							;;
@@ -380,6 +387,7 @@ case "$1" in
 							TARGET_DIR="$3"
 							BIND_DIR="$4"
 							if [[ $ZEPHEMERAL == "false" ]]; then
+								serviceConfiguration "stop"
 								removeZlog
 							fi
 							;;
@@ -403,3 +411,4 @@ case "$1" in
 		exit 1
 		;;
 esac
+serviceConfiguration "start"
