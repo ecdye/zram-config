@@ -25,6 +25,11 @@ jobs:
            echo "ShellCheck install.bash..."
            if shellcheck -x -s bash install.bash; then echo "OK"; else echo "FAILED"; exit 1; fi
          shell: bash
+       - name: "ShellCheck update.bash"
+         run: |
+           echo "ShellCheck update.bash..."
+           if shellcheck -x -s bash update.bash; then echo "OK"; else echo "FAILED"; exit 1; fi
+         shell: bash
        - name: "ShellCheck uninstall.bash"
          run: |
            echo "ShellCheck uninstall.bash..."

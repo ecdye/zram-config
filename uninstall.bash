@@ -4,8 +4,13 @@ if [[ "$(id -u)" -ne 0 ]]; then
   echo "ERROR: You need to be ROOT (sudo can be used)."
   exit 1
 fi
+if ! [[ -f /usr/local/sbin/zram-config ]]; then
+  echo "ERROR: zram-config is not installed."
+  exit 1
+fi
 
-systemctl disable --now zram-config.service
+zram-config "stop"
+systemctl disable zram-config.service
 rm -f /etc/systemd/system/zram-config.service
 systemctl daemon-reload
 rm -f /usr/local/sbin/zram-config
@@ -14,4 +19,4 @@ rm -f /etc/ztab
 rm -rf /usr/local/lib/zram-config
 rm -rf /usr/local/share/zram-config
 
-echo "##### Reboot isn't needed #####"
+echo "#####   Reboot isn't needed   #####"

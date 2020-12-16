@@ -27,11 +27,13 @@ Also if the OverlayFS guys would actually make some official merge/snapshot tool
 ### Table of Contents
 
 1. [Install](#install)
-2. [Configure](#customize)
+2. [Update](#update)
+3. [Uninstall](#uninstall)
+4. [Configure](#customize)
    - [Example configuration](#example-configuration)
-3. [Is it working?](#is-it-working)
-4. [Kiosk mode](#kiosk-mode)
-5. [Uninstall](#uninstall)
+5. [Is it working?](#is-it-working)
+6. [Kiosk mode](#kiosk-mode)
+
 
 
 ### Install
@@ -54,6 +56,19 @@ sudo systemctl stop zram-config.service
 because of issues with the way systemd works with zram logging.
 
 The service will stop normally on reboot, there is no need to manually stop it.
+
+### Update
+
+```
+cd /path/to/zram-config/
+sudo ./update.bash
+```
+
+### Uninstall
+
+```
+sudo /usr/local/share/zram-config/uninstall.bash
+```
 
 ### Configure
 
@@ -226,12 +241,6 @@ With swap, zram changes what is normally a static assumption that a HD is provid
 Depending on the average load zram will benefit from a setting of 80-100 for `swapiness` and changing `page-cache` to 0 so that singular pages are written which will greatly reduce latency.
 It is a shame `swapiness` is not dynamically based on load as for many systems there is often a huge difference in boot startup to settled load.
 In some cases you may find you are reducing `swapiness` purely because of boot load.
-
-### Uninstall
-
-```
-sudo /usr/local/share/zram-config/uninstall.bash
-```
 
 ### Git Branches & Update
 
