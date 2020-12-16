@@ -105,12 +105,6 @@ createZdir() {
 		echo "No bind directory provided in ztab" >> "$ZLOG"
 		return 1
 	fi
-}
-
-createZlog() {
-	createZdir
-
-	journalctl --flush >> "$ZLOG" 2>&1 || return 1
 
 	if [[ -n $OLDLOG_DIR ]]; then
 		echo -e "olddir ${OLDLOG_DIR}\\ncreateolddir 755 root root\\nrenamecopy" > /etc/logrotate.d/00_oldlog
@@ -128,7 +122,7 @@ mergeOverlay() {
 	rm -fv -- *.sh >> "$ZLOG" 2>&1 || return 1
 }
 
-removeZlog() {
+removeZdir() {
 	if [[ -n $OLDLOG_DIR ]]; then
 		rm -f /etc/logrotate.d/00_oldlog
 	fi
@@ -136,43 +130,6 @@ removeZlog() {
 	echo "$ZRAM_DEV" >> "$ZLOG"
 
 	if [[ -n $TARGET_DIR ]]; then
-		if ! (umount --verbose "${TARGET_DIR}/" >> "$ZLOG" 2>&1); then
-			umount --verbose --lazy "${TARGET_DIR}/" >> "$ZLOG" 2>&1 || return 1
-		fi
-	else
-		return 1
-	fi
-
-	mergeOverlay >> "$ZLOG" 2>&1 || return 1
-
-	if [[ -n $ZRAM_DEV ]]; then
-		if ! (umount --verbose "${ZDIR}${ZRAM_DEV}/" >> "$ZLOG" 2>&1); then
-			umount --verbose --lazy "${ZDIR}${ZRAM_DEV}/" >> "$ZLOG" 2>&1 || return 1
-		fi
-		rm -rfv "${ZDIR}${ZRAM_DEV}" >> "$ZLOG" 2>&1 || return 1
-	else
-		return 1
-	fi
-
-	if [[ -n $BIND_DIR ]]; then
-		if ! (umount --verbose "${ZDIR}${BIND_DIR}/" >> "$ZLOG" 2>&1); then
-			umount --verbose --lazy "${ZDIR}${BIND_DIR}/" >> "$ZLOG" 2>&1 || return 1
-		fi
-		rm -rfv "${ZDIR}${BIND_DIR}" >> "$ZLOG" 2>&1 || return 1
-	else
-		return 1
-	fi
-
-	zramctl -r "/dev${ZRAM_DEV}" >> "$ZLOG" 2>&1 || return 1
-
-	journalctl --flush >> "$ZLOG" 2>&1 || return 1
-	echo "/dev$ZRAM_DEV removed" >> "$ZLOG"
-}
-
-removeZdir() {
-	echo "$ZRAM_DEV" >> "$ZLOG"
-
-	if [[ -n "$TARGET_DIR" ]]; then
 		if ! (umount --verbose "${TARGET_DIR}/" >> "$ZLOG" 2>&1); then
 			umount --verbose --lazy "${TARGET_DIR}/" >> "$ZLOG" 2>&1 || return 1
 		fi
@@ -245,19 +202,20 @@ serviceConfiguration() {
 		echo "Stopping services that interfere with zram device configuration" >> "$ZLOG"
 		if [[ $(systemctl is-active rsyslog.service) == "active" ]]; then
 			export rsyslogActive="true"
-			systemctl stop syslog.socket rsyslog.service >> "$ZLOG" 2>&1 || return 1
+			systemctl stop syslog.socket >> "$ZLOG" 2>&1 || return 1
 		fi
 		if [[ $(systemctl is-active systemd-journald.service) == "active" ]]; then
 			export journaldActive="true"
-			systemctl stop systemd-journald.socket systemd-journald-audit.socket systemd-journald-dev-log.socket systemd-journald.service >> "$ZLOG" 2>&1 || return 1
+			journalctl --flush >> "$ZLOG" 2>&1 || return 1
+			systemctl stop systemd-journald.socket systemd-journald-audit.socket systemd-journald-dev-log.socket >> "$ZLOG" 2>&1 || return 1
 		fi
 	elif [[ $1 == "start" ]]; then
 		echo "Restarting services that interfere with zram device configuration" >> "$ZLOG"
 		if [[ -n $journaldActive ]]; then
-			systemctl restart systemd-journald.socket systemd-journald-audit.socket systemd-journald-dev-log.socket systemd-journald.service >> "$ZLOG" 2>&1 || return 1
+			systemctl restart systemd-journald.socket systemd-journald-audit.socket systemd-journald-dev-log.socket >> "$ZLOG" 2>&1 || return 1
 		fi
 		if [[ -n $rsyslogActive ]]; then
-			systemctl restart syslog.socket rsyslog.service >> "$ZLOG" 2>&1 || return 1
+			systemctl restart syslog.socket >> "$ZLOG" 2>&1 || return 1
 		fi
 	fi
 }
@@ -334,7 +292,7 @@ case "$1" in
 							OLDLOG_DIR="$7"
 							if [[ $ZEPHEMERAL == "false" ]]; then
 								serviceConfiguration "stop"
-								createZlog
+								createZdir
 							fi
 							;;
 					esac
@@ -388,7 +346,7 @@ case "$1" in
 							BIND_DIR="$4"
 							if [[ $ZEPHEMERAL == "false" ]]; then
 								serviceConfiguration "stop"
-								removeZlog
+								removeZdir
 							fi
 							;;
 					esac

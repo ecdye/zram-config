@@ -4,7 +4,7 @@ After=local-fs.target
 Before=reboot.target halt.target shutdown.target poweroff.target
 
 [Service]
-Type=oneshot
+Type=simple
 TimeoutSec=300
 RemainAfterExit=yes
 ExecStart=/usr/local/sbin/zram-config "start"
