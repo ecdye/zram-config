@@ -307,7 +307,7 @@ case "$1" in
 
 	stop)
 		if [[ $(systemctl is-active zram-config.service) == "active" ]]; then
-			systemctl kill zram-config.service >> "$ZLOG" 2>&1 || return 1
+			systemctl stop zram-config.service & systemctl kill zram-config.service >> "$ZLOG" 2>&1 || return 1
 		fi
 		echo "zram-config stop $(date +%Y-%m-%d-%H:%M:%S)" >> "$ZLOG"
 		tac "${TMPDIR}"/zram-device-list > "${TMPDIR}"/zram-device-list.rev
