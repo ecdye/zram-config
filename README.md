@@ -43,6 +43,18 @@ cd zram-config
 sudo ./install.bash
 ```
 
+Note: The recommended way to stop the `zram-config.service` is to run
+```
+sudo zram-config "stop"
+```
+NOT
+```
+sudo systemctl stop zram-config.service
+```
+because of issues with the way systemd works with zram logging.
+
+The service will stop normally on reboot, there is no need to manually stop it.
+
 ### Configure
 
 All configuration is done in the `/etc/ztab` file.
