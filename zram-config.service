@@ -9,6 +9,7 @@ TimeoutSec=300
 RemainAfterExit=yes
 ExecStart=/usr/local/sbin/zram-config "start"
 ExecStop=/usr/local/sbin/zram-config "stop"
+TimeoutStopSec=1800s
 
 [Install]
 WantedBy=basic.target
