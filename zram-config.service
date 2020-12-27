@@ -5,7 +5,8 @@ Before=reboot.target halt.target shutdown.target poweroff.target
 
 [Service]
 Type=simple
-TimeoutSec=300
+TimeoutStartSec=300
+TimeoutStopSec=1800
 RemainAfterExit=yes
 ExecStart=/usr/local/sbin/zram-config "start"
 ExecStop=/usr/local/sbin/zram-config "stop"
