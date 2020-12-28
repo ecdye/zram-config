@@ -223,6 +223,9 @@ serviceConfiguration() {
 ZSHARE="/usr/local/share/zram-config"
 ZLOG="${ZSHARE}/log/zram-config.log"
 ZDIR="/opt/zram"
+if [[ $2 == "shutdown" ]]; then
+  SERVICE="1"
+fi
 if [[ -f /boot/cmdline.txt ]] && grep -qs "init=/bin/ro-root.sh" /boot/cmdline.txt; then
 	ZEPHEMERAL="true"
 else
@@ -282,6 +285,7 @@ case "$1" in
 							TARGET_DIR="$5"
 							BIND_DIR="$6"
 							if [[ $ZEPHEMERAL == "false" ]]; then
+								serviceConfiguration "stop"
 								createZdir
 							fi
 							;;
@@ -339,6 +343,9 @@ case "$1" in
 							TARGET_DIR="$3"
 							BIND_DIR="$4"
 							if [[ $ZEPHEMERAL == "false" ]]; then
+								if [[ -z $SERVICE ]]; then
+									serviceConfiguration "stop"
+								fi
 								removeZdir
 							fi
 							;;
@@ -348,7 +355,9 @@ case "$1" in
 							TARGET_DIR="$3"
 							BIND_DIR="$4"
 							if [[ $ZEPHEMERAL == "false" ]]; then
-								serviceConfiguration "stop"
+								if [[ -z $SERVICE ]]; then
+									serviceConfiguration "stop"
+								fi
 								removeZdir
 							fi
 							;;
@@ -372,4 +381,6 @@ case "$1" in
 		exit 1
 		;;
 esac
-serviceConfiguration "start"
+if [[ -z $SERVICE ]]; then
+	serviceConfiguration "start"
+fi
