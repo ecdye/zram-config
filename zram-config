@@ -5,31 +5,12 @@ set -x
 TMPDIR="/tmp"
 
 createZdevice() {
-	# Check Zram Class created
-	if ! [[ -d "/sys/class/zram-control" ]]; then
-		modprobe --verbose zram >> "$ZLOG" 2>&1 || return 1
-		RAM_DEV='0'
-	else
-		RAM_DEV="$(cat /sys/class/zram-control/hot_add)"
-	fi
+	RAM_DEV="$(zramctl -f -s "$MEM_SIZE" -a "$ALG" | tr -dc '0-9')"
 
 	if [[ -n $MEM_SIZE ]]; then
 		echo "$MEM_SIZE" > "/sys/block/zram${RAM_DEV}/mem_limit"
 	else
 		echo "zram${RAM_DEV} no mem_limit" >> "$ZLOG"
-	fi
-
-	if [[ -n $DISK_SIZE ]]; then
-		echo "$DISK_SIZE" > "/sys/block/zram${RAM_DEV}/disksize"
-	else
-		echo "zram${RAM_DEV} no disksize" >> "$ZLOG"
-		return 1
-	fi
-
-	if [[ -n $ALG ]]; then
-		echo "$ALG" > "/sys/block/zram${RAM_DEV}/comp_algorithm"
-	else
-		echo "zram${RAM_DEV} no comp_algorithm" >> "$ZLOG"
 	fi
 
 	echo "zram${RAM_DEV} created comp_algorithm=${ALG} mem_limit=${MEM_SIZE} disksize=${DISK_SIZE}" >> "$ZLOG"
