@@ -5,6 +5,10 @@ set -x
 TMPDIR="/tmp"
 
 createZdevice() {
+	if ! [[ -d "/sys/class/zram-control" ]]; then
+		modprobe --verbose zram >> "$ZLOG" 2>&1 || return 1
+	fi
+	
 	RAM_DEV="$(zramctl -f -s "$MEM_SIZE" -a "$ALG" | tr -dc '0-9')"
 
 	if [[ -n $MEM_SIZE ]]; then
