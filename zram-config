@@ -8,7 +8,7 @@ createZdevice() {
 	if ! [[ -d "/sys/class/zram-control" ]]; then
 		modprobe --verbose zram >> "$ZLOG" 2>&1 || return 1
 	fi
-	
+
 	RAM_DEV="$(zramctl -f -s "$MEM_SIZE" -a "$ALG" | tr -dc '0-9')"
 
 	if [[ -n $MEM_SIZE ]]; then
@@ -91,7 +91,7 @@ createZdir() {
 		return 1
 	fi
 
-	if [[ -n $OLDLOG_DIR ]]; then
+	if [[ $ZTYPE == "log" ]] && [[ -n $OLDLOG_DIR ]]; then
 		echo -e "olddir ${OLDLOG_DIR}\\ncreateolddir 755 root root\\nrenamecopy" > /etc/logrotate.d/00_oldlog
 	else
 		echo "createZlog: no oldlog directory provided in ztab" >> "$ZLOG"
