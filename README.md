@@ -26,19 +26,21 @@ Also if the OverlayFS guys would actually make some official merge/snapshot tool
 
 ### Table of Contents
 
-1. [Install](#install)
-2. [Update](#update)
-3. [Uninstall](#uninstall)
-4. [Configure](#customize)
-   - [Example configuration](#example-configuration)
-5. [Is it working?](#is-it-working)
-6. [Kiosk mode](#kiosk-mode)
+1.  [Install](#install)
+2.  [Update](#update)
+3.  [Uninstall](#uninstall)
+4.  [Configure](#customize)
+    -   [Example configuration](#example-configuration)
+5.  [Is it working?](#is-it-working)
+6.  [Kiosk mode](#kiosk-mode)
+7.  [Performance](#performance)
+8.  [Reference](#reference)
 
 
 
 ### Install
 
-```
+``` shell
 sudo apt-get install git
 git clone --recurse-submodules https://github.com/ecdye/zram-config
 cd zram-config
@@ -46,11 +48,11 @@ sudo ./install.bash
 ```
 
 Note: The recommended way to stop the `zram-config.service` is to run
-```
+``` shell
 sudo zram-config "stop"
 ```
-NOT
-```
+**NOT**
+``` shell
 sudo systemctl stop zram-config.service
 ```
 because of issues with the way systemd works with zram logging.
@@ -59,14 +61,14 @@ The service will stop normally on reboot, there is no need to manually stop it.
 
 ### Update
 
-```
+``` shell
 cd /path/to/zram-config/
 sudo ./update.bash
 ```
 
 ### Uninstall
 
-```
+``` shell
 sudo /usr/local/share/zram-config/uninstall.bash
 ```
 
@@ -76,7 +78,7 @@ All configuration is done in the `/etc/ztab` file.
 
 Use `#` to comment out any line, add new drives with the first column providing the drive type and then drive details separated by tab characters.
 
-All algorithms in `/proc/crypto` are supported but only lzo, lzo-rle, lz4, and zstd have zramctl text strings; lz4 is the fastest with deflate(zlib) having much better text compression.
+All algorithms in `/proc/crypto` are supported but only `lzo-rle`, `lzo`, `lz4`, and `zstd` have zramctl text strings; `lzo-rle` is the fastest with `zstd` having much better text compression.
 
 `mem_limit` is the compressed memory limit and will set a hard memory limit for the system admin.
 
@@ -99,8 +101,8 @@ Usually in `/opt` or `/var`, name optional.
 Usually in `/opt` or `/var`, name optional.
 
 If you need multiple zram swaps or zram directories, just create another entry in `/etc/ztab`.
-To do this safely, first stop zram using `systemctl stop zram-config.service`, then edit `/etc/ztab`.
-Once finished, restart zram using `systemctl restart zram-config.service`.
+To do this safely, first stop zram using `sudo zram-config "stop"`, then edit `/etc/ztab`.
+Once finished, restart zram using `sudo systemctl start zram-config.service`.
 
 #### Example configuration
 
@@ -187,7 +189,7 @@ KiB Swap:  1331192 total,  1331192 free,        0 used.   412052 avail Mem
 
 zram-config also allows a 'kiosk mode' which allows loading the entire system root into zram.
 To enter this mode run `sudo zram-config enable-ephemeral` and reboot.
-There is no sync and zdir/zlog entries will be ignored as they are already included.
+There is no sync and zdir / zlog entries will be ignored as they are already included.
 To exit this mode run `sudo zram-config disable-ephemeral` and reboot.
 
 Credit to <https://blockdev.io/read-only-rpi/> and thanks to the original sources for another great script.
@@ -220,7 +222,7 @@ NAME       ALGORITHM DISKSIZE  DATA  COMPR TOTAL STREAMS MOUNTPOINT
 ### Performance
 
 LZO-RLE offers the best performance and is probably the best choice, and from kernel 5.1 and onward it is the default.
-You might have text based low impact directories such as `/var/log` or `/var/cache` where highly effective text compressors, such as deflate(zlib) and zstd are optimal, with effective compression that can be up to 200% of what a LZO may achieve especially with text.
+You might have text based low impact directories such as `/var/log` or `/var/cache` where a highly effective text compressor such as zstd is optimal, with effective compression that can be up to 200% of what LZO may achieve especially with text.
 With `/tmp` and `/run`, zram is unnecessary because of the blisteringly fast ram mounted `tmpfs` and, if memory gets short, then zram swap will provide extra.
 It is only under intense loads that the slight overhead of zram compression becomes noticeable.
 
@@ -228,31 +230,19 @@ Until I can find another comparative benchmark that includes all this list is a 
 
 | Compressor name  | Ratio | Compression | Decompress. |
 |:-----------------|:------|:------------|:------------|
-| zstd 1.3.4 -1    | 2.877 | 470 MB/s    | 1380 MB/s   |
-| zlib 1.2.11 -1   | 2.743 | 110 MB/s    | 400 MB/s    |
-| brotli 1.0.2 -0  | 2.701 | 410 MB/s    | 430 MB/s    |
-| quicklz 1.5.0 -1 | 2.238 | 550 MB/s    | 710 MB/s    |
-| lzo1x 2.09 -1    | 2.108 | 650 MB/s    | 830 MB/s    |
-| lz4 1.8.1        | 2.101 | 750 MB/s    | 3700 MB/s   |
-| snappy 1.1.4     | 2.091 | 530 MB/s    | 1800 MB/s   |
-| lzf 3.6 -1       | 2.077 | 400 MB/s    | 860 MB/s    |
+| zstd 1.4.5 -1    | 2.884 | 500 MB/s    | 1660 MB/s   |
+| zlib 1.2.11 -1   | 2.743 | 90 MB/s     | 400 MB/s    |
+| brotli 1.0.7 -0  | 2.703 | 400 MB/s    | 450 MB/s    |
+| quicklz 1.5.0 -1 | 2.238 | 560 MB/s    | 710 MB/s    |
+| lzo1x 2.10 -1    | 2.106 | 690 MB/s    | 820 MB/s    |
+| lz4 1.9.2        | 2.101 | 740 MB/s    | 4530 MB/s   |
+| lzf 3.6 -1       | 2.077 | 410 MB/s    | 860 MB/s    |
+| snappy 1.1.8     | 2.073 | 560 MB/s    | 1790 MB/s   |
 
 With swap, zram changes what is normally a static assumption that a HD is providing the swap using `swapiness` and `page-cache` where default `swapiness` is 60 and page-cache is 3.
 Depending on the average load zram will benefit from a setting of 80-100 for `swapiness` and changing `page-cache` to 0 so that singular pages are written which will greatly reduce latency.
 It is a shame `swapiness` is not dynamically based on load as for many systems there is often a huge difference in boot startup to settled load.
 In some cases you may find you are reducing `swapiness` purely because of boot load.
-
-### Git Branches & Update
-
-From the command line, enter `cd <path_to_local_repo>` so that you can enter commands for your repository.
-
-Enter `git add --all` at the command line to add the files or changes to the repository.
-
-Enter `git commit -ms '<commit_message>'` at the command line to commit new files/changes to the local repository. For the <commit_message> , you can enter anything that describes the changes you are committing.
-
-Enter `git push` at the command line to copy your files from your local repository to the remote.
-
-Please feel free to clone, copy and hack, post idea, issues, join and support a community.
 
 ### Reference
 
