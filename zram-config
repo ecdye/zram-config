@@ -9,7 +9,18 @@ createZdevice() {
 		modprobe --verbose zram >> "$ZLOG" 2>&1 || return 1
 	fi
 
-	RAM_DEV="$(zramctl -f -s "$MEM_SIZE" -a "$ALG" | tr -dc '0-9')"
+	RAM_DEV="$(zramctl --find | tr -dc '0-9')"
+
+	if [[ -z $RAM_DEV ]]; then
+		echo "Failed to find an open zram device, trying one more time!"
+		RAM_DEV="$(zramctl --find | tr -dc '0-9')"
+		if [[ -z $RAM_DEV ]]; then
+			echo "Still failed to find an open zram device, stopping creation!"
+			return 1
+		fi
+	fi
+
+	zramctl --size "$MEM_SIZE" --algorithm "$ALG" "/dev/zram${RAM_DEV}"
 
 	if [[ -n $MEM_SIZE ]]; then
 		echo "$MEM_SIZE" > "/sys/block/zram${RAM_DEV}/mem_limit"
