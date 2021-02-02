@@ -12,8 +12,6 @@ This project uses an OverlayFS mount with zram so that syncFromDisk on start is 
 In theory this should allow for faster boots and larger directories as no complete directory copy is needed as it is the lower mount in the OverlayFS.
 Many thanks go to [@kmxz](https://github.com/kmxz) for the [overlayfs-tools](https://github.com/kmxz/overlayfs-tools) used to make this possible.
 
-zram-config also allows a 'kiosk mode' which allows loading the entire system root into zram.
-
 The rationale for zram-config is that many distributions have `zram-config` packages that are actually broken, even by name, as often they are a zram-swap-config package in reality.
 But even then they do not check for other zram services or change the parameters of swap from HD based configurations to ram optimized ones.
 If all you are looking for is a zram-swap utility see [zram-swap-config](https://github.com/StuartIanNaylor/zram-swap-config).
@@ -32,7 +30,6 @@ Also if the OverlayFS guys would actually make some official merge/snapshot tool
 4.  [Configure](#customize)
     -   [Example configuration](#example-configuration)
 5.  [Is it working?](#is-it-working)
-6.  [Kiosk mode](#kiosk-mode)
 7.  [Performance](#performance)
 8.  [Reference](#reference)
 
@@ -185,48 +182,14 @@ KiB Swap:  1331192 total,  1331192 free,        0 used.   412052 avail Mem
     9 root      20   0       0      0      0 I   0.0  0.0   0:00.00 rcu_bh
 ```
 
-### Kiosk mode
-
-zram-config also allows a 'kiosk mode' which allows loading the entire system root into zram.
-To enter this mode run `sudo zram-config enable-ephemeral` and reboot.
-There is no sync and zdir / zlog entries will be ignored as they are already included.
-To exit this mode run `sudo zram-config disable-ephemeral` and reboot.
-
-Credit to <https://blockdev.io/read-only-rpi/> and thanks to the original sources for another great script.
-
-You may need to reboot after the rpi-update and then mkinitramfs -o /boot/initrd as a newer kernel maybe available.
-Check the 'Without NFS' section of <https://blockdev.io/read-only-rpi/> as many problems you may have require removal of the SD card and editing `/boot/cmdline.txt` to remove the `init=/bin/ro-root.sh` entry.
-
-```
-pi@raspberrypi:~/zram-config $ df
-Filesystem     1K-blocks    Used Available Use% Mounted on
-devtmpfs          465976       0    465976   0% /dev
-tmpfs              94832      48     94784   1% /mnt/run
-/dev/mmcblk0p2  14803620 1280148  12889224  10% /ro
-/dev/zram0        991512    5124    918804   1% /rw
-overlayfs-root    991512    5124    918804   1% /
-tmpfs             474152       0    474152   0% /dev/shm
-tmpfs             474152    6356    467796   2% /run
-tmpfs               5120       4      5116   1% /run/lock
-tmpfs             474152       0    474152   0% /sys/fs/cgroup
-/dev/mmcblk0p1     44220   30137     14083  69% /boot
-tmpfs              94828       0     94828   0% /run/user/1000
-```
-```
-pi@raspberrypi:~/zram-config $ zramctl
-NAME       ALGORITHM DISKSIZE  DATA  COMPR TOTAL STREAMS MOUNTPOINT
-/dev/zram0 lz4          1000M 19.2M 959.5K  1.4M       4 /rw
-/dev/zram1 lz4           750M    4K    76B    4K       4 [SWAP]
-```
-
 ### Performance
 
 LZO-RLE offers the best performance and is probably the best choice, and from kernel 5.1 and onward it is the default.
 You might have text based low impact directories such as `/var/log` or `/var/cache` where a highly effective text compressor such as zstd is optimal, with effective compression that can be up to 200% of what LZO may achieve especially with text.
-With `/tmp` and `/run`, zram is unnecessary because of the blisteringly fast ram mounted `tmpfs` and, if memory gets short, then zram swap will provide extra.
+With `/tmp` and `/run`, zram is unnecessary because they are RAM mounted as `tmpfs` and, if memory gets short, then the zram swap will provide extra.
 It is only under intense loads that the slight overhead of zram compression becomes noticeable.
 
-Until I can find another comparative benchmark that includes all this list is a good yardstick.
+This chart from [facebook/zstd](https://github.com/facebook/zstd) provides a good benchmark for the performance of the different compressors.
 
 | Compressor name  | Ratio | Compression | Decompress. |
 |:-----------------|:------|:------------|:------------|

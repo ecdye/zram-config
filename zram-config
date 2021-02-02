@@ -166,33 +166,6 @@ removeZswap() {
 	echo "/dev$ZRAM_DEV removed" >> "$ZLOG"
 }
 
-enableZephemeral() {
-	if [[ $ZEPHEMERAL == "false" ]]; then
-		mkinitramfs -o /boot/initrd
-		sed -i '/root=PARTUUID/ s|$| init=/bin/ro-root.sh|' /boot/cmdline.txt
-		echo -e "initramfs initrd followkernel\\nramfsfile=initrd\\nramfsaddr=-1" >> /boot/config.txt
-		cp "${ZSHARE}/ro-root.sh" /bin/ro-root.sh
-		chown root:root /bin/ro-root.sh
-		chmod a+x /bin/ro-root.sh
-		echo "Zephemeral enabled, after reboot all writes & changes will not be persistent"
-	else
-		echo "Zephemeral is already enabled"
-	fi
-}
-
-disableZephemeral() {
-	if [[ $ZEPHEMERAL == "true" ]]; then
-		sed -i -e 's| init=/bin/ro-root.sh||g'  /boot/cmdline.txt
-		sed -i -e '/initramfs initrd followkernel/d' /boot/config.txt
-		sed -i -e '/ramfsfile=initrd/d' /boot/config.txt
-		sed -i -e '/ramfsaddr=-1/d' /boot/config.txt
-		rm -f /bin/ro-root.sh
-		echo "Zephemeral disabled, after reboot system will be write and change enabled"
-	else
-		echo "Zephemeral is already disabled"
-	fi
-}
-
 serviceConfiguration() {
 	if [[ $1 == "stop" ]]; then
 		echo "Stopping services that interfere with zram device configuration" >> "$ZLOG"
@@ -221,11 +194,6 @@ ZLOG="${ZSHARE}/log/zram-config.log"
 ZDIR="/opt/zram"
 if [[ $2 == "shutdown" ]]; then
   SERVICE="1"
-fi
-if [[ -f /boot/cmdline.txt ]] && grep -qs "init=/bin/ro-root.sh" /boot/cmdline.txt; then
-	ZEPHEMERAL="true"
-else
-	ZEPHEMERAL="false"
 fi
 
 case "$1" in
@@ -280,20 +248,16 @@ case "$1" in
 						dir)
 							TARGET_DIR="$5"
 							BIND_DIR="$6"
-							if [[ $ZEPHEMERAL == "false" ]]; then
-								serviceConfiguration "stop"
-								createZdir
-							fi
+							serviceConfiguration "stop"
+							createZdir
 							;;
 
 						log)
 							TARGET_DIR="$5"
 							BIND_DIR="$6"
 							OLDLOG_DIR="$7"
-							if [[ $ZEPHEMERAL == "false" ]]; then
-								serviceConfiguration "stop"
-								createZdir
-							fi
+							serviceConfiguration "stop"
+							createZdir
 							;;
 					esac
 					;;
@@ -338,24 +302,20 @@ case "$1" in
 							ZRAM_DEV="$2"
 							TARGET_DIR="$3"
 							BIND_DIR="$4"
-							if [[ $ZEPHEMERAL == "false" ]]; then
-								if [[ -z $SERVICE ]]; then
-									serviceConfiguration "stop"
-								fi
-								removeZdir
+							if [[ -z $SERVICE ]]; then
+								serviceConfiguration "stop"
 							fi
+							removeZdir
 							;;
 
 						log)
 							ZRAM_DEV="$2"
 							TARGET_DIR="$3"
 							BIND_DIR="$4"
-							if [[ $ZEPHEMERAL == "false" ]]; then
-								if [[ -z $SERVICE ]]; then
-									serviceConfiguration "stop"
-								fi
-								removeZdir
+							if [[ -z $SERVICE ]]; then
+								serviceConfiguration "stop"
 							fi
+							removeZdir
 							;;
 					esac
 					;;
@@ -364,16 +324,8 @@ case "$1" in
 		rm -fv "${TMPDIR}"/zram-device-list.rev "${TMPDIR}"/zram-device-list >> "$ZLOG"
 		;;
 
-	enable-ephemeral)
-		enableZephemeral
-		;;
-
-	disable-ephemeral)
-		disableZephemeral
-		;;
-
 	*)
-		echo "Usage: zram-config {start|stop|enable-ephemeral|disable-ephemeral}" > 2
+		echo "Usage: zram-config {start|stop}" > 2
 		exit 1
 		;;
 esac
