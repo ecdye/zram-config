@@ -20,7 +20,7 @@ createZdevice() {
 		fi
 	fi
 
-	zramctl --size "$MEM_SIZE" --algorithm "$ALG" "/dev/zram${RAM_DEV}"
+	zramctl --size "$DISK_SIZE" --algorithm "$ALG" "/dev/zram${RAM_DEV}"
 
 	if [[ -n $MEM_SIZE ]]; then
 		echo "$MEM_SIZE" > "/sys/block/zram${RAM_DEV}/mem_limit"
