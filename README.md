@@ -1,5 +1,5 @@
 # zram-config
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+![GitHub](https://img.shields.io/github/license/ecdye/zram-config)
 ![ShellCheck](https://github.com/ecdye/zram-config/workflows/ShellCheck/badge.svg)
 
 ## Overview
