@@ -9,8 +9,8 @@ if ! [[ -f /usr/local/sbin/zram-config ]]; then
   exit 1
 fi
 
-if ! dpkg -s 'make' 'libattr1-dev' &> /dev/null; then
-  apt-get install --yes make libattr1-dev || exit 1
+if ! dpkg -s 'build-essential' 'libattr1-dev' &> /dev/null; then
+  apt-get install --yes build-essential libattr1-dev || exit 1
 fi
 
 git fetch origin
