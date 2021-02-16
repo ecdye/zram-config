@@ -14,9 +14,9 @@ Many thanks go to [@kmxz](https://github.com/kmxz) for the [overlayfs-tools](htt
 
 The rationale for zram-config is that many distributions have `zram-config` packages that are actually broken, even by name, as often they are a zram-swap-config package in reality.
 But even then they do not check for other zram services or change the parameters of swap from HD based configurations to ram optimized ones.
-If all you are looking for is a zram-swap utility see [zram-swap-config](https://github.com/StuartIanNaylor/zram-swap-config).
+If all you are looking for is a zram-swap utility see [StuartIanNaylor/zram-swap-config](https://github.com/StuartIanNaylor/zram-swap-config).
 
-Both [zram-swap-config](https://github.com/StuartIanNaylor/zram-swap-config) and [this](https://github.com/ecdye/zram-config) project are examples for distributions to get their zram packages updated.
+Both [StuartIanNaylor/zram-swap-config](https://github.com/StuartIanNaylor/zram-swap-config) and [ecdye/zram-config](https://github.com/ecdye/zram-config) are great examples for distributions to get their zram packages updated.
 
 Also if the OverlayFS guys would actually make some official merge/snapshot tools and not just leave it as just enough for Docker that would be massively useful, and if anyone fancies shouting out that call please do.
 
@@ -210,3 +210,4 @@ In some cases you may find you are reducing `swapiness` purely because of boot l
 ### Reference
 
 <https://www.kernel.org/doc/Documentation/blockdev/zram.txt>
+<https://www.kernel.org/doc/Documentation/filesystems/overlayfs.txt>
