@@ -12,6 +12,7 @@ fi
 zram-config "stop"
 systemctl disable zram-config.service
 rm -f /etc/systemd/system/zram-config.service
+sed -i '\|^ReadWritePaths=/usr/local/share/zram-config/log$|d' /lib/systemd/system/logrotate.service
 systemctl daemon-reload
 rm -f /usr/local/sbin/zram-config
 rm -f /etc/logrotate.d/zram-config

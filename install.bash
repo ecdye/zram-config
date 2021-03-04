@@ -31,6 +31,7 @@ install -m 644 uninstall.bash /usr/local/share/zram-config/uninstall.bash
 install -m 644 zram-config.logrotate /etc/logrotate.d/zram-config
 mkdir -p /usr/local/lib/zram-config/
 install -m 755 overlayfs-tools/overlay /usr/local/lib/zram-config/overlay
+echo "ReadWritePaths=/usr/local/share/zram-config/log" >> /lib/systemd/system/logrotate.service
 
 echo "Starting zram-config.service"
 systemctl daemon-reload
