@@ -18,9 +18,7 @@ jobs:
           gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
           passphrase: ${{ secrets.GPG_PASSPHRASE }}
       - name: "Archive zram-config"
-        id: archive
         run: |
-          echo ::set-output name=tag::${GITHUB_REF/refs\/tags\//}
           export tag="${GITHUB_REF/refs\/tags\//}"
           sudo apt-get install lzip
           git archive --format=tar --prefix=zram-config-${tag}/ ${tag} -o zram-config-${tag}.tar
@@ -33,7 +31,6 @@ jobs:
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
           prerelease: false
-          title: "zram-config ${{ steps.archive.outputs.tag }}"
           files: |
             zram-config-*.tar.lz
             zram-config-*.tar.lz.asc
