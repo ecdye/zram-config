@@ -17,7 +17,7 @@ jobs:
           passphrase: ${{ secrets.GPG_PASSPHRASE }}
       - name: "Archive zram-config"
         run: |
-          sudo apt get install lzip
+          sudo apt-get install lzip
           export tag="${GITHUB_REF/refs\/tags\//}"
           git archive --format=tar --prefix=zram-config-${tag}/ ${tag} -o zram-config-${tag}.tar
           lzip -9 --keep --verbose --verbose zram-config-${tag}.tar
