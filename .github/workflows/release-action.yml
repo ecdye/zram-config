@@ -10,6 +10,8 @@ jobs:
     runs-on: "ubuntu-latest"
 
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
       - name: Import GPG key
         uses: crazy-max/ghaction-import-gpg@v3
         with:
