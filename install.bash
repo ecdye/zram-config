@@ -13,9 +13,9 @@ if [[ -f /usr/local/sbin/zram-config ]]; then
   exit 1
 fi
 
-echo "Installing needed packages (make, libattr1-dev)"
-if ! dpkg -s 'build-essential' 'libattr1-dev' &> /dev/null; then
-  apt-get install --yes build-essential libattr1-dev || exit 1
+echo "Installing needed packages (gcc, make, libattr1-dev)"
+if ! dpkg -s 'gcc' 'make' 'libattr1-dev' &> /dev/null; then
+  apt-get install --yes gcc make libattr1-dev || exit 1
 fi
 
 cd overlayfs-tools || exit 1
