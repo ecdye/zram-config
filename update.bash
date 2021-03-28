@@ -45,6 +45,9 @@ if ! [[ -d /usr/local/lib/zram-config ]]; then
   mkdir -p /usr/local/lib/zram-config
 fi
 install -m 755 overlayfs-tools/overlay /usr/local/lib/zram-config/overlay
+if ! grep -qs "ReadWritePaths=/usr/local/share/zram-config/log" /lib/systemd/system/logrotate.service; then
+  echo "ReadWritePaths=/usr/local/share/zram-config/log" >> /lib/systemd/system/logrotate.service
+fi
 
 echo "Starting zram-config.service"
 systemctl daemon-reload
