@@ -10,7 +10,7 @@ zram-config implements zram to prevent frequent writing to the disk and allow ne
 A ztab table in `/etc/ztab` is used to configure where any combination and number of zram drives are to be created.
 This project uses an OverlayFS mount with zram so that syncFromDisk on start is not needed.
 In theory this should allow for faster boots and larger directories as no complete directory copy is needed as it is the lower mount in the OverlayFS.
-Many thanks go to [@kmxz](https://github.com/kmxz) for the [overlayfs-tools](https://github.com/kmxz/overlayfs-tools) used to make this possible.
+Many thanks go to [@kmxz](https://github.com/kmxz) for [kmxz/overlayfs-tools](https://github.com/kmxz/overlayfs-tools) which make this project possible.
 
 The rationale for zram-config is that many distributions have `zram-config` packages that are actually broken, even by name, as often they are a zram-swap-config package in reality.
 But even then they do not check for other zram services or change the parameters of swap from HD based configurations to ram optimized ones.
