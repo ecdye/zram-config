@@ -5,11 +5,11 @@ if [[ "$(id -u)" -ne 0 ]]; then
   exit 1
 fi
 if [[ $(systemctl is-active zram-config.service) == "active" ]]; then
-  echo "ERROR: zram-config service is still running. Please run \"sudo /usr/local/share/zram-config/uninstall.bash\" to uninstall zram-config before running this."
+  echo -e "ERROR: zram-config service is still running.\\nPlease run \"sudo ./update.bash\" to update zram-config instead."
   exit 1
 fi
 if [[ -f /usr/local/sbin/zram-config ]]; then
-  echo "ERROR: zram-config is already installed. Please run \"sudo /usr/local/share/zram-config/uninstall.bash\" to uninstall zram-config before running this."
+  echo -e "ERROR: zram-config is already installed.\\nPlease run \"sudo ./update.bash\" to update zram-config instead."
   exit 1
 fi
 

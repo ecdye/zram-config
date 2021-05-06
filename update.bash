@@ -5,7 +5,7 @@ if [[ "$(id -u)" -ne 0 ]]; then
   exit 1
 fi
 if ! [[ -f /usr/local/sbin/zram-config ]]; then
-  echo "ERROR: zram-config is not installed."
+  echo "ERROR: zram-config is not installed.\\nPlease run \"sudo ./install.bash\" to install zram-config instead."
   exit 1
 fi
 
