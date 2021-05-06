@@ -1,5 +1,6 @@
 [Unit]
 Description=zram-config
+Documentation=https://github.com/ecdye/zram-config/blob/main/README.md
 After=local-fs.target
 Before=reboot.target halt.target shutdown.target poweroff.target
 
