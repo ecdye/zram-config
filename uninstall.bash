@@ -20,4 +20,5 @@ rm -f /etc/ztab
 rm -rf /usr/local/lib/zram-config
 rm -rf /usr/local/share/zram-config
 
-echo "#####   Reboot isn't needed   #####"
+echo "#####     zram-config has been uninstalled     #####"
+echo "#####           Reboot is not needed           #####"

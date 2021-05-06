@@ -53,5 +53,5 @@ echo "Starting zram-config.service"
 systemctl daemon-reload
 systemctl start zram-config.service
 
-echo "#####          zram-config has been updated           #####"
-echo "#####       edit /etc/ztab to configure options       #####"
+echo "#####        zram-config has been updated         #####"
+echo "#####     edit /etc/ztab to configure options     #####"
