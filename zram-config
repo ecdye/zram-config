@@ -150,6 +150,7 @@ removeZdir() {
 		return 1
 	fi
 
+	zramctl -r "/dev${ZRAM_DEV}" >> "$ZLOG" 2>&1 || sleep 5
 	zramctl -r "/dev${ZRAM_DEV}" >> "$ZLOG" 2>&1 || return 1
 
 	echo "/dev$ZRAM_DEV removed" >> "$ZLOG"
@@ -158,6 +159,7 @@ removeZdir() {
 removeZswap() {
 	swapoff "/dev${ZRAM_DEV}" >> "$ZLOG" 2>&1 || return 1
 
+	zramctl -r "/dev${ZRAM_DEV}" >> "$ZLOG" 2>&1 || sleep 5
 	zramctl -r "/dev${ZRAM_DEV}" >> "$ZLOG" 2>&1 || return 1
 
 	echo "/dev$ZRAM_DEV removed" >> "$ZLOG"
