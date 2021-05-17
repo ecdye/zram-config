@@ -8,6 +8,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
       - name: Import GPG key
         uses: crazy-max/ghaction-import-gpg@v3
         with:
@@ -19,10 +21,9 @@ jobs:
         run: |
           git config --global user.name 'Ethan Dye'
           git config --global user.email 'mrtops03@gmail.com'
-          git fetch origin
-          git checkout origin/openHAB
-          git rebase origin/main
+          git checkout openHAB
+          git rebase main
           git push --force-with-lease
-          git checkout origin/openHAB2
-          git rebase origin/main
+          git checkout openHAB2
+          git rebase main
           git push --force-with-lease
