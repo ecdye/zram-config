@@ -198,7 +198,6 @@ case "$1" in
 	start)
 		echo "zram-config start $(date +%Y-%m-%d-%H:%M:%S)" | tee -a "$ZLOG"
 		rm -fv "${TMPDIR}"/zram-device-list.new >> "$ZLOG"
-		file="/etc/ztab"
 		ZTAB_EMPTY="true"
 		while read -r line; do
 			case "$line" in
@@ -228,7 +227,7 @@ case "$1" in
 							entry="$(grep "${1}.*${5}" "${TMPDIR}"/zram-device-list)"
 						fi
 						if [[ -n $entry ]]; then
-							echo "entry ${entry} already exists as zram."
+							echo "Entry ${entry} already exists as a zram device, skipping recreation of device."
 							echo "$entry" >> "${TMPDIR}"/zram-device-list.new
 							continue
 						fi
@@ -243,14 +242,7 @@ case "$1" in
 							createZswap
 							;;
 
-						dir)
-							TARGET_DIR="$5"
-							BIND_DIR="$6"
-							serviceConfiguration "stop"
-							createZdir
-							;;
-
-						log)
+						dir|log)
 							TARGET_DIR="$5"
 							BIND_DIR="$6"
 							OLDLOG_DIR="$7"
@@ -260,9 +252,9 @@ case "$1" in
 					esac
 					;;
 			esac
-		done < "$file"
+		done < /etc/ztab
 		if [[ $ZTAB_EMPTY == "true" ]]; then
-			echo "'/etc/ztab' is empty and needs to be configured" >> "$ZLOG"
+			echo "Configuration file `/etc/ztab` is empty and needs to be configured" >> "$ZLOG"
 			exit 1
 		fi
 		;;
@@ -273,7 +265,6 @@ case "$1" in
 		fi
 		echo "zram-config stop $(date +%Y-%m-%d-%H:%M:%S)" | tee -a "$ZLOG"
 		tac "${TMPDIR}"/zram-device-list > "${TMPDIR}"/zram-device-list.rev
-		file="${TMPDIR}/zram-device-list.rev"
 		while read -r line; do
 			case "$line" in
 				"#"*)
@@ -296,17 +287,7 @@ case "$1" in
 							removeZswap
 							;;
 
-						dir)
-							ZRAM_DEV="$2"
-							TARGET_DIR="$3"
-							BIND_DIR="$4"
-							if [[ -z $SERVICE ]]; then
-								serviceConfiguration "stop"
-							fi
-							removeZdir
-							;;
-
-						log)
+						dir|log)
 							ZRAM_DEV="$2"
 							TARGET_DIR="$3"
 							BIND_DIR="$4"
@@ -318,7 +299,7 @@ case "$1" in
 					esac
 					;;
 			esac
-		done < "$file"
+		done < "${TMPDIR}"/zram-device-list.rev
 		rm -fv "${TMPDIR}"/zram-device-list.rev "${TMPDIR}"/zram-device-list >> "$ZLOG"
 		;;
 
