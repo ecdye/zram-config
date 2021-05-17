@@ -1,6 +1,8 @@
 name: Rebase
 
-on: push
+push:
+  branches:
+    - main
 
 jobs:
   rebase:
