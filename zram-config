@@ -91,18 +91,18 @@ createZdir() {
 
 			echo "${ZTYPE}		/zram${RAM_DEV}		${TARGET_DIR}		${BIND_DIR}" >> "${TMPDIR}"/zram-device-list
 		else
-			echo "No mount directory provided in ztab" >> "$ZLOG"
+			echo "No mount directory provided in `/etc/ztab`. Exiting!" >> "$ZLOG"
 			return 1
 		fi
 	else
-		echo "No bind directory provided in ztab" >> "$ZLOG"
+		echo "No bind directory provided in `/etc/ztab`. Exiting!" >> "$ZLOG"
 		return 1
 	fi
 
 	if [[ $ZTYPE == "log" ]] && [[ -n $OLDLOG_DIR ]]; then
 		echo -e "olddir ${OLDLOG_DIR}\\ncreateolddir 755 root root\\nrenamecopy" > /etc/logrotate.d/00_oldlog
 	else
-		echo "createZlog: no oldlog directory provided in ztab" >> "$ZLOG"
+		echo "No oldlog directory provided in `/etc/ztab`, skipping oldlog configuration." >> "$ZLOG"
 	fi
 }
 
@@ -165,7 +165,7 @@ removeZswap() {
 
 serviceConfiguration() {
 	if [[ $1 == "stop" ]]; then
-		echo "Stopping services that interfere with zram device configuration" >> "$ZLOG"
+		echo "Stopping services that interfere with zram device configuration." >> "$ZLOG"
 		if [[ $(systemctl is-active rsyslog.service) == "active" ]]; then
 			export rsyslogActive="true"
 			systemctl stop syslog.socket >> "$ZLOG" 2>&1 || return 1
@@ -176,7 +176,7 @@ serviceConfiguration() {
 			systemctl stop systemd-journald.socket systemd-journald-audit.socket systemd-journald-dev-log.socket >> "$ZLOG" 2>&1 || return 1
 		fi
 	elif [[ $1 == "start" ]]; then
-		echo "Restarting services that interfere with zram device configuration" >> "$ZLOG"
+		echo "Restarting services that interfere with zram device configuration." >> "$ZLOG"
 		if [[ -n $journaldActive ]]; then
 			systemctl restart systemd-journald.socket systemd-journald-audit.socket systemd-journald-dev-log.socket >> "$ZLOG" 2>&1 || return 1
 		fi
