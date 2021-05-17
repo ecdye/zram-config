@@ -91,18 +91,18 @@ createZdir() {
 
 			echo "${ZTYPE}		/zram${RAM_DEV}		${TARGET_DIR}		${BIND_DIR}" >> "${TMPDIR}"/zram-device-list
 		else
-			echo "No mount directory provided in `/etc/ztab`. Exiting!" >> "$ZLOG"
+			echo "No mount directory provided in '/etc/ztab'. Exiting!" >> "$ZLOG"
 			return 1
 		fi
 	else
-		echo "No bind directory provided in `/etc/ztab`. Exiting!" >> "$ZLOG"
+		echo "No bind directory provided in '/etc/ztab'. Exiting!" >> "$ZLOG"
 		return 1
 	fi
 
 	if [[ $ZTYPE == "log" ]] && [[ -n $OLDLOG_DIR ]]; then
 		echo -e "olddir ${OLDLOG_DIR}\\ncreateolddir 755 root root\\nrenamecopy" > /etc/logrotate.d/00_oldlog
 	else
-		echo "No oldlog directory provided in `/etc/ztab`, skipping oldlog configuration." >> "$ZLOG"
+		echo "No oldlog directory provided in '/etc/ztab', skipping oldlog configuration." >> "$ZLOG"
 	fi
 }
 
@@ -254,7 +254,7 @@ case "$1" in
 			esac
 		done < /etc/ztab
 		if [[ $ZTAB_EMPTY == "true" ]]; then
-			echo "Configuration file `/etc/ztab` is empty and needs to be configured" >> "$ZLOG"
+			echo "Configuration file '/etc/ztab' is empty and needs to be configured" >> "$ZLOG"
 			exit 1
 		fi
 		;;
