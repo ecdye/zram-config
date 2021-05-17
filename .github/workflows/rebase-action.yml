@@ -1,0 +1,28 @@
+name: Rebase
+
+on: push
+
+jobs:
+  rebase:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - name: Import GPG key
+        uses: crazy-max/ghaction-import-gpg@v3
+        with:
+          gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.GPG_PASSPHRASE }}
+          git-user-signingkey: true
+          git-commit-gpgsign: true
+      - name: Rebase openHAB branches
+        run: |
+          git config --global user.name 'Ethan Dye'
+          git config --global user.email 'mrtops03@gmail.com'
+          git fetch origin
+          git checkout origin/openHAB
+          git rebase origin/main
+          git push --force-with-lease
+          git checkout origin/openHAB2
+          git rebase origin/main
+          git push --force-with-lease
