@@ -20,6 +20,10 @@ Both [StuartIanNaylor/zram-swap-config](https://github.com/StuartIanNaylor/zram-
 
 Also if the OverlayFS guys would actually make some official merge/snapshot tools and not just leave it as just enough for Docker that would be massively useful, and if anyone fancies shouting out that call please do.
 
+### COMPATIBILITY WARNING
+
+The Raspberry Pi 4 8GB model currently exhibits issues with zram due to a Linux kernel bug. See issue [#67](https://github.com/ecdye/zram-config/issues/67) for more details.
+
 ## A Brief Usage Guide
 
 ### Table of Contents
