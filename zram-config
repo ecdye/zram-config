@@ -111,7 +111,7 @@ mergeOverlay() {
 	ls -la "$ZDIR" "${ZDIR}${BIND_DIR}" "${ZDIR}${ZRAM_DEV}/upper" >> "$ZLOG"
 	cd /usr/local/lib/zram-config/ || return 1
 	(yes | ./overlay merge --lowerdir="${ZDIR}${BIND_DIR}" --upperdir="${ZDIR}${ZRAM_DEV}/upper") >> "$ZLOG" 2>&1 || return 1
-	bash -x -- *.sh >> "$ZLOG" 2>&1 || return 1
+	bash -x -- *.sh >> "$ZLOG" 2>&1
 	rm -fv -- *.sh >> "$ZLOG" 2>&1 || return 1
 }
 
