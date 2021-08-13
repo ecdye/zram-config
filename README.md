@@ -189,6 +189,7 @@ KiB Swap:  1331192 total,  1331192 free,        0 used.   412052 avail Mem
 ### Performance
 
 LZO-RLE offers the best performance and is probably the best choice, and from kernel 5.1 and onward it is the default.
+If you are not running at least kernel 5.1 then LZO-RLE may not be supported by your system and you may need to change `/etc/ztab` accordingly.
 You might have text based low impact directories such as `/var/log` or `/var/cache` where a highly effective text compressor such as zstd is optimal, with effective compression that can be up to 200% of what LZO may achieve especially with text.
 With `/tmp` and `/run`, zram is unnecessary because they are RAM mounted as `tmpfs` and, if memory gets short, then the zram swap will provide extra.
 It is only under intense loads that the slight overhead of zram compression becomes noticeable.
