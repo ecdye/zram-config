@@ -23,6 +23,11 @@
 
 #define STRING_BUFFER_SIZE PATH_MAX * 2
 
+// currently, brief and verbose are mutually exclusive
+bool verbose;
+bool brief;
+bool yes;
+
 void print_help(const char *program) {
     printf("Usage: %s command options\n", program);
     puts("");
@@ -123,11 +128,6 @@ bool check_xattr_trusted(const char *upper) {
     unlink(tmp_path);
     return ret;
 }
-
-// currently, brief and verbose are mutually exclusive
-bool verbose;
-bool brief;
-bool yes;
 
 int main(int argc, char *argv[]) {
 
