@@ -14,12 +14,6 @@ For safety reasons, vacuum and merge will not actually modify the filesystem, bu
 Prerequisite and Building
 --------
 
-To build it, you must have libattr headers installed. The package is usually named `libattr1-dev` or `libattr-devel`. For example,
-
-    # apt-get install libattr1-dev
-
-Then, you just build this program:
-
     $ make
 
 Example usage
@@ -32,7 +26,7 @@ See `./overlay --help` for more.
 Why sudo
 --------
 
-As [Linux documentation](https://www.kernel.org/doc/Documentation/filesystems/overlayfs.txt) said, 
+As [Linux documentation](https://www.kernel.org/doc/Documentation/filesystems/overlayfs.txt) said,
 
 > A directory is made opaque by setting the xattr "trusted.overlay.opaque" to "y".
 
@@ -43,6 +37,6 @@ Warnings / limitations
 
 - Only works for regular files and directories. Do not use it on OverlayFS with device files, socket files, etc..
 - Hard links may be broken (i.e. resulting in duplicated independent files).
-- File owner, group and permission bits will be preserved. File timestamps, attributes and extended attributes might be lost. 
+- File owner, group and permission bits will be preserved. File timestamps, attributes and extended attributes might be lost.
 - This program only works for OverlayFS with only one lower layer.
 - It is recommended to have the OverlayFS unmounted before running this program.

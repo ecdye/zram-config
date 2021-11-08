@@ -9,8 +9,8 @@ if ! [[ -f /usr/local/sbin/zram-config ]]; then
   exit 1
 fi
 
-if ! dpkg -s 'gcc' 'make' 'libattr1-dev' &> /dev/null; then
-  apt-get install --yes gcc make libattr1-dev || exit 1
+if ! dpkg -s 'gcc' 'make' &> /dev/null; then
+  apt-get install --yes gcc make || exit 1
 fi
 
 git fetch origin
