@@ -116,6 +116,8 @@ mergeOverlay() {
 }
 
 removeZdir() {
+	local count=0
+
 	if [[ -n $OLDLOG_DIR ]]; then
 		rm -f /etc/logrotate.d/00_oldlog
 	fi
@@ -150,7 +152,10 @@ removeZdir() {
 		return 1
 	fi
 
-	zramctl -r "/dev${ZRAM_DEV}" >> "$ZLOG" 2>&1 || return 1
+	until zramctl -r "/dev${ZRAM_DEV}" >> "$ZLOG" 2>&1 || [[ count -ge 5 ]]; do
+		count=$(( $count + 1 ))
+		sleep 5
+  done
 
 	echo "/dev$ZRAM_DEV removed" >> "$ZLOG"
 }
