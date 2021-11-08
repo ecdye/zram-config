@@ -1,3 +1,0 @@
-[submodule "overlayfs-tools"]
-	path = overlayfs-tools
-	url = https://github.com/kmxz/overlayfs-tools
