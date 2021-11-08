@@ -22,7 +22,9 @@ Also if the OverlayFS guys would actually make some official merge/snapshot tool
 
 ### COMPATIBILITY WARNING
 
-The Raspberry Pi 4 8GB model currently exhibits issues with zram due to a Linux kernel bug. See issue [#67](https://github.com/ecdye/zram-config/issues/67) for more details.
+The Raspberry Pi 4 8GB model can exhibit issues with zram due to a Linux kernel bug.
+This bug has been fixed as of Raspberry Pi Kernel version 1.20210527.
+See [raspberrypi/linux@cef3970381](https://github.com/raspberrypi/linux/commit/cef397038167ac15d085914493d6c86385773709) for more details about the issue.
 
 ## A Brief Usage Guide
 
