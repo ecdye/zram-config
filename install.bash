@@ -27,6 +27,7 @@ install -m 755 zram-config /usr/local/sbin/
 install -m 644 zram-config.service /etc/systemd/system/zram-config.service
 install -m 644 ztab /etc/ztab
 mkdir -p /usr/local/share/zram-config/log
+ln -s /usr/local/share/zram-config/log /var/log/zram-config
 install -m 755 uninstall.bash /usr/local/share/zram-config/uninstall.bash
 install -m 644 zram-config.logrotate /etc/logrotate.d/zram-config
 mkdir -p /usr/local/lib/zram-config/

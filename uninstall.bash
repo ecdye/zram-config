@@ -19,6 +19,7 @@ rm -f /etc/logrotate.d/zram-config
 rm -f /etc/ztab
 rm -rf /usr/local/lib/zram-config
 rm -rf /usr/local/share/zram-config
+rm -f /var/log/zram-config
 
 echo "#####     zram-config has been uninstalled     #####"
 echo "#####           Reboot is not needed           #####"

@@ -38,6 +38,9 @@ fi
 if ! [[ -d /usr/local/share/zram-config/log ]]; then
   mkdir -p /usr/local/share/zram-config/log
 fi
+if ! [[ -h /var/log/zram-config ]]; then
+  ln -s /usr/local/share/zram-config/log /var/log/zram-config
+fi
 if ! [[ -f /etc/logrotate.d/zram-config ]]; then
   install -m 644 zram-config.logrotate /etc/logrotate.d/zram-config
 fi
