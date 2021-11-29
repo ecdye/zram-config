@@ -18,7 +18,7 @@ if ! dpkg -s 'gcc' 'make' &> /dev/null; then
   apt-get install --yes gcc make || exit 1
 fi
 
-if [[ "$(cat /etc/os-release | grep -o '^ID=.*$' | cut -d'=' -f2)" == "ubuntu" ]] && [[ $(bc -l <<< "$(cat /etc/os-release | grep -o '^VERSION_ID=.*$' | cut -d'=' -f2 | tr -d '"') >= 21.10") -eq 1 ]]; then
+if [[ "$(grep -o '^ID=.*$' /etc/os-release | cut -d'=' -f2)" == "ubuntu" ]] && [[ $(bc -l <<< "$(grep -o '^VERSION_ID=.*$' /etc/os-release | cut -d'=' -f2 | tr -d '"') >= 21.10") -eq 1 ]]; then
   echo "Install zram module package for Ubuntu (linux-modules-extra-raspi)"
   if ! dpkg -s 'linux-modules-extra-raspi' &> /dev/null; then
     apt-get install --yes linux-modules-extra-raspi || exit 1
