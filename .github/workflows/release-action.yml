@@ -27,7 +27,7 @@ jobs:
           gpg --verify zram-config-${tag}.tar.lz.asc zram-config-${tag}.tar.lz
           unset tag
         shell: bash
-      - uses: "marvinpinto/action-automatic-releases@v1.1.1"
+      - uses: "marvinpinto/action-automatic-releases@v1.2.1"
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
           prerelease: false
