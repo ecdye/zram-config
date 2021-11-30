@@ -51,7 +51,7 @@ createZswap() {
 		echo "zram${RAM_DEV} no swappiness" >> "$ZLOG"
 	fi
 
-	echo "swap		/zram${RAM_DEV}		zram-config${RAM_DEV}" >> "${TMPDIR}"/zram-device-list
+	echo "swap		/zram${RAM_DEV}		zram-config${RAM_DEV}" >> "$TMPDIR"/zram-device-list
 }
 
 createZdir() {
@@ -61,43 +61,41 @@ createZdir() {
 	local dirMountOpt
 	local dirFSType
 
-	if [[ -n $BIND_DIR ]]; then
-		mkdir -p "${ZDIR}${BIND_DIR}" >> "$ZLOG" 2>&1 || return 1
-
-		if [[ -n $TARGET_DIR ]]; then
-			dirPerm="$(stat -c "%a" "$TARGET_DIR")"
-			dirUser="$(stat -c "%u" "$TARGET_DIR")"
-			dirGroup="$(stat -c "%g" "$TARGET_DIR")"
-
-			echo "dirPerm ${TARGET_DIR} ${dirPerm} ${dirUser}:${dirGroup}" >> "$ZLOG"
-
-			mount --verbose --bind "${TARGET_DIR}/" "${ZDIR}${BIND_DIR}/" >> "$ZLOG" 2>&1 || return 1
-			mount --verbose --make-private "${ZDIR}${BIND_DIR}/" >> "$ZLOG" 2>&1 || return 1
-
-			dirMountOpt="$(awk -v a="${ZDIR}${BIND_DIR}" '$2 == a {print $4}' /proc/mounts | head -1)"
-			dirFSType="$(awk -v a="${ZDIR}${BIND_DIR}" '$2 == a {print $3}' /proc/mounts | head -1)"
-
-			echo "dirMountOpt: ${dirMountOpt}; dirFsType: ${dirFSType}" >> "$ZLOG"
-			createZdevice || return 1
-
-			mke2fs -v -t "$dirFSType" "/dev/zram${RAM_DEV}" >> "$ZLOG" 2>&1 || return 1
-			mkdir -p "${ZDIR}/zram${RAM_DEV}" >> "$ZLOG" 2>&1 || return 1
-			mount --verbose --types "$dirFSType" -o "$dirMountOpt" "/dev/zram${RAM_DEV}" "${ZDIR}/zram${RAM_DEV}/" >> "$ZLOG" 2>&1 || return 1
-			mkdir -p "${ZDIR}/zram${RAM_DEV}/upper" "${ZDIR}/zram${RAM_DEV}/workdir" "$TARGET_DIR" >> "$ZLOG" 2>&1 || return 1
-			mount --verbose --types overlay -o redirect_dir=on,lowerdir="${ZDIR}${BIND_DIR}",upperdir="${ZDIR}/zram${RAM_DEV}/upper",workdir="${ZDIR}/zram${RAM_DEV}/workdir" "overlay${RAM_DEV}" "$TARGET_DIR" >> "$ZLOG" 2>&1 || return 1
-
-			chown "${dirUser}:${dirGroup}" "${ZDIR}/zram${RAM_DEV}/upper" "${ZDIR}/zram${RAM_DEV}/workdir" "$TARGET_DIR" >> "$ZLOG" 2>&1 || return 1
-			chmod "$dirPerm" "${ZDIR}/zram${RAM_DEV}/upper" "${ZDIR}/zram${RAM_DEV}/workdir" "$TARGET_DIR" >> "$ZLOG" 2>&1 || return 1
-
-			echo "${ZTYPE}		/zram${RAM_DEV}		${TARGET_DIR}		${BIND_DIR}" >> "${TMPDIR}"/zram-device-list
-		else
-			echo "No mount directory provided in '/etc/ztab'. Exiting!" >> "$ZLOG"
-			return 1
-		fi
-	else
+	if [[ -z $BIND_DIR ]]; then
 		echo "No bind directory provided in '/etc/ztab'. Exiting!" >> "$ZLOG"
 		return 1
+	elif [[ -z $TARGET_DIR ]]; then
+		echo "No mount directory provided in '/etc/ztab'. Exiting!" >> "$ZLOG"
+		return 1
 	fi
+
+	mkdir -p "${ZDIR}${BIND_DIR}" >> "$ZLOG" 2>&1 || return 1
+
+	dirPerm="$(stat -c "%a" "$TARGET_DIR")"
+	dirUser="$(stat -c "%u" "$TARGET_DIR")"
+	dirGroup="$(stat -c "%g" "$TARGET_DIR")"
+
+	echo "dirPerm ${TARGET_DIR} ${dirPerm} ${dirUser}:${dirGroup}" >> "$ZLOG"
+
+	mount --verbose --bind "${TARGET_DIR}/" "${ZDIR}${BIND_DIR}/" >> "$ZLOG" 2>&1 || return 1
+	mount --verbose --make-private "${ZDIR}${BIND_DIR}/" >> "$ZLOG" 2>&1 || return 1
+
+	dirMountOpt="$(awk -v a="${ZDIR}${BIND_DIR}" '$2 == a {print $4}' /proc/mounts | head -1)"
+	dirFSType="$(awk -v a="${ZDIR}${BIND_DIR}" '$2 == a {print $3}' /proc/mounts | head -1)"
+
+	echo "dirMountOpt: ${dirMountOpt}; dirFsType: ${dirFSType}" >> "$ZLOG"
+	createZdevice || return 1
+
+	mke2fs -v -t "$dirFSType" "/dev/zram${RAM_DEV}" >> "$ZLOG" 2>&1 || return 1
+	mkdir -p "${ZDIR}/zram${RAM_DEV}" >> "$ZLOG" 2>&1 || return 1
+	mount --verbose --types "$dirFSType" -o "$dirMountOpt" "/dev/zram${RAM_DEV}" "${ZDIR}/zram${RAM_DEV}/" >> "$ZLOG" 2>&1 || return 1
+	mkdir -p "${ZDIR}/zram${RAM_DEV}/upper" "${ZDIR}/zram${RAM_DEV}/workdir" "$TARGET_DIR" >> "$ZLOG" 2>&1 || return 1
+	mount --verbose --types overlay -o redirect_dir=on,lowerdir="${ZDIR}${BIND_DIR}",upperdir="${ZDIR}/zram${RAM_DEV}/upper",workdir="${ZDIR}/zram${RAM_DEV}/workdir" "overlay${RAM_DEV}" "$TARGET_DIR" >> "$ZLOG" 2>&1 || return 1
+
+	chown "${dirUser}:${dirGroup}" "${ZDIR}/zram${RAM_DEV}/upper" "${ZDIR}/zram${RAM_DEV}/workdir" "$TARGET_DIR" >> "$ZLOG" 2>&1 || return 1
+	chmod "$dirPerm" "${ZDIR}/zram${RAM_DEV}/upper" "${ZDIR}/zram${RAM_DEV}/workdir" "$TARGET_DIR" >> "$ZLOG" 2>&1 || return 1
+
+	echo "${ZTYPE}		/zram${RAM_DEV}		${TARGET_DIR}		${BIND_DIR}" >> "$TMPDIR"/zram-device-list
 
 	if [[ $ZTYPE == "log" ]] && [[ -n $OLDLOG_DIR ]]; then
 		echo -e "olddir ${OLDLOG_DIR}\\ncreateolddir 755 root root\\nrenamecopy" > /etc/logrotate.d/00_oldlog
@@ -224,11 +222,11 @@ case "$1" in
 					ALG="$2"
 					MEM_SIZE="$3"
 					DISK_SIZE="$4"
-					if [[ -f "${TMPDIR}"/zram-device-list ]]; then
+					if [[ -f "$TMPDIR"/zram-device-list ]]; then
 						if [[ $1 == "swap" ]]; then
-							entry="$(grep "^swap" "${TMPDIR}"/zram-device-list)"
+							entry="$(grep "^swap" "$TMPDIR"/zram-device-list)"
 						else
-							entry="$(grep "${1}.*${5}" "${TMPDIR}"/zram-device-list)"
+							entry="$(grep "${1}.*${5}" "$TMPDIR"/zram-device-list)"
 						fi
 						if [[ -n $entry ]]; then
 							echo "Entry ${entry} already exists as a zram device, skipping recreation of device." >> "$ZLOG"
@@ -266,7 +264,7 @@ case "$1" in
 			systemctl stop zram-config.service & systemctl kill zram-config.service >> "$ZLOG" 2>&1 || return 1
 		fi
 		echo "zram-config stop $(date +%Y-%m-%d-%H:%M:%S)" | tee -a "$ZLOG"
-		tac "${TMPDIR}"/zram-device-list > "${TMPDIR}"/zram-device-list.rev
+		tac "$TMPDIR"/zram-device-list > "$TMPDIR"/zram-device-list.rev
 		while read -r line; do
 			case "$line" in
 				"#"*)
@@ -293,16 +291,14 @@ case "$1" in
 							ZRAM_DEV="$2"
 							TARGET_DIR="$3"
 							BIND_DIR="$4"
-							if [[ -z $SERVICE ]]; then
-								serviceConfiguration "stop"
-							fi
+							[[ -z $SERVICE ]] && serviceConfiguration "stop"
 							removeZdir
 							;;
 					esac
 					;;
 			esac
-		done < "${TMPDIR}"/zram-device-list.rev
-		rm -fv "${TMPDIR}"/zram-device-list.rev "${TMPDIR}"/zram-device-list >> "$ZLOG"
+		done < "$TMPDIR"/zram-device-list.rev
+		rm -fv "$TMPDIR"/zram-device-list.rev "$TMPDIR"/zram-device-list >> "$ZLOG"
 		;;
 
 	*)
@@ -310,6 +306,4 @@ case "$1" in
 		exit 1
 		;;
 esac
-if [[ -z $SERVICE ]]; then
-	serviceConfiguration "start"
-fi
+[[ -z $SERVICE ]] && serviceConfiguration "start"

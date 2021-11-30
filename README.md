@@ -164,7 +164,7 @@ NAME       TYPE      SIZE USED PRIO
 ```
 ```
 pi@raspberrypi:/opt/zram $ ls
-log.bind  magicmirror.bind  oldlog  zram1  zram2
+log.bind  oldlog  zram1  zram2
 ```
 ```
 pi@raspberrypi:/opt/zram $ top
