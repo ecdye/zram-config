@@ -13,7 +13,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
       - name: Import GPG key
-        uses: crazy-max/ghaction-import-gpg@v3
+        uses: crazy-max/ghaction-import-gpg@v4.1.0
         with:
           gpg-private-key: "${{ secrets.GPG_PRIVATE_KEY }}"
           passphrase: "${{ secrets.GPG_PASSPHRASE }}"
