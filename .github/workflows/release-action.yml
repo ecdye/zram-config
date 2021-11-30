@@ -15,11 +15,11 @@ jobs:
       - name: Import GPG key
         uses: crazy-max/ghaction-import-gpg@v3
         with:
-          gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
-          passphrase: ${{ secrets.GPG_PASSPHRASE }}
+          gpg-private-key: "${{ secrets.GPG_PRIVATE_KEY }}"
+          passphrase: "${{ secrets.GPG_PASSPHRASE }}"
       - name: "Archive zram-config"
         run: |
-          export tag="${GITHUB_REF/refs\/tags\//}"
+          export tag="${{ github.ref_name }}"
           sudo apt-get install lzip
           git archive --format=tar --prefix=zram-config-${tag}/ ${tag} -o zram-config-${tag}.tar
           lzip -9 --keep --verbose --verbose zram-config-${tag}.tar
@@ -30,6 +30,8 @@ jobs:
       - uses: "marvinpinto/action-automatic-releases@v1.2.1"
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          title: "${{ github.ref_name }}"
+          automatic_release_tag: "${{ github.ref_name }}"
           prerelease: false
           files: |
             zram-config-*.tar.lz
