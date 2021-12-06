@@ -122,6 +122,7 @@ removeZdir() {
 
 	[[ -z $TARGET_DIR ]] && return 1
 	if ! (umount --verbose "${TARGET_DIR}/" >> "$ZLOG" 2>&1); then
+		[[ -x $(command -v lsof) ]] && lsof "${TARGET_DIR}/" >> "$ZLOG" 2>&1
 		umount --verbose --lazy "${TARGET_DIR}/" >> "$ZLOG" 2>&1 || return 1
 	fi
 
