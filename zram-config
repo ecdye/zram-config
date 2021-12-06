@@ -116,39 +116,28 @@ mergeOverlay() {
 removeZdir() {
 	local count=0
 
-	if [[ -n $OLDLOG_DIR ]]; then
-		rm -f /etc/logrotate.d/00_oldlog
-	fi
+	[[ -n $OLDLOG_DIR ]] && rm -f /etc/logrotate.d/00_oldlog
 
 	echo "$ZRAM_DEV" >> "$ZLOG"
 
-	if [[ -n $TARGET_DIR ]]; then
-		if ! (umount --verbose "${TARGET_DIR}/" >> "$ZLOG" 2>&1); then
-			umount --verbose --lazy "${TARGET_DIR}/" >> "$ZLOG" 2>&1 || return 1
-		fi
-	else
-		return 1
+	[[ -z $TARGET_DIR ]] && return 1
+	if ! (umount --verbose "${TARGET_DIR}/" >> "$ZLOG" 2>&1); then
+		umount --verbose --lazy "${TARGET_DIR}/" >> "$ZLOG" 2>&1 || return 1
 	fi
 
 	mergeOverlay >> "$ZLOG" 2>&1 || return 1
 
-	if [[ -n $ZRAM_DEV ]]; then
-		if ! (umount --verbose "${ZDIR}${ZRAM_DEV}/" >> "$ZLOG" 2>&1); then
-			umount --verbose --lazy "${ZDIR}${ZRAM_DEV}/" >> "$ZLOG" 2>&1 || return 1
-		fi
-		rm -rfv "${ZDIR}${ZRAM_DEV}" >> "$ZLOG" 2>&1 || return 1
-	else
-		return 1
+	[[ -z $ZRAM_DEV ]] && return 1
+	if ! (umount --verbose "${ZDIR}${ZRAM_DEV}/" >> "$ZLOG" 2>&1); then
+		umount --verbose --lazy "${ZDIR}${ZRAM_DEV}/" >> "$ZLOG" 2>&1 || return 1
 	fi
+	rm -rfv "${ZDIR}${ZRAM_DEV}" >> "$ZLOG" 2>&1 || return 1
 
-	if [[ -n $BIND_DIR ]]; then
-		if ! (umount --verbose "${ZDIR}${BIND_DIR}/" >> "$ZLOG" 2>&1); then
-			umount --verbose --lazy "${ZDIR}${BIND_DIR}/" >> "$ZLOG" 2>&1 || return 1
-		fi
-		rm -rfv "${ZDIR}${BIND_DIR}" >> "$ZLOG" 2>&1 || return 1
-	else
-		return 1
+	[[ -z $BIND_DIR ]] && return 1
+	if ! (umount --verbose "${ZDIR}${BIND_DIR}/" >> "$ZLOG" 2>&1); then
+		umount --verbose --lazy "${ZDIR}${BIND_DIR}/" >> "$ZLOG" 2>&1 || return 1
 	fi
+	rm -rfv "${ZDIR}${BIND_DIR}" >> "$ZLOG" 2>&1 || return 1
 
 	until zramctl -r "/dev${ZRAM_DEV}" >> "$ZLOG" 2>&1 || [[ count -ge 5 ]]; do
 		count=$(( count + 1 ))
