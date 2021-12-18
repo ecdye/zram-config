@@ -13,9 +13,9 @@ if [[ -f /usr/local/sbin/zram-config ]]; then
   exit 1
 fi
 
-if ! dpkg -s 'gcc' 'make' &> /dev/null; then
-  echo "Installing needed packages (gcc, make)"
-  apt-get install --yes gcc make || exit 1
+if ! dpkg -s 'gcc' 'make' 'libc6-dev' &> /dev/null; then
+  echo "Installing needed packages (gcc, make, libc6-dev)"
+  apt-get install --yes gcc make libc6-dev || exit 1
 fi
 if [[ "$(grep -o '^ID=.*$' /etc/os-release | cut -d'=' -f2)" == "ubuntu" ]] && [[ $(bc -l <<< "$(grep -o '^VERSION_ID=.*$' /etc/os-release | cut -d'=' -f2 | tr -d '"') >= 21.10") -eq 1 ]]; then
   echo "Install zram module package for Ubuntu (linux-modules-extra-raspi)"
