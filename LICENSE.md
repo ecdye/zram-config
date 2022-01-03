@@ -1,7 +1,7 @@
 The MIT License (MIT)
 =====================
 
-Copyright © 2019-2021 Contributors to the zram-config project
+Copyright © 2019-2022 Contributors to the zram-config project
 
 Permission is hereby granted, free of charge, to any person
 obtaining a copy of this software and associated documentation
