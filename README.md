@@ -36,6 +36,8 @@ See [raspberrypi/linux@cef3970381](https://github.com/raspberrypi/linux/commit/c
 4.  [Configure](#customize)
     -   [Example configuration](#example-configuration)
 5.  [Is it working?](#is-it-working)
+6.  [Known issues](#known-issues)
+    -   [Conflicts with services](#conflicts-with-services)
 7.  [Performance](#performance)
 8.  [Reference](#reference)
 
@@ -45,7 +47,7 @@ See [raspberrypi/linux@cef3970381](https://github.com/raspberrypi/linux/commit/c
 
 ``` shell
 sudo apt-get install git
-git clone --recurse-submodules https://github.com/ecdye/zram-config
+git clone https://github.com/ecdye/zram-config
 cd zram-config
 sudo ./install.bash
 ```
@@ -104,8 +106,8 @@ Usually in `/opt` or `/var`, name optional.
 Usually in `/opt` or `/var`, name optional.
 
 If you need multiple zram swaps or zram directories, just create another entry in `/etc/ztab`.
-To do this safely, first stop zram using `sudo zram-config "stop"`, then edit `/etc/ztab`.
-Once finished, restart zram using `sudo systemctl start zram-config.service`.
+To do this simply add the new entries to the `/etc/ztab`, if you need to edit an active zram device you must stop zram with `sudo zram-config "stop"` and then edit any entries you need to.
+Once finished, start zram using `sudo systemctl start zram-config.service` which will only add the new entries if zram is already running.
 
 #### Example configuration
 
@@ -187,6 +189,18 @@ KiB Swap:  1331192 total,  1331192 free,        0 used.   412052 avail Mem
     8 root      20   0       0      0      0 I   0.0  0.0   0:00.87 rcu_sched
     9 root      20   0       0      0      0 I   0.0  0.0   0:00.00 rcu_bh
 ```
+
+### Known issues
+
+#### Conflicts with services
+
+When running zram on a directory that has services accessing it, they will need to be stopped before starting or stopping zram.
+For example, in the log zram device zram-config stops the services that run by default in the `/var/log` directory before starting or stopping.
+If your system has other services that write to `/var/log` that are not stopped zram may fail to properly sync files and remove the zram device when stopping, and will probably outright fail to start when initializing a zram device.
+This issue is not limited to logs, if you are running zram on another directoy that is written to by a service you will run into the same issue.
+
+For an example on how this project internally takes care of this issue see the `serviceConfiguration` function in zram-config.
+A more in depth version of this function is used in the `openhab` branch that can be referenced as well.
 
 ### Performance
 
