@@ -97,7 +97,7 @@ createZdir() {
 
 	if [[ $ZTYPE == "log" ]] && [[ -n $OLDLOG_DIR ]]; then
 		echo -e "olddir ${OLDLOG_DIR}\\ncreateolddir 755 root root\\nrenamecopy" > /etc/logrotate.d/00_oldlog
-	else
+	elif [[ $ZTYPE == "log" ]]; then
 		echo "No oldlog directory provided in '/etc/ztab', skipping oldlog configuration." >> "$ZLOG"
 	fi
 }
