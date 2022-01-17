@@ -38,6 +38,7 @@ See [raspberrypi/linux@cef3970381](https://github.com/raspberrypi/linux/commit/c
 5.  [Is it working?](#is-it-working)
 6.  [Known issues](#known-issues)
     -   [Conflicts with services](#conflicts-with-services)
+    -   [Swapiness on older Linux kernel versions](#swapiness-on-older-linux-kernel-versions)
 7.  [Performance](#performance)
 8.  [Reference](#reference)
 
@@ -86,17 +87,18 @@ Use `#` to comment out any line, add new drives with the first column providing 
 All algorithms in `/proc/crypto` are supported but only `lzo-rle`, `lzo`, `lz4`, and `zstd` have zramctl text strings; `lzo-rle` is the fastest with `zstd` having much better text compression.
 
 `mem_limit` is the compressed memory limit and will set a hard memory limit for the system admin.
-Set to 0 do disable the `mem_limit`.
+Set to 0 to disable the `mem_limit`.
 
-`disk_size` is the virtual uncompressed size approx. 220-450% of memory allocated depending on the algorithm and input file.
-Don't make it much higher than the compression algorithm is capable of as it will waste memory because there is a ~0.1% memory overhead when empty.
+`disk_size` is the maximum size of the uncompressed memory.
+It should be set to roughly 150% of `mem_limit` depending on the algorithm and how compressible the input files are.
+Don't make it much higher than the compression algorithm (and the additional zram overhead) is capable of because there is a ~0.1% memory overhead when empty.
 
 `swap_priority` will set zram over alternative swap devices.
 
 `page-cluster` 0 means tuning to singular pages rather than the default 3 which caches 8 for HDD tuning, which can lower latency.
 
-`swappiness` 80 because the improved performance of zram allows more usage without any adverse affects from the default of 60.
-It can be raised up to 100 but that will increase process queue on intense loads such as boot time.
+`swappiness` 150 because the improved performance of zram allows more usage without any adverse affects from the default of 60.
+It can be raised up to 200 which will improve performance in high memory pressure situations.
 
 `target_dir` is the directory you wish to hold in zram, and the original will be moved to a bind mount `bind_dir` and is synchronized on start, stop, and write commands.
 
@@ -114,7 +116,7 @@ Once finished, start zram using `sudo systemctl start zram-config.service` which
 
 ```
 # swap	alg		mem_limit	disk_size	swap_priority	page-cluster	swappiness
-swap	lzo-rle		250M		750M		75		0		80
+swap	lzo-rle		250M		750M		75		0		150
 
 # dir	alg		mem_limit	disk_size	target_dir		bind_dir
 #dir	lzo-rle		50M		150M		/home/pi		/pi.bind
@@ -202,6 +204,11 @@ This issue is not limited to logs, if you are running zram on another directoy t
 
 For an example on how this project internally takes care of this issue see the `serviceConfiguration` function in zram-config.
 A more in depth version of this function is used in the `openhab` branch that can be referenced as well.
+
+#### Swapiness on older Linux kernel versions
+
+When running zram swap on Linux kernel versions older than 5.8 swappiness has a maximum value of 100.
+If you observe issues runnning on older kernel versions try setting the default value of 150 back to 100.
 
 ### Performance
 
