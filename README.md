@@ -86,6 +86,7 @@ Use `#` to comment out any line, add new drives with the first column providing 
 All algorithms in `/proc/crypto` are supported but only `lzo-rle`, `lzo`, `lz4`, and `zstd` have zramctl text strings; `lzo-rle` is the fastest with `zstd` having much better text compression.
 
 `mem_limit` is the compressed memory limit and will set a hard memory limit for the system admin.
+Set to 0 do disable the `mem_limit`.
 
 `disk_size` is the virtual uncompressed size approx. 220-450% of memory allocated depending on the algorithm and input file.
 Don't make it much higher than the compression algorithm is capable of as it will waste memory because there is a ~0.1% memory overhead when empty.

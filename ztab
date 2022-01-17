@@ -6,7 +6,7 @@
 # better text compression.
 #
 # mem_limit is the compressed memory limit and will set a hard memory limit for
-# the system admin.
+# the system admin. Set to 0 do disable the mem_limit.
 #
 # disk_size is the virtual uncompressed size approx. 220-450% of memory
 # allocated depending on the algorithm and input file. Don't make it much higher

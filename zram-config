@@ -17,9 +17,8 @@ createZdevice() {
 		fi
 	fi
 
-	if [[ -n $MEM_SIZE ]]; then
-		echo "$MEM_SIZE" > "/sys/block/zram${RAM_DEV}/mem_limit"
-	else
+	echo "$MEM_SIZE" > "/sys/block/zram${RAM_DEV}/mem_limit"
+	if [[ $MEM_SIZE == 0 ]]; then
 		echo "zram${RAM_DEV} no mem_limit" >> "$ZLOG"
 	fi
 
