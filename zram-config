@@ -241,14 +241,17 @@ case "$1" in
 			esac
 		done < /etc/ztab
 		if [[ $ZTAB_EMPTY == "true" ]]; then
-			echo "Configuration file '/etc/ztab' is empty and needs to be configured" >> "$ZLOG"
+			echo "Configuration file '/etc/ztab' is empty and needs to be configured, exiting" > 2
 			exit 1
 		fi
 		;;
 
 	stop)
 		if [[ $(systemctl is-active zram-config.service) == "active" ]]; then
-			systemctl stop zram-config.service & systemctl kill zram-config.service >> "$ZLOG" 2>&1 || echo "Failed to kill zram-config.service" > 2; exit 1
+			if ! systemctl stop zram-config.service & systemctl kill zram-config.service >> "$ZLOG" 2>&1; then
+		    echo "Failed to kill zram-config.service, exiting" > 2
+				exit 1
+			fi
 		fi
 		echo "zram-config stop $(date +%Y-%m-%d-%H:%M:%S)" | tee -a "$ZLOG"
 		tac "$TMPDIR"/zram-device-list > "$TMPDIR"/zram-device-list.rev
