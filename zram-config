@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-# shellcheck disable=SC2140,SC2210
 
 createZdevice() {
 	if ! [[ -d "/sys/class/zram-control" ]]; then
@@ -9,10 +8,10 @@ createZdevice() {
 	RAM_DEV="$(zramctl --find --size "$DISK_SIZE" --algorithm "$ALG" | tr -dc '0-9')"
 
 	if [[ -z $RAM_DEV ]]; then
-		echo "Failed to find an open zram device, trying one more time!"
+		echo "Failed to find an open zram device, trying one more time!" >> "$ZLOG"
 		RAM_DEV="$(zramctl --find --size "$DISK_SIZE" --algorithm "$ALG" | tr -dc '0-9')"
 		if [[ -z $RAM_DEV ]]; then
-			echo "Still failed to find an open zram device, stopping creation!"
+			echo "Failed to find an open zram device. Exiting!" | tee -a "$ZLOG"
 			return 1
 		fi
 	fi
@@ -32,7 +31,7 @@ createZswap() {
 	if [[ -n $PRIORITY ]]; then
 		swapon -v -p "$PRIORITY" "/dev/zram${RAM_DEV}" >> "$ZLOG" 2>&1 || return 1
 	else
-		echo "zram${RAM_DEV} no swap_priority" >> "$ZLOG"
+		echo "No swap priority provided for zram${RAM_DEV}. Exiting!" | tee -a "$ZLOG"
 		return 1
 	fi
 
@@ -59,10 +58,10 @@ createZdir() {
 	local dirFSType
 
 	if [[ -z $BIND_DIR ]]; then
-		echo "No bind directory provided in '/etc/ztab'. Exiting!" >> "$ZLOG"
+		echo "No bind directory provided in '/etc/ztab'. Exiting!" | tee -a "$ZLOG"
 		return 1
 	elif [[ -z $TARGET_DIR ]]; then
-		echo "No mount directory provided in '/etc/ztab'. Exiting!" >> "$ZLOG"
+		echo "No mount directory provided in '/etc/ztab'. Exiting!" | tee -a "$ZLOG"
 		return 1
 	fi
 
@@ -87,7 +86,7 @@ createZdir() {
 	mkdir -p "${ZDIR}/zram${RAM_DEV}" >> "$ZLOG" 2>&1 || return 1
 	mount --verbose --types "$dirFSType" -o "$dirMountOpt" "/dev/zram${RAM_DEV}" "${ZDIR}/zram${RAM_DEV}/" >> "$ZLOG" 2>&1 || return 1
 	mkdir -p "${ZDIR}/zram${RAM_DEV}/upper" "${ZDIR}/zram${RAM_DEV}/workdir" "$TARGET_DIR" >> "$ZLOG" 2>&1 || return 1
-	mount --verbose --types overlay -o redirect_dir=on,lowerdir="${ZDIR}${BIND_DIR}",upperdir="${ZDIR}/zram${RAM_DEV}/upper",workdir="${ZDIR}/zram${RAM_DEV}/workdir" "overlay${RAM_DEV}" "$TARGET_DIR" >> "$ZLOG" 2>&1 || return 1
+	mount --verbose --types overlay -o "redirect_dir=on,lowerdir=${ZDIR}${BIND_DIR},upperdir=${ZDIR}/zram${RAM_DEV}/upper,workdir=${ZDIR}/zram${RAM_DEV}/workdir" "overlay${RAM_DEV}" "$TARGET_DIR" >> "$ZLOG" 2>&1 || return 1
 
 	chown "${dirUser}:${dirGroup}" "${ZDIR}/zram${RAM_DEV}/upper" "${ZDIR}/zram${RAM_DEV}/workdir" "$TARGET_DIR" >> "$ZLOG" 2>&1 || return 1
 	chmod "$dirPerm" "${ZDIR}/zram${RAM_DEV}/upper" "${ZDIR}/zram${RAM_DEV}/workdir" "$TARGET_DIR" >> "$ZLOG" 2>&1 || return 1
@@ -226,7 +225,7 @@ case "$1" in
 							PRIORITY="$5"
 							PAGE_CLUSTER="$6"
 							SWAPPINESS="$7"
-							createZswap
+							createZswap || exit 1
 							;;
 
 						dir|log)
@@ -234,14 +233,14 @@ case "$1" in
 							BIND_DIR="$6"
 							OLDLOG_DIR="$7"
 							serviceConfiguration "stop"
-							createZdir
+							createZdir || exit 1
 							;;
 					esac
 					;;
 			esac
 		done < /etc/ztab
 		if [[ $ZTAB_EMPTY == "true" ]]; then
-			echo "Configuration file '/etc/ztab' is empty and needs to be configured, exiting" > 2
+			echo "Configuration file '/etc/ztab' is empty and needs to be configured. Exiting!" | tee -a "$ZLOG"
 			exit 1
 		fi
 		;;
@@ -249,7 +248,7 @@ case "$1" in
 	stop)
 		if [[ $(systemctl is-active zram-config.service) == "active" ]]; then
 			if ! systemctl stop zram-config.service & systemctl kill zram-config.service >> "$ZLOG" 2>&1; then
-		    echo "Failed to kill zram-config.service, exiting" > 2
+		    echo "Failed to kill zram-config.service. Exiting!" | tee -a "$ZLOG"
 				exit 1
 			fi
 		fi
@@ -292,8 +291,8 @@ case "$1" in
 		;;
 
 	*)
-		echo "Usage: zram-config {start|stop}" > 2
-		exit 1
+		echo "Usage: zram-config {start|stop}"
+		exit 0
 		;;
 esac
 [[ -z $SERVICE ]] && serviceConfiguration "start"
