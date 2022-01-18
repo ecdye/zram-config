@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 createZdevice() {
+	echo "createZdevice: Beginning creation of zDevice."
 	if ! [[ -d "/sys/class/zram-control" ]]; then
 		modprobe --verbose zram >> "$ZLOG" 2>&1 || return 1
 	fi
@@ -8,46 +9,48 @@ createZdevice() {
 	RAM_DEV="$(zramctl --find --size "$DISK_SIZE" --algorithm "$ALG" | tr -dc '0-9')"
 
 	if [[ -z $RAM_DEV ]]; then
-		echo "Failed to find an open zram device, trying one more time!" >> "$ZLOG"
+		echo "createZdevice: Failed to find an open zram device, trying one more time!" >> "$ZLOG"
 		RAM_DEV="$(zramctl --find --size "$DISK_SIZE" --algorithm "$ALG" | tr -dc '0-9')"
 		if [[ -z $RAM_DEV ]]; then
-			echo "Failed to find an open zram device. Exiting!" | tee -a "$ZLOG"
+			echo "createZdevice: Failed to find an open zram device. Exiting!" | tee -a "$ZLOG"
 			return 1
 		fi
 	fi
 
 	echo "$MEM_SIZE" > "/sys/block/zram${RAM_DEV}/mem_limit"
 	if [[ $MEM_SIZE == 0 ]]; then
-		echo "zram${RAM_DEV} no mem_limit" >> "$ZLOG"
+		echo "createZdevice: zram${RAM_DEV} no mem_limit" >> "$ZLOG"
 	fi
 
-	echo "zram${RAM_DEV} created comp_algorithm=${ALG} mem_limit=${MEM_SIZE} disksize=${DISK_SIZE}" >> "$ZLOG"
+	echo "createZdevice: zram${RAM_DEV} created comp_algorithm=${ALG} mem_limit=${MEM_SIZE} disksize=${DISK_SIZE}." >> "$ZLOG"
 }
 
 createZswap() {
+	echo "createZswap: Beginning creation of zswap device." >> "$ZLOG"
 	createZdevice || return 1
 	mkswap --label "zram-config${RAM_DEV}" "/dev/zram${RAM_DEV}" >> "$ZLOG" 2>&1 || return 1
 
 	if [[ -n $PRIORITY ]]; then
 		swapon -v -p "$PRIORITY" "/dev/zram${RAM_DEV}" >> "$ZLOG" 2>&1 || return 1
 	else
-		echo "No swap priority provided for zram${RAM_DEV}. Exiting!" | tee -a "$ZLOG"
+		echo "createZswap: No swap priority provided for zram${RAM_DEV}. Exiting!" | tee -a "$ZLOG"
 		return 1
 	fi
 
 	if [[ -n $PAGE_CLUSTER ]]; then
 		sysctl vm.page-cluster="$PAGE_CLUSTER" >> "$ZLOG" 2>&1 || return 1
 	else
-		echo "zram${RAM_DEV} no page_cluster" >> "$ZLOG"
+		echo "createZswap: zram${RAM_DEV} no page_cluster" >> "$ZLOG"
 	fi
 
 	if [[ -n $SWAPPINESS ]]; then
 		sysctl vm.swappiness="$SWAPPINESS" >> "$ZLOG" 2>&1 || return 1
 	else
-		echo "zram${RAM_DEV} no swappiness" >> "$ZLOG"
+		echo "createZswap: zram${RAM_DEV} no swappiness" >> "$ZLOG"
 	fi
 
 	echo "swap		/zram${RAM_DEV}		zram-config${RAM_DEV}" >> "$TMPDIR"/zram-device-list
+	echo "createZswap: Completed zswap device creation." >> "$ZLOG"
 }
 
 createZdir() {
@@ -58,20 +61,21 @@ createZdir() {
 	local dirFSType
 
 	if [[ -z $BIND_DIR ]]; then
-		echo "No bind directory provided in '/etc/ztab'. Exiting!" | tee -a "$ZLOG"
+		echo "createZdir: No bind directory provided in '/etc/ztab'. Exiting!" | tee -a "$ZLOG"
 		return 1
 	elif [[ -z $TARGET_DIR ]]; then
-		echo "No mount directory provided in '/etc/ztab'. Exiting!" | tee -a "$ZLOG"
+		echo "createZdir: No mount directory provided in '/etc/ztab'. Exiting!" | tee -a "$ZLOG"
 		return 1
 	fi
 
+	echo "createZdir: Beginning creation of ${ZDIR}." >> "$ZLOG"
 	mkdir -p "${ZDIR}${BIND_DIR}" >> "$ZLOG" 2>&1 || return 1
 
 	dirPerm="$(stat -c "%a" "$TARGET_DIR")"
 	dirUser="$(stat -c "%u" "$TARGET_DIR")"
 	dirGroup="$(stat -c "%g" "$TARGET_DIR")"
 
-	echo "dirPerm ${TARGET_DIR} ${dirPerm} ${dirUser}:${dirGroup}" >> "$ZLOG"
+	echo "createZdir: dirPerm - ${TARGET_DIR} ${dirPerm} ${dirUser}:${dirGroup}" >> "$ZLOG"
 
 	mount --verbose --bind "${TARGET_DIR}/" "${ZDIR}${BIND_DIR}/" >> "$ZLOG" 2>&1 || return 1
 	mount --verbose --make-private "${ZDIR}${BIND_DIR}/" >> "$ZLOG" 2>&1 || return 1
@@ -79,15 +83,14 @@ createZdir() {
 	dirMountOpt="$(awk -v a="${ZDIR}${BIND_DIR}" '$2 == a {print $4}' /proc/mounts | head -1)"
 	dirFSType="$(awk -v a="${ZDIR}${BIND_DIR}" '$2 == a {print $3}' /proc/mounts | head -1)"
 
-	echo "dirMountOpt: ${dirMountOpt}; dirFsType: ${dirFSType}" >> "$ZLOG"
+	echo "createZdir: dirMountOpt - ${dirMountOpt}; dirFsType: ${dirFSType}" >> "$ZLOG"
 	createZdevice || return 1
 
 	mke2fs -v -t "$dirFSType" "/dev/zram${RAM_DEV}" >> "$ZLOG" 2>&1 || return 1
 	mkdir -p "${ZDIR}/zram${RAM_DEV}" >> "$ZLOG" 2>&1 || return 1
 	mount --verbose --types "$dirFSType" -o "$dirMountOpt" "/dev/zram${RAM_DEV}" "${ZDIR}/zram${RAM_DEV}/" >> "$ZLOG" 2>&1 || return 1
 	mkdir -p "${ZDIR}/zram${RAM_DEV}/upper" "${ZDIR}/zram${RAM_DEV}/workdir" "$TARGET_DIR" >> "$ZLOG" 2>&1 || return 1
-	# shellcheck disable=2140
-	mount --verbose --types overlay -o redirect_dir=on,lowerdir="${ZDIR}${BIND_DIR}",upperdir="${ZDIR}/zram${RAM_DEV}/upper",workdir="${ZDIR}/zram${RAM_DEV}/workdir" "overlay${RAM_DEV}" "$TARGET_DIR" >> "$ZLOG" 2>&1 || return 1
+	mount --verbose --types overlay -o "redirect_dir=on,lowerdir=${ZDIR}${BIND_DIR},upperdir=${ZDIR}/zram${RAM_DEV}/upper,workdir=${ZDIR}/zram${RAM_DEV}/workdir" "overlay${RAM_DEV}" "$TARGET_DIR" >> "$ZLOG" 2>&1 || return 1
 	chown "${dirUser}:${dirGroup}" "${ZDIR}/zram${RAM_DEV}/upper" "${ZDIR}/zram${RAM_DEV}/workdir" "$TARGET_DIR" >> "$ZLOG" 2>&1 || return 1
 	chmod "$dirPerm" "${ZDIR}/zram${RAM_DEV}/upper" "${ZDIR}/zram${RAM_DEV}/workdir" "$TARGET_DIR" >> "$ZLOG" 2>&1 || return 1
 
@@ -96,17 +99,19 @@ createZdir() {
 	if [[ $ZTYPE == "log" ]] && [[ -n $OLDLOG_DIR ]]; then
 		echo -e "olddir ${OLDLOG_DIR}\\ncreateolddir 755 root root\\nrenamecopy" > /etc/logrotate.d/00_oldlog
 	elif [[ $ZTYPE == "log" ]]; then
-		echo "No oldlog directory provided in '/etc/ztab', skipping oldlog configuration." >> "$ZLOG"
+		echo "createZdir: No oldlog directory provided in '/etc/ztab', skipping oldlog configuration." >> "$ZLOG"
 	fi
+	echo "createZdir: Creation of ${ZDIR} complete." >> "$ZLOG"
 }
 
 mergeOverlay() {
-	echo "overlay merge --lowerdir=${ZDIR}${BIND_DIR} --upperdir=${ZDIR}${ZRAM_DEV}/upper" >> "$ZLOG"
+	echo "mergeOverlay: Beginning merge of ${ZDIR}${BIND_DIR}." >> "$ZLOG"
 	ls -la "$ZDIR" "${ZDIR}${BIND_DIR}" "${ZDIR}${ZRAM_DEV}/upper" >> "$ZLOG"
 	cd /usr/local/lib/zram-config/ || return 1
 	(./overlay merge --yes --lowerdir="${ZDIR}${BIND_DIR}" --upperdir="${ZDIR}${ZRAM_DEV}/upper") >> "$ZLOG" 2>&1 || return 1
 	bash -x -- *.sh >> "$ZLOG" 2>&1
 	rm -fv -- *.sh >> "$ZLOG" 2>&1 || return 1
+	echo "mergeOverlay: Merge of ${ZDIR}${BIND_DIR} complete." >> "$ZLOG"
 }
 
 removeZdir() {
@@ -114,7 +119,7 @@ removeZdir() {
 
 	[[ -n $OLDLOG_DIR ]] && rm -f /etc/logrotate.d/00_oldlog
 
-	echo "$ZRAM_DEV" >> "$ZLOG"
+	echo "removeZdir: Beginning removal of device /dev${ZRAM_DEV}." >> "$ZLOG"
 
 	[[ -z $TARGET_DIR ]] && return 1
 	if ! (umount --verbose "${TARGET_DIR}/" >> "$ZLOG" 2>&1); then
@@ -141,15 +146,16 @@ removeZdir() {
 		sleep 5
   done
 
-	echo "/dev$ZRAM_DEV removed" >> "$ZLOG"
+	echo "removeZdir: Device /dev$ZRAM_DEV removed." >> "$ZLOG"
 }
 
 removeZswap() {
-	swapoff "/dev${ZRAM_DEV}" >> "$ZLOG" 2>&1 || return 1
+	echo "removeZswap: Beginning removal of device /dev${ZRAM_DEV}." >> "$ZLOG"
 
+	swapoff "/dev${ZRAM_DEV}" >> "$ZLOG" 2>&1 || return 1
 	zramctl -r "/dev${ZRAM_DEV}" >> "$ZLOG" 2>&1 || return 1
 
-	echo "/dev$ZRAM_DEV removed" >> "$ZLOG"
+	echo "removeZswap: Device /dev$ZRAM_DEV removed." >> "$ZLOG"
 }
 
 serviceConfiguration() {
@@ -225,7 +231,7 @@ case "$1" in
 							PRIORITY="$5"
 							PAGE_CLUSTER="$6"
 							SWAPPINESS="$7"
-							createZswap || exit 1
+							createZswap
 							;;
 
 						dir|log)
@@ -233,7 +239,7 @@ case "$1" in
 							BIND_DIR="$6"
 							OLDLOG_DIR="$7"
 							serviceConfiguration "stop"
-							createZdir || exit 1
+							createZdir
 							;;
 					esac
 					;;
