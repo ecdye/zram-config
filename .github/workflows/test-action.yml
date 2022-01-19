@@ -12,7 +12,7 @@ on:
       - '**.bash'
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
 
     steps:
@@ -30,7 +30,6 @@ jobs:
            path: ${{ steps.setup.outputs.image32 }}
            key: ${{ steps.setup.outputs.image32 }}
        - name: Build image
-         id: build
          run: |
            if ! [[ -f ${{ steps.setup.outputs.image32 }} ]]; then curl -L "https://downloads.raspberrypi.org/raspios_lite_armhf_latest" -o "${{ steps.setup.outputs.image32 }}"; fi
            curl -s "$(curl "https://downloads.raspberrypi.org/raspios_lite_armhf_latest" -s -L -I  -o /dev/null -w '%{url_effective}')".sig -o "${{ steps.setup.outputs.image32 }}".sig
@@ -51,18 +50,18 @@ jobs:
            umount test/boot
            umount test/root
            kpartx -d raspios.img
-      - name: Run tests
-        run: |
-          sudo qemu-system-aarch64 \
-            -machine "raspi3b" \
-            -cpu arm1176 \
-            -m "1024m" \
-            -drive "format=raw,file=raspios.img" \
-            -netdev user,id=net0,hostfwd=tcp::5022-:22 \
-            -device usb-net,netdev=net0 \
-            -dtb "tests/dtb/bcm2710-rpi-3-b.dtb" \
-            -kernel "tests/kernel/kernel8.img" \
-            -append "rw earlyprintk loglevel=8 console=ttyAMA0,115200 dwc_otg.lpm_enable=0 root=/dev/mmcblk0p2 rootwait panic=1 dwc_otg.fiq_fsm_enable=0" \
-            -no-reboot \
-            -display none \
-            -serial mon:stdio
+       - name: Run tests
+         run: |
+           sudo qemu-system-aarch64 \
+             -machine "raspi3b" \
+             -cpu arm1176 \
+             -m "1024m" \
+             -drive "format=raw,file=raspios.img" \
+             -netdev user,id=net0,hostfwd=tcp::5022-:22 \
+             -device usb-net,netdev=net0 \
+             -dtb "tests/dtb/bcm2710-rpi-3-b.dtb" \
+             -kernel "tests/kernel/kernel8.img" \
+             -append "rw earlyprintk loglevel=8 console=ttyAMA0,115200 dwc_otg.lpm_enable=0 root=/dev/mmcblk0p2 rootwait panic=1 dwc_otg.fiq_fsm_enable=0" \
+             -no-reboot \
+             -display none \
+             -serial mon:stdio
