@@ -43,14 +43,14 @@ jobs:
            echo ", +" | sfdisk -N 2 raspios.img
            loopPrefix="$(sudo kpartx -asv raspios.img | grep -oE "loop([0-9]+)" | head -n 1)"
            mkdir -p tests/{boot,root,kernel,dtb}
-           mount -o rw -t vfat "/dev/mapper/${loopPrefix}p1" "tests/boot"
-           mount -o rw -t ext4 "/dev/mapper/${loopPrefix}p2" "tests/root"
+           sudo mount -o rw -t vfat "/dev/mapper/${loopPrefix}p1" "tests/boot"
+           sudo mount -o rw -t ext4 "/dev/mapper/${loopPrefix}p2" "tests/root"
            cp tests/boot/kernel* test/kernel
            cp tests/boot/*.dtb test/dtb
            rsync -avr --exclude="*.zip" --exclude="*.img" ./ tests/root/opt/zram
            cp tests/rc.local tests/root/etc/
-           umount test/boot
-           umount test/root
+           sudo umount test/boot
+           sudo umount test/root
            sudo kpartx -d raspios.img
        - name: Run tests
          run: |
