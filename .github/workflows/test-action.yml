@@ -26,7 +26,7 @@ jobs:
          id: setup
          run: |
            sudo -E bash -c set
-           sudo apt-get install --yes gnupg unzip qemu-utils qemu-system-aarch64
+           sudo apt-get install --yes gnupg unzip systemd-container qemu-user-static qemu-utils qemu-system-aarch64
            echo "::set-output name=image32::$(basename "$(curl "https://downloads.raspberrypi.org/raspios_lite_armhf_latest" -s -L -I  -o /dev/null -w '%{url_effective}')")"
        - name: Cache Raspberry Pi OS 32bit image
          uses: actions/cache@v2.1.7
