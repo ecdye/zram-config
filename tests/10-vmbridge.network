@@ -1,6 +1,0 @@
-[Match]
-Name=vmbridge
-
-[Network]
-Description=Your awesome VM bridge
-Address=10.0.42.1/24

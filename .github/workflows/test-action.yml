@@ -44,18 +44,19 @@ jobs:
            qemu-img resize -f raw raspios.img 4G
            echo ", +" | sfdisk -N 2 raspios.img
            loopPrefix="$(sudo kpartx -asv raspios.img | grep -oE "loop([0-9]+)" | head -n 1)"
-           mkdir -p tests/{boot,root,kernel,dtb}
-           sudo mount -o rw -t vfat "/dev/mapper/${loopPrefix}p1" "tests/boot"
-           sudo mount -o rw -t ext4 "/dev/mapper/${loopPrefix}p2" "tests/root"
-           sudo cp tests/boot/kernel* tests/kernel
-           sudo cp tests/boot/*.dtb tests/dtb
-           sudo rsync -avr --exclude="*.zip" --exclude="*.img" --exclude="tests" ./ tests/root/opt/zram
-           sudo cp tests/rc.local tests/root/etc/
-           sudo cp tests/net /etc/conf.d/net
-           sudo cp tests/vmbridge.netdev /etc/systemd/network/
-           sudo cp tests/10-vmbridge.network /etc/systemd/network/
+           mkdir -p tests/{fs,kernel,dtb}
+           sudo mount -o rw -t ext4 "/dev/mapper/${loopPrefix}p2" "tests/fs"
+           sudo mount -o rw -t vfat "/dev/mapper/${loopPrefix}p1" "tests/fs/boot"
+           sudo cp tests/fs/boot/kernel* tests/kernel
+           sudo cp tests/fs/boot/*.dtb tests/dtb
+           sudo rsync -avr --exclude="*.zip" --exclude="*.img" --exclude="tests" ./ tests/fs/opt/zram
+           sudo cp tests/rc.local tests/fs/etc/
+           sudo systemd-nspawn --directory="tests/fs" /opt/zram/tests/install-packages.bash
            sudo umount tests/boot
            sudo umount tests/root
+           sync
+           e2fsck -y -f "/dev/mapper/${loopPrefix}p2"
+           zerofree "/dev/mapper/${loopPrefix}p2"
            sudo kpartx -d raspios.img
        - name: Run tests
          run: |
