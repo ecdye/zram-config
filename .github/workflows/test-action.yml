@@ -49,8 +49,9 @@ jobs:
            sudo cp tests/boot/*.dtb tests/dtb
            sudo rsync -avr --exclude="*.zip" --exclude="*.img" --exclude="tests" ./ tests/root/opt/zram
            sudo cp tests/rc.local tests/root/etc/
-           sudo cp tests/*.{network,netdev} /etc/systemd/network/
            sudo cp tests/net /etc/conf.d/net
+           sudo cp tests/vmbridge.netdev /etc/systemd/network/
+           sudo cp tests/10-vmbridge.network /etc/systemd/network/
            sudo umount tests/boot
            sudo umount tests/root
            sudo kpartx -d raspios.img
