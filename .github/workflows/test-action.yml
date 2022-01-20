@@ -6,11 +6,13 @@ on:
     paths:
       - 'zram-config'
       - '**.bash'
+      - 'tests/**'
       - '.github/workflows/test-action.yml'
   pull_request:
     paths:
       - 'zram-config'
       - '**.bash'
+      - 'tests/**'
       - '.github/workflows/test-action.yml'
 
 jobs:
