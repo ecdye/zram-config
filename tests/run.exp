@@ -22,6 +22,7 @@ expect {
     exp_continue
   }
 }
+send "bash -i"
 
 # Run tests
 expect "pi@raspberrypi:~$ "
