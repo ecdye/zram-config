@@ -26,6 +26,7 @@ jobs:
          id: setup
          run: |
            sudo -E bash -c set
+           sudo apt-get update
            sudo apt-get install --yes gnupg unzip systemd-container qemu-user-static qemu-utils qemu-system-aarch64
            echo "::set-output name=image32::$(basename "$(curl "https://downloads.raspberrypi.org/raspios_lite_armhf_latest" -s -L -I  -o /dev/null -w '%{url_effective}')")"
        - name: Cache Raspberry Pi OS 32bit image
@@ -58,6 +59,7 @@ jobs:
            e2fsck -y -f "/dev/mapper/${loopPrefix}p2"
            zerofree "/dev/mapper/${loopPrefix}p2"
            sudo kpartx -d raspios.img
+         shell: bash
        - name: Run tests
          run: |
            sudo qemu-system-aarch64 \
@@ -71,3 +73,4 @@ jobs:
              -no-reboot \
              -display none \
              -serial mon:stdio
+         shell: bash
