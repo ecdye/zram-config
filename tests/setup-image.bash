@@ -17,7 +17,6 @@ mount -o rw -t vfat "/dev/mapper/${loopPrefix}p1" "tests/fs/boot"
 cp tests/fs/boot/kernel* tests/kernel
 cp tests/fs/boot/*.dtb tests/dtb
 rsync -avr --exclude="*.zip" --exclude="*.img" --exclude="tests/fs" --exclude="tests/dtb" --exclude="tests/kernel" ./ tests/fs/opt/zram
-cp tests/rc.local tests/fs/etc/
 systemd-nspawn --directory="tests/fs" /opt/zram/tests/install-packages.bash
 umount tests/fs/boot
 umount tests/fs

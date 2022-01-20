@@ -1,4 +1,0 @@
-cd /opt/zram || exit 1
-./install.bash
-zramctl --output-all
-shutdown -h now

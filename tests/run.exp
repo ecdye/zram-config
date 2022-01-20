@@ -1,0 +1,31 @@
+#!/usr/bin/expect -f
+
+# starts guest vm, run benchmarks, poweroff
+set timeout -1
+
+set loginUser "pi"
+set loginPassword "raspberry"
+
+#Start the guest VM
+spawn qemu-system-aarch64 -machine "raspi2" -cpu arm1176 -m "1024m" -drive "format=raw,file=raspios.img" -dtb "./tests/dtb/bcm2710-rpi-2-b.dtb" -kernel "./tests/kernel/kernel7.img" append "rw earlyprintk loglevel=8 console=ttyAMA0,115200 dwc_otg.lpm_enable=0 root=/dev/mmcblk0p2 rootwait panic=1 dwc_otg.fiq_fsm_enable=0" -no-reboot -display none -serial stdio
+
+# Login process
+# Enter username
+expect "raspberrypi login: "
+send "$loginUser\r"
+
+# Enter Password
+expect "Password: "
+send "$loginPassword\r"
+
+# Run tests
+expect "pi@raspberrypi:~$ "
+send "cd /opt/zram"
+expect "pi@raspberrypi:/opt/zram$ "
+send "sudo ./install.bash"
+expect "pi@raspberrypi:/opt/zram$ "
+send "zramctl --output-all"
+
+# poweroff the Guest VM
+expect "pi@raspberrypi:/opt/zram$ "
+send "sudo shutdown -h now\r"
