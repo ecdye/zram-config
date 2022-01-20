@@ -59,8 +59,7 @@ jobs:
              -cpu arm1176 \
              -m "1024m" \
              -drive "format=raw,file=raspios.img" \
-             -netdev user,id=net0,hostfwd=tcp::5022-:22 \
-             -device usb-net,netdev=net0 \
+             -net nic -net user,hostfwd=tcp::5022-:22
              -dtb "tests/dtb/bcm2710-rpi-2-b.dtb" \
              -kernel "tests/kernel/kernel7.img" \
              -append "rw earlyprintk loglevel=8 console=ttyAMA0,115200 dwc_otg.lpm_enable=0 root=/dev/mmcblk0p2 rootwait panic=1 dwc_otg.fiq_fsm_enable=0" \
