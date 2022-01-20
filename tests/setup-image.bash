@@ -20,7 +20,5 @@ rsync -avr --exclude="*.zip" --exclude="*.img" --exclude="tests/fs" --exclude="t
 systemd-nspawn --directory="tests/fs" /opt/zram/tests/install-packages.bash
 umount tests/fs/boot
 umount tests/fs
-sync
-e2fsck -y -f "/dev/mapper/${loopPrefix}p2"
-zerofree "/dev/mapper/${loopPrefix}p2"
 kpartx -d raspios.img
+exit 0
