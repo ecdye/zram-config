@@ -7,7 +7,7 @@ set loginUser "pi"
 set loginPassword "raspberry"
 
 #Start the guest VM
-spawn qemu-system-arm -machine "raspi2" -cpu arm1176 -m "1024m" -drive "format=raw,file=raspios.img" -dtb "./tests/dtb/bcm2710-rpi-2-b.dtb" -kernel "./tests/kernel/kernel7.img" -append "rw earlyprintk loglevel=0 quiet console=ttyAMA0,115200 dwc_otg.lpm_enable=0 root=/dev/mmcblk0p2 rootwait panic=1 dwc_otg.fiq_fsm_enable=0" -no-reboot -nographic -serial mon:stdio
+spawn qemu-system-arm -machine "raspi2" -cpu arm1176 -m "1024m" -drive "format=raw,file=raspios.img" -dtb "./tests/dtb/bcm2710-rpi-2-b.dtb" -kernel "./tests/kernel/kernel7.img" -append "console=ttyAMA0,115200 root=/dev/mmcblk0p2 rootfstype=ext4 fsck.repair=yes rootwait" -nographic -serial mon:stdio
 
 # Login process
 expect {
@@ -22,15 +22,14 @@ expect {
     exp_continue
   }
 }
-send "bash -i"
 
 # Run tests
 expect "pi@raspberrypi:~$ "
-send "cd /opt/zram"
+send "cd /opt/zram\r"
 expect "pi@raspberrypi:/opt/zram$ "
-send "sudo ./install.bash"
+send "sudo ./install.bash\r"
 expect "pi@raspberrypi:/opt/zram$ "
-send "zramctl --output-all"
+send "zramctl --output-all\r"
 
 # poweroff the Guest VM
 expect "pi@raspberrypi:/opt/zram$ "
