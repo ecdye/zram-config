@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 
+export DEBIAN_FRONTEND="noninteractive"
+
 apt-get --quiet update
-apt-get --quiet upgrade --yes
+# apt-get --quiet upgrade --yes
 apt-get --quiet install --yes gcc make libc6-dev
 apt-get --quiet autoremove --yes
 rm -f /var/lib/apt/lists/lock
