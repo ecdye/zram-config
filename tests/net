@@ -1,0 +1,18 @@
+# Bridge setup
+tuntap_tap0="tap"
+config_tap0="null"
+
+config_eth0="null"
+
+bridge_br0="eth0 tap0"
+
+# Bridge static config
+config_br0="10.0.42.1 netmask 255.255.255.0"
+routes_br0="default via 10.0.42.100"
+bridge_forward_delay_br0=0
+bridge_hello_time_br0=1000
+
+depend_br0() {
+    need net.eth0
+    need net.tap0
+}
