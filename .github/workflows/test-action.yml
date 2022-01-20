@@ -50,7 +50,7 @@ jobs:
            sudo mount -o rw -t vfat "/dev/mapper/${loopPrefix}p1" "tests/fs/boot"
            sudo cp tests/fs/boot/kernel* tests/kernel
            sudo cp tests/fs/boot/*.dtb tests/dtb
-           sudo rsync -avr --exclude="*.zip" --exclude="*.img" --exclude="tests" ./ tests/fs/opt/zram
+           sudo rsync -avr --exclude="*.zip" --exclude="*.img" --exclude="tests/fs" --exclude="tests/dtb" --exclude="tests/kernel" ./ tests/fs/opt/zram
            sudo cp tests/rc.local tests/fs/etc/
            sudo systemd-nspawn --directory="tests/fs" /opt/zram/tests/install-packages.bash
            sudo umount tests/boot
