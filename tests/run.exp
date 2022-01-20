@@ -21,6 +21,16 @@ send "$loginUser\r"
 expect "Password: "
 send "$loginPassword\r"
 
+# Try twice in case first fails
+# Login process
+# Enter username
+expect "raspberrypi login: "
+send "$loginUser\r"
+
+# Enter Password
+expect "Password: "
+send "$loginPassword\r"
+
 # Run tests
 expect "pi@raspberrypi:~$ "
 send "cd /opt/zram"
