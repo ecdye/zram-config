@@ -35,30 +35,7 @@ jobs:
            path: ${{ steps.setup.outputs.image32 }}
            key: ${{ steps.setup.outputs.image32 }}
        - name: Build image
-         run: |
-           if ! [[ -f ${{ steps.setup.outputs.image32 }} ]]; then curl -s -L "https://downloads.raspberrypi.org/raspios_lite_armhf_latest" -o "${{ steps.setup.outputs.image32 }}"; fi
-           curl -s "$(curl "https://downloads.raspberrypi.org/raspios_lite_armhf_latest" -s -L -I  -o /dev/null -w '%{url_effective}')".sig -o "${{ steps.setup.outputs.image32 }}".sig
-           gpg -q --keyserver keyserver.ubuntu.com --recv-key 0x8738CD6B956F460C
-           gpg -q --trust-model always --verify "${{ steps.setup.outputs.image32 }}".sig "${{ steps.setup.outputs.image32 }}"
-           unzip -q "${{ steps.setup.outputs.image32 }}" -d .
-           mv *-raspios-*.img raspios.img
-           qemu-img resize -f raw raspios.img 4G
-           echo ", +" | sfdisk -N 2 raspios.img
-           loopPrefix="$(sudo kpartx -asv raspios.img | grep -oE "loop([0-9]+)" | head -n 1)"
-           mkdir -p tests/{fs,kernel,dtb}
-           sudo mount -o rw -t ext4 "/dev/mapper/${loopPrefix}p2" "tests/fs"
-           sudo mount -o rw -t vfat "/dev/mapper/${loopPrefix}p1" "tests/fs/boot"
-           sudo cp tests/fs/boot/kernel* tests/kernel
-           sudo cp tests/fs/boot/*.dtb tests/dtb
-           sudo rsync -avr --exclude="*.zip" --exclude="*.img" --exclude="tests/fs" --exclude="tests/dtb" --exclude="tests/kernel" ./ tests/fs/opt/zram
-           sudo cp tests/rc.local tests/fs/etc/
-           sudo systemd-nspawn --directory="tests/fs" /opt/zram/tests/install-packages.bash
-           sudo umount tests/fs/boot
-           sudo umount tests/fs
-           sync
-           e2fsck -y -f "/dev/mapper/${loopPrefix}p2"
-           zerofree "/dev/mapper/${loopPrefix}p2"
-           sudo kpartx -d raspios.img
+         run: sudo -E ./tests/setup-image.bash "${{ steps.setup.outputs.image32 }}"
          shell: bash
        - name: Run tests
          run: |
@@ -67,8 +44,8 @@ jobs:
              -cpu arm1176 \
              -m "1024m" \
              -drive "format=raw,file=raspios.img" \
-             -dtb "tests/dtb/bcm2710-rpi-2-b.dtb" \
-             -kernel "tests/kernel/kernel7.img" \
+             -dtb "./tests/dtb/bcm2710-rpi-2-b.dtb" \
+             -kernel "./tests/kernel/kernel7.img" \
              -append "rw earlyprintk loglevel=8 console=ttyAMA0,115200 dwc_otg.lpm_enable=0 root=/dev/mmcblk0p2 rootwait panic=1 dwc_otg.fiq_fsm_enable=0" \
              -no-reboot \
              -display none \
