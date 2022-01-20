@@ -49,8 +49,8 @@ jobs:
            sudo cp tests/boot/*.dtb tests/dtb
            sudo rsync -avr --exclude="*.zip" --exclude="*.img" --exclude="tests" ./ tests/root/opt/zram
            sudo cp tests/rc.local tests/root/etc/
-           sudo umount test/boot
-           sudo umount test/root
+           sudo umount tests/boot
+           sudo umount tests/root
            sudo kpartx -d raspios.img
        - name: Run tests
          run: |
