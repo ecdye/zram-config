@@ -49,6 +49,8 @@ jobs:
            sudo cp tests/boot/*.dtb tests/dtb
            sudo rsync -avr --exclude="*.zip" --exclude="*.img" --exclude="tests" ./ tests/root/opt/zram
            sudo cp tests/rc.local tests/root/etc/
+           sudo cp tests/*.{network,netdev} /etc/systemd/network/
+           sudo cp tests/net /etc/conf.d/net
            sudo umount tests/boot
            sudo umount tests/root
            sudo kpartx -d raspios.img
@@ -59,11 +61,11 @@ jobs:
              -cpu arm1176 \
              -m "1024m" \
              -drive "format=raw,file=raspios.img" \
-             -netdev user,id=net0,hostfwd=tcp::5022-:22 \
-             -device e1000,netdev=net0 \
+             -device virtio-net-pci,netdev=n0,mac=02:ca:fe:f0:0d:01 \
+             -netdev tap,id=n0,ifname=vmtap,script=tests/addtobridge.sh,downscript=no \
              -dtb "tests/dtb/bcm2710-rpi-2-b.dtb" \
              -kernel "tests/kernel/kernel7.img" \
              -append "rw earlyprintk loglevel=8 console=ttyAMA0,115200 dwc_otg.lpm_enable=0 root=/dev/mmcblk0p2 rootwait panic=1 dwc_otg.fiq_fsm_enable=0" \
              -no-reboot \
              -display none \
-             -serial stdio
+             -serial mon:stdio
