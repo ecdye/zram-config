@@ -45,10 +45,10 @@ jobs:
            mkdir -p tests/{boot,root,kernel,dtb}
            sudo mount -o rw -t vfat "/dev/mapper/${loopPrefix}p1" "tests/boot"
            sudo mount -o rw -t ext4 "/dev/mapper/${loopPrefix}p2" "tests/root"
-           cp tests/boot/kernel* tests/kernel
-           cp tests/boot/*.dtb tests/dtb
-           rsync -avr --exclude="*.zip" --exclude="*.img" ./ tests/root/opt/zram
-           cp tests/rc.local tests/root/etc/
+           sudo cp tests/boot/kernel* tests/kernel
+           sudo cp tests/boot/*.dtb tests/dtb
+           sudo rsync -avr --exclude="*.zip" --exclude="*.img" ./ tests/root/opt/zram
+           sudo cp tests/rc.local tests/root/etc/
            sudo umount test/boot
            sudo umount test/root
            sudo kpartx -d raspios.img
