@@ -29,7 +29,7 @@ jobs:
            sudo apt-get update
            sudo apt-get install --yes gnupg unzip expect systemd-container qemu-user-static qemu-utils qemu-system-arm
            echo "::set-output name=imagezip::$(basename "$(curl "https://downloads.raspberrypi.org/raspios_lite_armhf_latest" -s -L -I  -o /dev/null -w '%{url_effective}')")"
-           echo "::set-output name=image::$(sed -e 's/.zip/.img/' $(basename "$(curl "https://downloads.raspberrypi.org/raspios_lite_armhf_latest" -s -L -I  -o /dev/null -w '%{url_effective}')"))"
+           echo "::set-output name=image::$(echo "$(basename "$(curl "https://downloads.raspberrypi.org/raspios_lite_armhf_latest" -s -L -I  -o /dev/null -w '%{url_effective}')")" | sed -e 's/.zip/.img/')"
        - name: Cache Raspberry Pi OS 32bit image
          uses: actions/cache@v2.1.7
          with:
@@ -43,5 +43,5 @@ jobs:
        - name: Run tests
          run: |
            sudo expect ./tests/run.exp
-           mv raspios.img "${{ steps.setup.outputs.image }}" 
+           mv raspios.img "${{ steps.setup.outputs.image }}"
          shell: bash
