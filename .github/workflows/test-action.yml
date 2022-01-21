@@ -36,12 +36,11 @@ jobs:
            path: ${{ steps.setup.outputs.image }}
            key: ${{ steps.setup.outputs.image }}
        - name: Build image
-         run: |
-           mv "${{ steps.setup.outputs.image }}" raspios.img
-           sudo -E ./tests/setup-image.bash "${{ steps.setup.outputs.imagezip }}" "${{ steps.setup.outputs.image }}"
+         run: sudo -E ./tests/setup-image.bash "${{ steps.setup.outputs.imagezip }}" "${{ steps.setup.outputs.image }}"
          shell: bash
        - name: Run tests
          run: |
+           mv "${{ steps.setup.outputs.image }}" raspios.img
            sudo expect ./tests/run.exp
            mv raspios.img "${{ steps.setup.outputs.image }}"
          shell: bash
