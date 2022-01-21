@@ -7,7 +7,7 @@ set loginUser "pi"
 set loginPassword "raspberry"
 
 #Start the guest VM
-spawn qemu-system-arm -machine "raspi2" -cpu arm1176 -m "1024m" -drive "format=raw,file=raspios.img" -dtb "./tests/dtb/bcm2710-rpi-2-b.dtb" -kernel "./tests/kernel/kernel7.img" -append "console=ttyAMA0,115200 root=/dev/mmcblk0p2 rootfstype=ext4 fsck.repair=yes rootwait" -nographic -serial mon:stdio
+spawn qemu-system-arm -machine "raspi2" -cpu arm1176 -m "1024m" -drive "loglevel=0 quiet format=raw,file=raspios.img" -dtb "./tests/dtb/bcm2710-rpi-2-b.dtb" -kernel "./tests/kernel/kernel7.img" -append "console=ttyAMA0,115200 root=/dev/mmcblk0p2 rootfstype=ext4 fsck.repair=yes rootwait" -nographic -serial mon:stdio
 
 # Login process
 expect {

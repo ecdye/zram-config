@@ -28,15 +28,20 @@ jobs:
            sudo -E bash -c set
            sudo apt-get update
            sudo apt-get install --yes gnupg unzip expect systemd-container qemu-user-static qemu-utils qemu-system-arm
-           echo "::set-output name=image32::$(basename "$(curl "https://downloads.raspberrypi.org/raspios_lite_armhf_latest" -s -L -I  -o /dev/null -w '%{url_effective}')")"
+           echo "::set-output name=imagezip::$(basename "$(curl "https://downloads.raspberrypi.org/raspios_lite_armhf_latest" -s -L -I  -o /dev/null -w '%{url_effective}')")"
+           echo "::set-output name=image::$(sed -e 's/.zip/.img/' $(basename "$(curl "https://downloads.raspberrypi.org/raspios_lite_armhf_latest" -s -L -I  -o /dev/null -w '%{url_effective}')"))"
        - name: Cache Raspberry Pi OS 32bit image
          uses: actions/cache@v2.1.7
          with:
-           path: ${{ steps.setup.outputs.image32 }}
-           key: ${{ steps.setup.outputs.image32 }}
+           path: ${{ steps.setup.outputs.image }}
+           key: ${{ steps.setup.outputs.image }}
        - name: Build image
-         run: sudo -E ./tests/setup-image.bash "${{ steps.setup.outputs.image32 }}"
+         run: |
+           mv "${{ steps.setup.outputs.image }}" raspios.img
+           sudo -E ./tests/setup-image.bash "${{ steps.setup.outputs.imagezip }}" "${{ steps.setup.outputs.image }}"
          shell: bash
        - name: Run tests
-         run: sudo expect ./tests/run.exp
+         run: |
+           sudo expect ./tests/run.exp
+           mv raspios.img "${{ steps.setup.outputs.image }}" 
          shell: bash
