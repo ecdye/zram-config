@@ -8,16 +8,16 @@ if ! [[ -f $2 ]]; then
   unzip -q "$1" -d .
   qemu-img resize -f raw "$2" 4G
   echo ", +" | sfdisk -N 2 "$2"
-  loopPrefix="$(kpartx -asv "$2" | grep -oE "loop([0-9]+)" | head -n 1)"
-  mkdir -p tests/{fs,kernel,dtb}
-  mount -o rw -t ext4 "/dev/mapper/${loopPrefix}p2" "tests/fs"
-  mount -o rw -t vfat "/dev/mapper/${loopPrefix}p1" "tests/fs/boot"
-  cp tests/fs/boot/kernel* tests/kernel
-  cp tests/fs/boot/*.dtb tests/dtb
-  rsync -avr --exclude="*.zip" --exclude="*.img" --exclude="tests/fs" --exclude="tests/dtb" --exclude="tests/kernel" ./ tests/fs/opt/zram
-  systemd-nspawn --directory="tests/fs" /opt/zram/tests/install-packages.bash
-  umount tests/fs/boot
-  umount tests/fs
-  kpartx -d "$2"
 fi
+loopPrefix="$(kpartx -asv "$2" | grep -oE "loop([0-9]+)" | head -n 1)"
+mkdir -p tests/{fs,kernel,dtb}
+mount -o rw -t ext4 "/dev/mapper/${loopPrefix}p2" "tests/fs"
+mount -o rw -t vfat "/dev/mapper/${loopPrefix}p1" "tests/fs/boot"
+cp tests/fs/boot/kernel* tests/kernel
+cp tests/fs/boot/*.dtb tests/dtb
+rsync -avr --exclude="*.zip" --exclude="*.img" --exclude="tests/fs" --exclude="tests/dtb" --exclude="tests/kernel" ./ tests/fs/opt/zram
+systemd-nspawn --directory="tests/fs" /opt/zram/tests/install-packages.bash
+umount tests/fs/boot
+umount tests/fs
+kpartx -d "$2"
 exit 0
