@@ -24,9 +24,7 @@ if [[ "$(grep -o '^ID=.*$' /etc/os-release | cut -d'=' -f2)" == "ubuntu" ]] && [
   fi
 fi
 
-cd overlayfs-tools || exit 1
-make
-cd ..
+make --always-make --directory=overlayfs-tools
 
 echo "Installing zram-config files"
 install -m 755 zram-config /usr/local/sbin/

@@ -27,10 +27,7 @@ git checkout main
 git reset --hard origin/main
 git submodule update --remote
 
-cd overlayfs-tools || exit 1
-rm -f overlay
-make
-cd ..
+make --always-make --directory=overlayfs-tools
 
 echo "Stopping zram-config.service"
 zram-config "stop"
