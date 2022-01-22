@@ -29,7 +29,7 @@ send "cd /opt/zram\r"
 expect "pi@raspberrypi:/opt/zram$ "
 send "sudo ./install.bash\r"
 expect "pi@raspberrypi:/opt/zram$ "
-send "zramctl --output-all\r"
+send "sleep 10; zramctl --output-all\r"
 
 # poweroff the Guest VM
 expect "pi@raspberrypi:/opt/zram$ "
