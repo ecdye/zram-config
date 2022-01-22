@@ -34,7 +34,7 @@ jobs:
          uses: actions/cache@v2.1.7
          with:
            path: ${{ steps.setup.outputs.image }}
-           key: ${{ steps.setup.outputs.image }}
+           key: ${{ steps.setup.outputs.image }}-${{ secrets.CACHE_VERSION }}
        - name: Build image
          run: sudo -E ./tests/setup-image.bash "${{ steps.setup.outputs.imagezip }}" "${{ steps.setup.outputs.image }}"
          shell: bash
