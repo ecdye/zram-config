@@ -40,7 +40,6 @@ jobs:
          shell: bash
        - name: Run tests
          run: |
-           mv "${{ steps.setup.outputs.image }}" raspios.img
+           cp "${{ steps.setup.outputs.image }}" raspios.img
            sudo expect ./tests/run.exp
-           mv raspios.img "${{ steps.setup.outputs.image }}"
          shell: bash
