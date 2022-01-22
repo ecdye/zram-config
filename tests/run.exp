@@ -28,7 +28,7 @@ expect {
     exit 1
   }
   "pi@raspberrypi:~$ " {
-    send "sudo ./uninstall.bash\r"
+    send "sudo /opt/zram/uninstall.bash\r"
   }
 }
 expect "pi@raspberrypi:~$ "
