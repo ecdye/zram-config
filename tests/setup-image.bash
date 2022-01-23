@@ -13,10 +13,10 @@ loopPrefix="$(kpartx -asv "$2" | grep -oE "loop([0-9]+)" | head -n 1)"
 mkdir -p tests/{fs,kernel,dtb}
 mount -o rw -t ext4 "/dev/mapper/${loopPrefix}p2" "tests/fs"
 mount -o rw -t vfat "/dev/mapper/${loopPrefix}p1" "tests/fs/boot"
+rsync -avr --exclude="*.zip" --exclude="*.img" --exclude="*.sig" --exclude="tests/fs" --exclude="tests/dtb" --exclude="tests/kernel" ./ tests/fs/opt/zram
 systemd-nspawn --directory="tests/fs" /opt/zram/tests/install-packages.bash
 cp tests/fs/boot/kernel* tests/kernel
 cp tests/fs/boot/*.dtb tests/dtb
-rsync -avr --exclude="*.zip" --exclude="*.img" --exclude="tests/fs" --exclude="tests/dtb" --exclude="tests/kernel" ./ tests/fs/opt/zram
 umount tests/fs/boot
 umount tests/fs
 kpartx -d "$2"
