@@ -60,7 +60,7 @@ check_zram_removal() {
             return 1
           fi
         elif [[ $ZTYPE == "dir" ]] || [[ $ZTYPE == "log" ]]; then
-          if ! [[ "$(df "$TARGET_DIR" | awk '/overlay/ { print $1 }' | tr -d '0-9')" != "overlay" ]]; then
+          if [[ "$(df "$TARGET_DIR" | awk '/overlay/ { print $1 }' | tr -d '0-9')" == "overlay" ]]; then
             echo "Test failed: overlay for '$TARGET_DIR' found."
             return 1
           fi
