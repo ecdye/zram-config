@@ -23,7 +23,7 @@ send "sudo /opt/zram/install.bash\r"
 expect "pi@raspberrypi:~$ "
 send "sleep 10; /opt/zram/tests/test-zram-devices.bash\r"
 expect {
-  -re "^Test failed:.*$" {
+  -re "Test failed:.*" {
     puts "Failed test, exiting."
     exit 1
   }
@@ -34,7 +34,7 @@ expect {
 expect "pi@raspberrypi:~$ "
 send "/opt/zram/tests/test-zram-devices.bash removal\r"
 expect {
-  -re "^Test failed:.*$" {
+  -re "Test failed:.*" {
     puts "Failed test, exiting."
     exit 1
   }

@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+BASEDIR="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 check_zram_mounts() {
   while read -r line; do
     case "$line" in
@@ -31,7 +33,7 @@ check_zram_mounts() {
         fi
         ;;
     esac
-  done < /etc/ztab
+  done < "${BASEDIR}/../ztab"
 }
 
 check_zram_removal() {
@@ -65,7 +67,7 @@ check_zram_removal() {
         fi
         ;;
     esac
-  done < /etc/ztab
+  done < "${BASEDIR}/../ztab"
 }
 
 if [[ $1 == "removal" ]]; then
