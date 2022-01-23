@@ -1,11 +1,13 @@
 #!/usr/bin/env bash
 
+BASEDIR="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 if [[ "$(id -u)" -ne 0 ]]; then
   echo "ERROR: You need to be ROOT (sudo can be used)."
   exit 1
 fi
 if ! [[ -f /usr/local/sbin/zram-config ]]; then
-  echo -e "ERROR: zram-config is not installed.\\nPlease run \"sudo ./install.bash\" to install zram-config instead."
+  echo -e "ERROR: zram-config is not installed.\\nPlease run \"sudo ${BASEDIR}/install.bash\" to install zram-config instead."
   exit 1
 fi
 
@@ -20,24 +22,23 @@ if [[ "$(grep -o '^ID=.*$' /etc/os-release | cut -d'=' -f2)" == "ubuntu" ]] && [
   fi
 fi
 
-git fetch origin
-git fetch --tags --force --prune
-git clean --force -x -d
-git checkout main
-git reset --hard origin/main
-git submodule update --remote
+git -C "$BASEDIR" fetch origin
+git -C "$BASEDIR" fetch --tags --force --prune
+git -C "$BASEDIR" clean --force -x -d
+git -C "$BASEDIR" checkout main
+git -C "$BASEDIR" reset --hard origin/main
 
-make --always-make --directory=overlayfs-tools
+make --always-make --directory="${BASEDIR}/overlayfs-tools"
 
 echo "Stopping zram-config.service"
 zram-config "stop"
 
 echo "Updating zram-config files"
-install -m 755 zram-config /usr/local/sbin/
-install -m 644 zram-config.service /etc/systemd/system/zram-config.service
-install -m 755 uninstall.bash /usr/local/share/zram-config/uninstall.bash
+install -m 755 "${BASEDIR}/zram-config" /usr/local/sbin/
+install -m 644 "${BASEDIR}/zram-config.service" /etc/systemd/system/zram-config.service
+install -m 755 "${BASEDIR}/uninstall.bash" /usr/local/share/zram-config/uninstall.bash
 if ! [[ -f /etc/ztab ]]; then
-  install -m 644 ztab /etc/ztab
+  install -m 644 "${BASEDIR}/ztab" /etc/ztab
 fi
 if ! [[ -d /usr/local/share/zram-config/log ]]; then
   mkdir -p /usr/local/share/zram-config/log
@@ -46,12 +47,12 @@ if ! [[ -h /var/log/zram-config ]]; then
   ln -s /usr/local/share/zram-config/log /var/log/zram-config
 fi
 if ! [[ -f /etc/logrotate.d/zram-config ]]; then
-  install -m 644 zram-config.logrotate /etc/logrotate.d/zram-config
+  install -m 644 "${BASEDIR}/zram-config.logrotate" /etc/logrotate.d/zram-config
 fi
 if ! [[ -d /usr/local/lib/zram-config ]]; then
   mkdir -p /usr/local/lib/zram-config
 fi
-install -m 755 overlayfs-tools/overlay /usr/local/lib/zram-config/overlay
+install -m 755 "${BASEDIR}/overlayfs-tools/overlay" /usr/local/lib/zram-config/overlay
 if ! grep -qs "ReadWritePaths=/usr/local/share/zram-config/log" /lib/systemd/system/logrotate.service; then
   echo "ReadWritePaths=/usr/local/share/zram-config/log" >> /lib/systemd/system/logrotate.service
 fi
