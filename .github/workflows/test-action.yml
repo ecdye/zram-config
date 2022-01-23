@@ -26,6 +26,7 @@ jobs:
          id: setup
          run: |
            sudo -E bash -c set
+           sudo add-apt-repository ppa:canonical-server/server-backports
            sudo apt-get update
            sudo apt-get install --yes gnupg unzip expect systemd-container qemu-user-static qemu-utils qemu-system-arm
            echo "::set-output name=imagezip::$(basename "$(curl "https://downloads.raspberrypi.org/raspios_lite_armhf_latest" -s -L -I  -o /dev/null -w '%{url_effective}')")"
