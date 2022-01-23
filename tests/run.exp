@@ -25,6 +25,9 @@ send "sleep 10; /opt/zram/tests/test-zram-devices.bash\r"
 expect {
   -re "Test failed:.*" {
     puts "Failed test, exiting."
+    logfile zram-config.log
+    send "cat /usr/local/share/zram-config/log/zram-config.log"
+    logfile
     exit 1
   }
   "pi@raspberrypi:~$ " {
@@ -36,6 +39,9 @@ send "/opt/zram/tests/test-zram-devices.bash removal\r"
 expect {
   -re "Test failed:.*" {
     puts "Failed test, exiting."
+    logfile zram-config.log
+    send "cat /usr/local/share/zram-config/log/zram-config.log"
+    logfile
     exit 1
   }
   "pi@raspberrypi:~$ " {

@@ -34,7 +34,7 @@ jobs:
          uses: actions/cache@v2.1.7
          with:
            path: ${{ steps.setup.outputs.image }}
-           key: ${{ steps.setup.outputs.image }}
+           key: ${{ steps.setup.outputs.image }}-${{ secrets.CACHE_VERSION }}
        - name: Build image
          run: sudo -E ./tests/setup-image.bash "${{ steps.setup.outputs.imagezip }}" "${{ steps.setup.outputs.image }}"
          shell: bash
@@ -43,3 +43,9 @@ jobs:
            cp "${{ steps.setup.outputs.image }}" raspios.img
            sudo expect ./tests/run.exp
          shell: bash
+       - name: Upload logs
+         if: failure()
+         uses: actions/upload-artifact@v2
+         with:
+           name: zram-config.log
+           path: zram-config.log
