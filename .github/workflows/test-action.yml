@@ -37,13 +37,13 @@ jobs:
            path: ${{ steps.setup.outputs.image }}
            key: ${{ steps.setup.outputs.image }}-${{ secrets.CACHE_VERSION }}
        - name: Build image
-         run: sudo -E ./tests/setup-image.bash "${{ steps.setup.outputs.imagezip }}" "${{ steps.setup.outputs.image }}"
+         run: sudo -E ./tests/image.bash "setup" "${{ steps.setup.outputs.imagezip }}" "${{ steps.setup.outputs.image }}"
          shell: bash
        - name: Run tests
          run: |
            cp "${{ steps.setup.outputs.image }}" raspios.img
            sudo expect ./tests/run.exp
-           sudo ./tests/copy-logs.bash
+           sudo ./tests/image.bash "copy-logs" "raspios.img"
          shell: bash
        - name: Upload logs
          uses: actions/upload-artifact@v2
