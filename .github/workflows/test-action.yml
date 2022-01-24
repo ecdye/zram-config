@@ -45,7 +45,6 @@ jobs:
            sudo expect ./tests/run.exp
          shell: bash
        - name: Upload logs
-         if: failure()
          uses: actions/upload-artifact@v2
          with:
            name: zram-config.log
