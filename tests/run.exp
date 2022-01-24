@@ -22,7 +22,7 @@ expect {
 expect "pi@raspberrypi:~$ "
 send "sudo /opt/zram/install.bash\r"
 expect "pi@raspberrypi:~$ "
-send "sleep 10; /opt/zram/tests/test-zram-devices.bash\r"
+send "sleep 60; /opt/zram/tests/test-zram-devices.bash\r"
 expect {
   -re "Test failed:.*$" {
     set retval 1
