@@ -46,6 +46,7 @@ jobs:
            sudo ./tests/image.bash "copy-logs" "raspios.img"
          shell: bash
        - name: Upload logs
+         if: always()
          uses: actions/upload-artifact@v2
          with:
            name: zram-config.log
