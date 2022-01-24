@@ -51,5 +51,5 @@ jobs:
          if: always()
          uses: actions/upload-artifact@v2
          with:
-           name: zram-config.log
-           path: zram-config.log
+           name: logs.tar.gz
+           path: logs.tar.gz
