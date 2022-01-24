@@ -43,6 +43,7 @@ jobs:
          run: |
            cp "${{ steps.setup.outputs.image }}" raspios.img
            sudo expect ./tests/run.exp
+           sudo ./tests/copy-logs.bash
          shell: bash
        - name: Upload logs
          uses: actions/upload-artifact@v2
