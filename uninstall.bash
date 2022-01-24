@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+BASEDIR="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 if [[ "$(id -u)" -ne 0 ]]; then
   echo "ERROR: You need to be ROOT (sudo can be used)."
   exit 1
@@ -17,7 +19,7 @@ systemctl daemon-reload
 rm -f /usr/local/sbin/zram-config
 rm -f /etc/logrotate.d/zram-config
 rm -f /etc/ztab
-tar -czf logs.tar.gz /usr/local/share/zram-config/log
+tar -czf "${BASEDIR}/logs.tar.gz" /usr/local/share/zram-config/log
 rm -rf /usr/local/lib/zram-config
 rm -rf /usr/local/share/zram-config
 rm -f /var/log/zram-config

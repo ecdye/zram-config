@@ -44,4 +44,4 @@ expect {
   }
 }
 
-exit 0
+exit $retval
