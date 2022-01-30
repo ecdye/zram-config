@@ -36,6 +36,7 @@ zram-config "stop"
 echo "Updating zram-config files"
 install -m 755 "${BASEDIR}/zram-config" /usr/local/sbin/
 install -m 644 "${BASEDIR}/zram-config.service" /etc/systemd/system/zram-config.service
+install -m 644 "${BASEDIR}/zram-config-shutdown.service" /etc/systemd/system/zram-config-shutdown.service
 install -m 755 "${BASEDIR}/uninstall.bash" /usr/local/share/zram-config/uninstall.bash
 if ! [[ -f /etc/ztab ]]; then
   install -m 644 "${BASEDIR}/ztab" /etc/ztab

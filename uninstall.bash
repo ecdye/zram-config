@@ -13,8 +13,8 @@ fi
 
 zram-config "stop"
 tar -czvf "${BASEDIR}/logs.tar.gz" /usr/local/share/zram-config/log
-systemctl disable zram-config.service
-rm -f /etc/systemd/system/zram-config.service
+systemctl disable zram-config.service zram-config-shutdown.service
+rm -f /etc/systemd/system/zram-config.service /etc/systemd/system/zram-config-shutdown.service
 sed -i '\|^ReadWritePaths=/usr/local/share/zram-config/log$|d' /lib/systemd/system/logrotate.service
 systemctl daemon-reload
 rm -f /usr/local/sbin/zram-config

@@ -68,7 +68,7 @@ createZdir() {
 		return 1
 	fi
 
-	echo "createZdir: Beginning creation of ${ZDIR}." >> "$ZLOG"
+	echo "createZdir: Beginning creation of ${ZDIR}/zram${RAM_DEV}." >> "$ZLOG"
 	mkdir -p "${ZDIR}${BIND_DIR}" >> "$ZLOG" 2>&1 || return 1
 
 	dirPerm="$(stat -c "%a" "$TARGET_DIR")"
@@ -101,7 +101,7 @@ createZdir() {
 	elif [[ $ZTYPE == "log" ]]; then
 		echo "createZdir: No oldlog directory provided in '/etc/ztab', skipping oldlog configuration." >> "$ZLOG"
 	fi
-	echo "createZdir: Creation of ${ZDIR} complete." >> "$ZLOG"
+	echo "createZdir: Creation of ${ZDIR}/zram${RAM_DEV} complete." >> "$ZLOG"
 }
 
 mergeOverlay() {
@@ -252,9 +252,6 @@ case "$1" in
 		;;
 
 	stop)
-		if [[ $(systemctl is-active zram-config.service) == "active" ]]; then
-			systemctl stop zram-config.service & systemctl kill zram-config.service >> "$ZLOG" 2>&1
-		fi
 		echo "zram-config stop $(date +%Y-%m-%d-%H:%M:%S)" | tee -a "$ZLOG"
 		tac "$TMPDIR"/zram-device-list > "$TMPDIR"/zram-device-list.rev
 		while read -r line; do

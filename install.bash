@@ -31,6 +31,7 @@ make --always-make --directory="${BASEDIR}/overlayfs-tools"
 echo "Installing zram-config files"
 install -m 755 "${BASEDIR}/zram-config" /usr/local/sbin/
 install -m 644 "${BASEDIR}/zram-config.service" /etc/systemd/system/zram-config.service
+install -m 644 "${BASEDIR}/zram-config-shutdown.service" /etc/systemd/system/zram-config-shutdown.service
 install -m 644 "${BASEDIR}/ztab" /etc/ztab
 mkdir -p /usr/local/share/zram-config/log
 ln -s /usr/local/share/zram-config/log /var/log/zram-config
