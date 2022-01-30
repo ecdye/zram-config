@@ -12,6 +12,7 @@ if ! [[ -f /usr/local/sbin/zram-config ]]; then
 fi
 
 zram-config "stop"
+tar -czvf "${BASEDIR}/logs.tar.gz" /usr/local/share/zram-config/log
 systemctl disable zram-config.service
 rm -f /etc/systemd/system/zram-config.service
 sed -i '\|^ReadWritePaths=/usr/local/share/zram-config/log$|d' /lib/systemd/system/logrotate.service
@@ -19,7 +20,6 @@ systemctl daemon-reload
 rm -f /usr/local/sbin/zram-config
 rm -f /etc/logrotate.d/zram-config
 rm -f /etc/ztab
-tar -czf "${BASEDIR}/logs.tar.gz" /usr/local/share/zram-config/log
 rm -rf /usr/local/lib/zram-config
 rm -rf /usr/local/share/zram-config
 rm -f /var/log/zram-config
