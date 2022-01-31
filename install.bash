@@ -44,6 +44,9 @@ echo "ReadWritePaths=/usr/local/share/zram-config/log" >> /lib/systemd/system/lo
 echo "Starting zram-config.service"
 systemctl daemon-reload
 systemctl enable --now zram-config.service
+until [[ $(systemctl show -p SubState --value zram-config) == "exited" ]]; do
+  sleep 5
+done
 
 echo "#####     zram-config is now installed and running     #####"
 echo "#####       edit /etc/ztab to configure options        #####"

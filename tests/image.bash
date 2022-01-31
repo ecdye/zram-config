@@ -31,6 +31,7 @@ if [[ $1 == "setup" ]]; then
   systemd-nspawn --directory="tests/fs" /opt/zram/tests/install-packages.bash
   cp tests/fs/boot/kernel* tests/kernel
   cp tests/fs/boot/*.dtb tests/dtb
+  echo "bind 'set enable-bracketed-paste off'" >> /etc/inputrc
   mountImageFile "umount" "$3"
 elif [[ $1 == "copy-logs" ]]; then
   mountImageFile "mount" "$2"

@@ -22,8 +22,6 @@ expect {
 expect "pi@raspberrypi:~$ "
 send "sudo /opt/zram/install.bash\r"
 expect "pi@raspberrypi:~$ "
-send "until [[ $(systemctl show -p SubState --value zram-config) == "exited" ]]; do sleep 5; done\r"
-expect "pi@raspberrypi:~$ "
 send "/opt/zram/tests/test-zram-devices.bash\r"
 expect {
   -re "Test failed:.*$" {
