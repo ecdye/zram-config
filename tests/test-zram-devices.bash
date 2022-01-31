@@ -21,7 +21,7 @@ check_zram_mounts() {
         ZTYPE="$1"
 	      TARGET_DIR="$5"
         if [[ $ZTYPE == "swap" ]]; then
-          if [[ "$(swapon | grep -q zram)" ]]; then
+          if [[ "$(zramctl | grep -q "[SWAP]")" ]]; then
             echo "Test failed: swap not on zram."
             zramctl --output-all
             return 1
@@ -57,16 +57,16 @@ check_zram_removal() {
         ZTYPE="$1"
 	      TARGET_DIR="$5"
         if [[ $ZTYPE == "swap" ]]; then
-          if ! [[ "$(swapon | grep -q zram)" ]]; then
+          if ! [[ "$(zramctl | grep -q "[SWAP]")" ]]; then
             echo "Test failed: swap on zram."
             zramctl --output-all
-            # return 1
+            return 1
           fi
         elif [[ $ZTYPE == "dir" ]] || [[ $ZTYPE == "log" ]]; then
           if [[ "$(df "$TARGET_DIR" | awk '/overlay/ { print $1 }' | tr -d '0-9')" == "overlay" ]]; then
             echo "Test failed: overlay for '$TARGET_DIR' found."
             zramctl --output-all
-            # return 1
+            return 1
           fi
         fi
         ;;

@@ -29,9 +29,9 @@ if [[ $1 == "setup" ]]; then
   mountImageFile "mount" "$3"
   rsync -avr --exclude="*.zip" --exclude="*.img" --exclude="*.sig" --exclude="tests/fs" --exclude="tests/dtb" --exclude="tests/kernel" ./ tests/fs/opt/zram
   systemd-nspawn --directory="tests/fs" /opt/zram/tests/install-packages.bash
+  echo "set enable-bracketed-paste off" >> tests/fs/etc/inputrc
   cp tests/fs/boot/kernel* tests/kernel
   cp tests/fs/boot/*.dtb tests/dtb
-  echo "set enable-bracketed-paste off" >> tests/fs/etc/inputrc
   mountImageFile "umount" "$3"
 elif [[ $1 == "copy-logs" ]]; then
   mountImageFile "mount" "$2"
