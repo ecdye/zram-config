@@ -51,5 +51,5 @@ jobs:
          if: always()
          uses: actions/upload-artifact@v2
          with:
-           name: logs.tar.gz
-           path: logs.tar.gz
+           name: logs.tar
+           path: logs.tar
