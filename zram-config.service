@@ -1,7 +1,8 @@
 [Unit]
 Description=zram-config
 Documentation=https://github.com/ecdye/zram-config/blob/main/README.md
-After=local-fs.target zram-config-shutdown.service
+After=local-fs.target
+Before=zram-config-shutdown.service
 
 [Service]
 Type=exec
