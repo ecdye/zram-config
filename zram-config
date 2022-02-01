@@ -68,7 +68,7 @@ createZdir() {
 		return 1
 	fi
 
-	echo "createZdir: Beginning creation of ${ZDIR}." >> "$ZLOG"
+	echo "createZdir: Beginning creation of ${ZDIR}/zram${RAM_DEV}." >> "$ZLOG"
 	mkdir -p "${ZDIR}${BIND_DIR}" >> "$ZLOG" 2>&1 || return 1
 
 	dirPerm="$(stat -c "%a" "$TARGET_DIR")"
@@ -101,7 +101,7 @@ createZdir() {
 	elif [[ $ZTYPE == "log" ]]; then
 		echo "createZdir: No oldlog directory provided in '/etc/ztab', skipping oldlog configuration." >> "$ZLOG"
 	fi
-	echo "createZdir: Creation of ${ZDIR} complete." >> "$ZLOG"
+	echo "createZdir: Creation of ${ZDIR}/zram${RAM_DEV} complete." >> "$ZLOG"
 }
 
 mergeOverlay() {
@@ -141,7 +141,7 @@ removeZdir() {
 	fi
 	rm -rfv "${ZDIR}${BIND_DIR}" >> "$ZLOG" 2>&1 || return 1
 
-	until zramctl -r "/dev${ZRAM_DEV}" >> "$ZLOG" 2>&1 || [[ count -ge 5 ]]; do
+	until zramctl --reset "/dev${ZRAM_DEV}" >> "$ZLOG" 2>&1 || [[ count -ge 5 ]]; do
 		count=$(( count + 1 ))
 		sleep 5
   done
@@ -152,8 +152,8 @@ removeZdir() {
 removeZswap() {
 	echo "removeZswap: Beginning removal of device /dev${ZRAM_DEV}." >> "$ZLOG"
 
-	swapoff "/dev${ZRAM_DEV}" >> "$ZLOG" 2>&1 || return 1
-	zramctl -r "/dev${ZRAM_DEV}" >> "$ZLOG" 2>&1 || return 1
+	swapoff --verbose "/dev${ZRAM_DEV}" >> "$ZLOG" 2>&1 || return 1
+	zramctl --reset "/dev${ZRAM_DEV}" >> "$ZLOG" 2>&1 || return 1
 
 	echo "removeZswap: Device /dev$ZRAM_DEV removed." >> "$ZLOG"
 }
@@ -252,12 +252,6 @@ case "$1" in
 		;;
 
 	stop)
-		if [[ $(systemctl is-active zram-config.service) == "active" ]]; then
-			if ! systemctl stop zram-config.service & systemctl kill zram-config.service >> "$ZLOG" 2>&1; then
-		    echo "Failed to kill zram-config.service. Exiting!" | tee -a "$ZLOG"
-				exit 1
-			fi
-		fi
 		echo "zram-config stop $(date +%Y-%m-%d-%H:%M:%S)" | tee -a "$ZLOG"
 		tac "$TMPDIR"/zram-device-list > "$TMPDIR"/zram-device-list.rev
 		while read -r line; do

@@ -2,14 +2,12 @@
 Description=zram-config
 Documentation=https://github.com/ecdye/zram-config/blob/main/README.md
 After=local-fs.target
-Before=reboot.target halt.target shutdown.target poweroff.target
+Before=zram-config-shutdown.service
 
 [Service]
-Type=simple
+Type=exec
 TimeoutSec=300
-RemainAfterExit=yes
 ExecStart=/usr/local/sbin/zram-config "start"
-ExecStop=/usr/local/sbin/zram-config "stop" "shutdown"
 
 [Install]
 WantedBy=basic.target

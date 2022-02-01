@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+BASEDIR="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 if [[ "$(id -u)" -ne 0 ]]; then
   echo "ERROR: You need to be ROOT (sudo can be used)."
   exit 1
@@ -10,8 +12,9 @@ if ! [[ -f /usr/local/sbin/zram-config ]]; then
 fi
 
 zram-config "stop"
-systemctl disable zram-config.service
-rm -f /etc/systemd/system/zram-config.service
+tar -cf "${BASEDIR}/logs.tar" --directory=/usr/local/share/zram-config log
+systemctl disable zram-config.service zram-config-shutdown.service
+rm -f /etc/systemd/system/zram-config.service /etc/systemd/system/zram-config-shutdown.service
 sed -i '\|^ReadWritePaths=/usr/local/share/zram-config/log$|d' /lib/systemd/system/logrotate.service
 systemctl daemon-reload
 rm -f /usr/local/sbin/zram-config

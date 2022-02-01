@@ -1,0 +1,47 @@
+#!/usr/bin/expect -f
+
+set retval 0
+set timeout -1
+set loginUser "pi"
+set loginPassword "raspberry"
+
+spawn qemu-system-arm -machine "raspi2b" -cpu arm1176 -m 1G -drive "format=raw,file=raspios.img" -dtb "./tests/dtb/bcm2710-rpi-2-b.dtb" -kernel "./tests/kernel/kernel7.img" -append "loglevel=0 quiet console=ttyAMA0,115200 root=/dev/mmcblk0p2 rootfstype=ext4 fsck.repair=yes rootwait" -nographic -serial mon:stdio
+
+# Login process
+expect {
+  "raspberrypi login: " {
+    send "$loginUser\r"
+    exp_continue
+  }
+  "Password: " {
+    send "$loginPassword\r"
+  }
+}
+
+# Run tests
+expect "pi@raspberrypi:~$ "
+send "sudo /opt/zram/install.bash\r"
+expect "pi@raspberrypi:~$ "
+send "/opt/zram/tests/test-zram-devices.bash\r"
+expect {
+  -re "Test failed:.*$" {
+    set retval 1
+    exp_continue
+  }
+  "pi@raspberrypi:~$ " {
+    send "sudo /opt/zram/uninstall.bash\r"
+  }
+}
+expect "pi@raspberrypi:~$ "
+send "/opt/zram/tests/test-zram-devices.bash removal\r"
+expect {
+  -re "Test failed:.*$" {
+    set retval 1
+    exp_continue
+  }
+  "pi@raspberrypi:~$ " {
+    send "sudo shutdown -h now\r"
+  }
+}
+
+exit $retval

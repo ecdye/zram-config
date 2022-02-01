@@ -20,6 +20,11 @@ jobs:
          uses: actions/checkout@v2
        - name: Setup environment
          run: sudo -E bash -c set
+       - name: "ShellCheck tests/*.bash"
+         run: |
+           echo "ShellCheck zram-config..."
+           if shellcheck -x -s bash tests/*.bash; then echo "OK"; else echo "FAILED"; exit 1; fi
+         shell: bash
        - name: "ShellCheck install.bash"
          run: |
            echo "ShellCheck install.bash..."

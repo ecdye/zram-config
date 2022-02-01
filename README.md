@@ -1,6 +1,7 @@
 # zram-config
-[![GitHub](https://img.shields.io/github/license/ecdye/zram-config)](https://github.com/ecdye/zram-config/blob/main/LICENSE.md)
+[![License](https://img.shields.io/github/license/ecdye/zram-config)](https://github.com/ecdye/zram-config/blob/main/LICENSE.md)
 [![ShellCheck](https://github.com/ecdye/zram-config/workflows/ShellCheck/badge.svg)](https://github.com/ecdye/zram-config/actions?query=workflow%3AShellCheck)
+[![Test](https://github.com/ecdye/zram-config/actions/workflows/test-action.yml/badge.svg)](https://github.com/ecdye/zram-config/actions/workflows/test-action.yml)
 
 ## Overview
 
@@ -49,8 +50,7 @@ See [raspberrypi/linux@cef3970381](https://github.com/raspberrypi/linux/commit/c
 ``` shell
 sudo apt-get install git
 git clone https://github.com/ecdye/zram-config
-cd zram-config
-sudo ./install.bash
+sudo ./zram-config/install.bash
 ```
 
 Note: The recommended way to stop the `zram-config.service` is to run
@@ -68,8 +68,7 @@ The service will stop normally on reboot, there is no need to manually stop it.
 ### Update
 
 ``` shell
-cd /path/to/zram-config/
-sudo ./update.bash
+sudo /path/to/zram-config/update.bash
 ```
 
 ### Uninstall
