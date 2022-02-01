@@ -21,7 +21,7 @@ check_zram_mounts() {
         ZTYPE="$1"
 	      TARGET_DIR="$5"
         if [[ $ZTYPE == "swap" ]]; then
-          if [[ "$(zramctl | grep -q "[SWAP]")" ]]; then
+          if [[ "$(swapon | awk '/zram/ { print $1 }' | tr -d '0-9')" != "/dev/zram" ]]; then
             echo "Test failed: swap not on zram."
             zramctl --output-all
             return 1
@@ -57,7 +57,7 @@ check_zram_removal() {
         ZTYPE="$1"
 	      TARGET_DIR="$5"
         if [[ $ZTYPE == "swap" ]]; then
-          if ! [[ "$(zramctl | grep -q "[SWAP]")" ]]; then
+          if [[ "$(swapon | awk '/zram/ { print $1 }' | tr -d '0-9')" == "/dev/zram" ]]; then
             echo "Test failed: swap on zram."
             zramctl --output-all
             return 1

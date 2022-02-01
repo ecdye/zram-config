@@ -141,7 +141,7 @@ removeZdir() {
 	fi
 	rm -rfv "${ZDIR}${BIND_DIR}" >> "$ZLOG" 2>&1 || return 1
 
-	until zramctl -r "/dev${ZRAM_DEV}" >> "$ZLOG" 2>&1 || [[ count -ge 5 ]]; do
+	until zramctl --reset "/dev${ZRAM_DEV}" >> "$ZLOG" 2>&1 || [[ count -ge 5 ]]; do
 		count=$(( count + 1 ))
 		sleep 5
   done
@@ -152,8 +152,8 @@ removeZdir() {
 removeZswap() {
 	echo "removeZswap: Beginning removal of device /dev${ZRAM_DEV}." >> "$ZLOG"
 
-	swapoff "/dev${ZRAM_DEV}" >> "$ZLOG" 2>&1 || return 1
-	zramctl -r "/dev${ZRAM_DEV}" >> "$ZLOG" 2>&1 || return 1
+	swapoff --verbose "/dev${ZRAM_DEV}" >> "$ZLOG" 2>&1 || return 1
+	zramctl --reset "/dev${ZRAM_DEV}" >> "$ZLOG" 2>&1 || return 1
 
 	echo "removeZswap: Device /dev$ZRAM_DEV removed." >> "$ZLOG"
 }
