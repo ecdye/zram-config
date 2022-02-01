@@ -29,7 +29,7 @@ if [[ $1 == "setup" ]]; then
   mountImageFile "mount" "$3"
   rsync -avr --exclude="*.zip" --exclude="*.img" --exclude="*.sig" --exclude="tests/fs" --exclude="tests/dtb" --exclude="tests/kernel" ./ tests/fs/opt/zram
   systemd-nspawn --directory="tests/fs" /opt/zram/tests/install-packages.bash
-  echo "set enable-bracketed-paste off" >> tests/fs/etc/inputrc
+  echo "set enable-bracketed-paste off" >> tests/fs/etc/inputrc  # Prevents weird character output when running the image in tests
   cp tests/fs/boot/kernel* tests/kernel
   cp tests/fs/boot/*.dtb tests/dtb
   mountImageFile "umount" "$3"

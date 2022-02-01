@@ -1,6 +1,7 @@
 # zram-config
-[![GitHub](https://img.shields.io/github/license/ecdye/zram-config)](https://github.com/ecdye/zram-config/blob/main/LICENSE.md)
+[![License](https://img.shields.io/github/license/ecdye/zram-config)](https://github.com/ecdye/zram-config/blob/main/LICENSE.md)
 [![ShellCheck](https://github.com/ecdye/zram-config/workflows/ShellCheck/badge.svg)](https://github.com/ecdye/zram-config/actions?query=workflow%3AShellCheck)
+[![Test](https://github.com/ecdye/zram-config/actions/workflows/test-action.yml/badge.svg)](https://github.com/ecdye/zram-config/actions/workflows/test-action.yml)
 
 ## Overview
 

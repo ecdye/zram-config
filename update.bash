@@ -60,7 +60,7 @@ fi
 
 echo "Starting zram-config.service"
 systemctl daemon-reload
-systemctl start zram-config.service
+systemctl enable --now zram-config.service zram-config-shutdown.service
 
 echo "#####        zram-config has been updated         #####"
 echo "#####     edit /etc/ztab to configure options     #####"

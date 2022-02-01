@@ -163,20 +163,20 @@ serviceConfiguration() {
 		echo "Stopping services that interfere with zram device configuration." >> "$ZLOG"
 		if [[ $(systemctl is-active rsyslog.service) == "active" ]]; then
 			export rsyslogActive="true"
-			systemctl stop syslog.socket >> "$ZLOG" 2>&1
+			systemctl stop syslog.socket >> "$ZLOG" 2>&1 || return 1
 		fi
 		if [[ $(systemctl is-active systemd-journald.service) == "active" ]]; then
 			export journaldActive="true"
-			journalctl --flush >> "$ZLOG" 2>&1
-			systemctl stop systemd-journald.socket systemd-journald-audit.socket systemd-journald-dev-log.socket >> "$ZLOG" 2>&1
+			journalctl --flush >> "$ZLOG" 2>&1 || return 1
+			systemctl stop systemd-journald.socket systemd-journald-audit.socket systemd-journald-dev-log.socket >> "$ZLOG" 2>&1 || return 1
 		fi
 	elif [[ $1 == "start" ]]; then
 		echo "Restarting services that interfere with zram device configuration." >> "$ZLOG"
 		if [[ -n $journaldActive ]]; then
-			systemctl restart systemd-journald.socket systemd-journald-audit.socket systemd-journald-dev-log.socket >> "$ZLOG" 2>&1
+			systemctl restart systemd-journald.socket systemd-journald-audit.socket systemd-journald-dev-log.socket >> "$ZLOG" 2>&1 || return 1
 		fi
 		if [[ -n $rsyslogActive ]]; then
-			systemctl restart syslog.socket >> "$ZLOG" 2>&1
+			systemctl restart syslog.socket >> "$ZLOG" 2>&1 || return 1
 		fi
 	fi
 }

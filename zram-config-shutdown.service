@@ -1,5 +1,5 @@
 [Unit]
-Description=zram-config
+Description=zram-config-shutdown
 Documentation=https://github.com/ecdye/zram-config/blob/main/README.md
 
 [Service]
