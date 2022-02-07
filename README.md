@@ -33,6 +33,7 @@ See [raspberrypi/linux@cef3970381](https://github.com/raspberrypi/linux/commit/c
 
 1.  [Install](#install)
     -   [Manually start or stop](#manually-start-or-stop)
+    -   [Sync files to disk](#sync-files-to-disk)
 2.  [Update](#update)
 3.  [Uninstall](#uninstall)
 4.  [Configure](#customize)
@@ -58,6 +59,19 @@ sudo ./zram-config/install.bash
 
 Use `sudo systemctl {start|stop} zram-config.service` to start or stop zram-config.
 This will ensure that any changes are properly synced to the persistent storage before system poweroff.
+
+#### Sync files to disk
+
+Run `sudo zram-config sync` to sync any changes in the zram filesystems managed by zram-config to persistent storage.
+If you have concerns about losing data due to sudden power loss you could use this to ensure that changes are synced to disk periodically.
+
+A default sync service that will sync files to disk every night can be installed by running the following.
+
+``` shell
+sudo /path/to/zram-config/install.bash sync
+```
+
+Note that this sync service is not installed by default, you must install it separately.
 
 ### Update
 

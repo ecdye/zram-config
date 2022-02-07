@@ -6,6 +6,13 @@ if [[ "$(id -u)" -ne 0 ]]; then
   echo "ERROR: You need to be ROOT (sudo can be used)."
   exit 1
 fi
+if [[ $1 == "sync" ]]; then
+  install -m 644 "$BASEDIR"/zsync.* /etc/systemd/system/
+  systemctl daemon-reload
+  systemctl enable --now zsync.timer
+  echo "#####     zsync service is now installed     #####"
+  exit 0
+fi
 if [[ $(systemctl is-active zram-config.service) == "active" ]]; then
   echo -e "ERROR: zram-config service is still running.\\nPlease run \"sudo ${BASEDIR}/update.bash\" to update zram-config instead."
   exit 1
