@@ -23,9 +23,9 @@ if [[ $1 == "setup" ]]; then
     gpg -q --keyserver keyserver.ubuntu.com --recv-key 0x8738CD6B956F460C
     gpg -q --trust-model always --verify "${2}.sig" "$2"
     unzip -q "$2" -d .
-    qemu-img resize -f raw "$3" 4G
-    echo ", +" | sfdisk -N 2 "$3"
   fi
+  qemu-img resize -f raw "$3" 4G
+  echo ", +" | sfdisk -N 2 "$3"
   mountImageFile "mount" "$3"
   rsync -avr --exclude="*.zip" --exclude="*.img" --exclude="*.sig" --exclude="tests/fs" --exclude="tests/dtb" --exclude="tests/kernel" ./ tests/fs/opt/zram
   systemd-nspawn --directory="tests/fs" /opt/zram/tests/install-packages.bash

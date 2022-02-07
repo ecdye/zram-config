@@ -32,6 +32,7 @@ See [raspberrypi/linux@cef3970381](https://github.com/raspberrypi/linux/commit/c
 ### Table of Contents
 
 1.  [Install](#install)
+    -   [Manually start or stop](#manually-start-or-stop)
 2.  [Update](#update)
 3.  [Uninstall](#uninstall)
 4.  [Configure](#customize)
@@ -53,17 +54,10 @@ git clone https://github.com/ecdye/zram-config
 sudo ./zram-config/install.bash
 ```
 
-Note: The recommended way to stop the `zram-config.service` is to run
-``` shell
-sudo zram-config "stop"
-```
-**NOT**
-``` shell
-sudo systemctl stop zram-config.service
-```
-because of issues with the way systemd works with zram logging.
+#### Manually start or stop
 
-The service will stop normally on reboot, there is no need to manually stop it.
+Use `sudo systemctl {start|stop} zram-config.service` to start or stop zram-config.
+This will ensure that any changes are properly synced to the persistent storage before system poweroff.
 
 ### Update
 
@@ -108,7 +102,7 @@ Usually in `/opt` or `/var`, name optional.
 Usually in `/opt` or `/var`, name optional.
 
 If you need multiple zram swaps or zram directories, just create another entry in `/etc/ztab`.
-To do this simply add the new entries to the `/etc/ztab`, if you need to edit an active zram device you must stop zram with `sudo zram-config "stop"` and then edit any entries you need to.
+To do this simply add the new entries to the `/etc/ztab`, if you need to edit an active zram device you must stop zram with `sudo systemctl stop zram-config.service` and then edit any entries you need to.
 Once finished, start zram using `sudo systemctl start zram-config.service` which will only add the new entries if zram is already running.
 
 #### Example configuration
