@@ -1,13 +1,16 @@
 [Unit]
 Description=zram-config
 Documentation=https://github.com/ecdye/zram-config/blob/main/README.md
+Requires=local-fs.target
 After=local-fs.target
-Before=zram-config-shutdown.service
 
 [Service]
 Type=exec
-TimeoutSec=300
+TimeoutSec=120
+RemainAfterExit=yes
 ExecStart=/usr/local/sbin/zram-config "start"
+ExecReload=/usr/local/sbin/zram-config "start"
+ExecStop=/usr/local/sbin/zram-config "stop"
 
 [Install]
-WantedBy=basic.target
+WantedBy=multi-user.target

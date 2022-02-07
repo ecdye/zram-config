@@ -141,10 +141,12 @@ removeZdir() {
 	fi
 	rm -rfv "${ZDIR}${BIND_DIR}" >> "$ZLOG" 2>&1 || return 1
 
-	until zramctl --reset "/dev${ZRAM_DEV}" >> "$ZLOG" 2>&1 || [[ count -ge 5 ]]; do
-		count=$(( count + 1 ))
-		sleep 5
-  done
+	if [[ -z $SERVICE ]]; then  # We don't care about device reset when shutting down system
+		until zramctl --reset "/dev${ZRAM_DEV}" >> "$ZLOG" 2>&1 || [[ count -ge 5 ]]; do
+			count=$(( count + 1 ))
+			sleep 5
+		done
+	fi
 
 	echo "removeZdir: Device /dev$ZRAM_DEV removed." >> "$ZLOG"
 }
@@ -163,20 +165,20 @@ serviceConfiguration() {
 		echo "Stopping services that interfere with zram device configuration." >> "$ZLOG"
 		if [[ $(systemctl is-active rsyslog.service) == "active" ]]; then
 			export rsyslogActive="true"
-			systemctl stop syslog.socket >> "$ZLOG" 2>&1 || return 1
+			systemctl --no-block stop syslog.socket >> "$ZLOG" 2>&1 || return 1
 		fi
 		if [[ $(systemctl is-active systemd-journald.service) == "active" ]]; then
 			export journaldActive="true"
 			journalctl --flush >> "$ZLOG" 2>&1 || return 1
-			systemctl stop systemd-journald.socket systemd-journald-audit.socket systemd-journald-dev-log.socket >> "$ZLOG" 2>&1 || return 1
+			systemctl --no-block stop systemd-journald.socket systemd-journald-audit.socket systemd-journald-dev-log.socket >> "$ZLOG" 2>&1 || return 1
 		fi
 	elif [[ $1 == "start" ]]; then
 		echo "Restarting services that interfere with zram device configuration." >> "$ZLOG"
 		if [[ -n $journaldActive ]]; then
-			systemctl restart systemd-journald.socket systemd-journald-audit.socket systemd-journald-dev-log.socket >> "$ZLOG" 2>&1 || return 1
+			systemctl --no-block restart systemd-journald.socket systemd-journald-audit.socket systemd-journald-dev-log.socket >> "$ZLOG" 2>&1 || return 1
 		fi
 		if [[ -n $rsyslogActive ]]; then
-			systemctl restart syslog.socket >> "$ZLOG" 2>&1 || return 1
+			systemctl --no-block restart syslog.socket >> "$ZLOG" 2>&1 || return 1
 		fi
 	fi
 }
@@ -185,8 +187,8 @@ TMPDIR="/tmp"
 ZDIR="/opt/zram"
 ZSHARE="/usr/local/share/zram-config"
 ZLOG="${ZSHARE}/log/zram-config.log"
-if [[ $2 == "shutdown" ]]; then
-  SERVICE="1"
+if [[ -f /run/systemd/shutdown/scheduled ]]; then
+	SERVICE="1"
 fi
 
 case "$1" in
