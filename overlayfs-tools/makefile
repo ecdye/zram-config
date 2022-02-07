@@ -17,4 +17,4 @@ sh.o: sh.c sh.h
 	$(CC) $(CFLAGS) -c sh.c
 
 clean:
-	rm -f main.o logic.o sh.o overlay
+	$(RM) main.o logic.o sh.o overlay
