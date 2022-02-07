@@ -22,7 +22,6 @@ if [[ -f /usr/local/sbin/zram-config ]]; then
   exit 1
 fi
 
-
 if ! dpkg -s 'gcc' 'make' 'libc6-dev' &> /dev/null; then
   echo "Installing needed packages (gcc, make, libc6-dev)"
   apt-get install --yes gcc make libc6-dev || exit 1
