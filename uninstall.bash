@@ -15,9 +15,9 @@ zram-config "stop"
 tar -cf "${BASEDIR}/logs.tar" --directory=/usr/local/share/zram-config log
 systemctl disable zram-config.service
 rm -f /etc/systemd/system/zram-config.service
-if [[ -f /etc/systemd/system/zync.timer ]]; then
+if [[ -f /etc/systemd/system/zsync.timer ]]; then
   systemctl disable zsync.timer
-  rm -f /etc/systemd/system/zync.*
+  rm -f /etc/systemd/system/zsync.*
 fi
 sed -i '\|^ReadWritePaths=/usr/local/share/zram-config/log$|d' /lib/systemd/system/logrotate.service
 systemctl daemon-reload
