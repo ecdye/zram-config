@@ -213,16 +213,16 @@ It is only under intense loads that the slight overhead of zram compression beco
 
 This chart from [facebook/zstd](https://github.com/facebook/zstd) provides a good benchmark for the performance of the different compressors.
 
-| Compressor name  | Ratio | Compression | Decompress. |
-|:-----------------|:------|:------------|:------------|
-| zstd 1.4.5 -1    | 2.884 | 500 MB/s    | 1660 MB/s   |
-| zlib 1.2.11 -1   | 2.743 | 90 MB/s     | 400 MB/s    |
-| brotli 1.0.7 -0  | 2.703 | 400 MB/s    | 450 MB/s    |
-| quicklz 1.5.0 -1 | 2.238 | 560 MB/s    | 710 MB/s    |
-| lzo1x 2.10 -1    | 2.106 | 690 MB/s    | 820 MB/s    |
-| lz4 1.9.2        | 2.101 | 740 MB/s    | 4530 MB/s   |
-| lzf 3.6 -1       | 2.077 | 410 MB/s    | 860 MB/s    |
-| snappy 1.1.8     | 2.073 | 560 MB/s    | 1790 MB/s   |
+| Compressor name  | Ratio | Compression| Decompress.|
+|:-----------------|------:|-----------:|-----------:|
+| zstd 1.5.1 -1    | 2.887 |   530 MB/s |  1700 MB/s |
+| zlib 1.2.11 -1   | 2.743 |    95 MB/s |   400 MB/s |
+| brotli 1.0.9 -0  | 2.702 |   395 MB/s |   450 MB/s |
+| quicklz 1.5.0 -1 | 2.238 |   540 MB/s |   760 MB/s |
+| lzo1x 2.10 -1    | 2.106 |   660 MB/s |   845 MB/s |
+| lz4 1.9.3        | 2.101 |   740 MB/s |  4500 MB/s |
+| lzf 3.6 -1       | 2.077 |   410 MB/s |   830 MB/s |
+| snappy 1.1.9     | 2.073 |   550 MB/s |  1750 MB/s |
 
 With swap, zram changes what is normally a static assumption that a HD is providing the swap using `swapiness` and `page-cache` where default `swapiness` is 60 and page-cache is 3.
 Depending on the average load zram will benefit from a setting of 80-100 for `swapiness` and changing `page-cache` to 0 so that singular pages are written which will greatly reduce latency.
