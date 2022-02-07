@@ -160,6 +160,23 @@ removeZswap() {
 	echo "removeZswap: Device /dev$ZRAM_DEV removed." >> "$ZLOG"
 }
 
+syncZdir() {
+	echo "syncZdir: Beginning sync of device /dev${ZRAM_DEV}." >> "$ZLOG"
+
+	[[ -z $TARGET_DIR ]] && return 1
+	if ! (umount --verbose "${TARGET_DIR}/" >> "$ZLOG" 2>&1); then
+		[[ -x $(command -v lsof) ]] && lsof "${TARGET_DIR}/" >> "$ZLOG" 2>&1
+		umount --verbose --lazy "${TARGET_DIR}/" >> "$ZLOG" 2>&1 || return 1
+	fi
+
+	mergeOverlay >> "$ZLOG" 2>&1 || return 1
+
+	mkdir -p "${ZDIR}${ZRAM_DEV}/upper" "${ZDIR}${ZRAM_DEV}/workdir" "$TARGET_DIR" >> "$ZLOG" 2>&1 || return 1
+	mount --verbose --types overlay -o "redirect_dir=on,lowerdir=${ZDIR}${BIND_DIR},upperdir=${ZDIR}${ZRAM_DEV}/upper,workdir=${ZDIR}${ZRAM_DEV}/workdir" "overlay${ZRAM_DEV//[!0-9]/}" "$TARGET_DIR" >> "$ZLOG" 2>&1 || return 1
+
+	echo "syncZdir: Device /dev$ZRAM_DEV synced." >> "$ZLOG"
+}
+
 serviceConfiguration() {
 	if [[ $1 == "stop" ]]; then
 		echo "Stopping services that interfere with zram device configuration." >> "$ZLOG"
@@ -292,8 +309,42 @@ case "$1" in
 		rm -fv "$TMPDIR"/zram-device-list.rev "$TMPDIR"/zram-device-list >> "$ZLOG"
 		;;
 
+	sync)
+		echo "zram-config sync $(date +%Y-%m-%d-%H:%M:%S)" | tee -a "$ZLOG"
+		tac "$TMPDIR"/zram-device-list > "$TMPDIR"/zram-device-list.rev
+		while read -r line; do
+			case "$line" in
+				"#"*)
+					# Skip comment line
+					continue
+					;;
+
+				"")
+					# Skip empty line
+					continue
+					;;
+
+				*)
+					# shellcheck disable=SC2086
+					set -- $line
+					echo "ztab sync ${1} ${2} ${3} ${4}" >> "$ZLOG"
+					case "$1" in
+						dir|log)
+							ZRAM_DEV="$2"
+							TARGET_DIR="$3"
+							BIND_DIR="$4"
+							[[ -z $SERVICE ]] && serviceConfiguration "stop"
+							syncZdir
+							;;
+					esac
+					;;
+			esac
+		done < "$TMPDIR"/zram-device-list.rev
+		rm -fv "$TMPDIR"/zram-device-list.rev >> "$ZLOG"
+		;;
+
 	*)
-		echo "Usage: zram-config {start|stop}"
+		echo "Usage: zram-config {start|stop|sync}"
 		exit 0
 		;;
 esac
