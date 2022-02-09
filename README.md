@@ -181,7 +181,7 @@ If your system has other services that write to `/var/log` that are not stopped 
 This issue is not limited to logs, if you are running zram on another directoy that is written to by a service you will run into the same issue.
 
 For an example on how this project internally takes care of this issue see the `serviceConfiguration` function in zram-config.
-A more in depth version of this function is used in the `openhab` branch that can be referenced as well.
+A more in depth version of this function is used in the `openHAB` branch that can be referenced as well.
 
 #### Swapiness on older Linux kernel versions
 
