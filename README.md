@@ -129,7 +129,7 @@ swap	lzo-rle		250M		750M		75		0		150
 #dir	lzo-rle		50M		150M		/home/pi		/opt/zram/pi.bind
 
 # log	alg		mem_limit	disk_size	target_dir		bind_dir		oldlog_dir
-log	lzo-rle		50M		150M		/var/log		/opt/zram/log.bind		/opt/zram/oldlog
+log	lzo-rle		50M		150M		/var/log		/opt/zram/log.bind	/opt/zram/oldlog
 ```
 
 ### Is it working?
@@ -137,67 +137,38 @@ log	lzo-rle		50M		150M		/var/log		/opt/zram/log.bind		/opt/zram/oldlog
 Run `zramctl` in your preferred shell and if you see and output similar to below, yes it is working.
 
 ```
-pi@raspberrypi:~ $ zramctl
-NAME       ALGORITHM DISKSIZE  DATA COMPR TOTAL STREAMS MOUNTPOINT
-/dev/zram0 lz4           1.2G    4K   76B    4K       4 [SWAP]
-/dev/zram1 lz4           150M 16.3M 25.1K  208K       4 /opt/zram/zram1
-/dev/zram2 lz4            60M  7.5M  1.2M  1.7M       4 /opt/zram/zram2
+pi@raspberrypi:~$ zramctl
+NAME       ALGORITHM DISKSIZE  DATA  COMPR TOTAL STREAMS MOUNTPOINT
+/dev/zram1 lzo-rle       150M 16.9M 373.2K  692K       4 /opt/zram/zram1
+/dev/zram0 lzo-rle       750M    4K    87B   12K       4 [SWAP]
 ```
 
 To view more information on zram usage take a look at the following commands and their corresponding output.
 
 ```
-pi@raspberrypi:~ $ df
+pi@raspberrypi:~$ df
 Filesystem     1K-blocks    Used Available Use% Mounted on
-/dev/root       14803620 2558152  11611220  19% /
-devtmpfs          470116       0    470116   0% /dev
-tmpfs             474724  223868    250856  48% /dev/shm
-tmpfs             474724   12284    462440   3% /run
-tmpfs               5120       4      5116   1% /run/lock
-tmpfs             474724       0    474724   0% /sys/fs/cgroup
-/dev/mmcblk0p1     44220   22390     21831  51% /boot
-/dev/zram1        132384     280    121352   1% /opt/zram/zram1
-overlay1          132384     280    121352   1% /home/pi/MagicMirror
-/dev/zram2         55408    3460     47648   7% /opt/zram/zram2
-overlay2           55408    3460     47648   7% /var/log
-tmpfs              94944       0     94944   0% /run/user/1000
+/dev/root        3833792 1368488   2275172  38% /
+devtmpfs          437356       0    437356   0% /dev
+tmpfs             471980       0    471980   0% /dev/shm
+tmpfs             188792     440    188352   1% /run
+tmpfs               5120       0      5120   0% /run/lock
+/dev/mmcblk0p1    258095   49436    208660  20% /boot
+/dev/zram1        132240   18440    103048  16% /opt/zram/zram1
+overlay1          132240   18440    103048  16% /var/log
+tmpfs              94396       0     94396   0% /run/user/1000
 ```
 ```
-pi@raspberrypi:~ $ free -h
-              total        used        free      shared  buff/cache   available
-Mem:           927M        206M        184M        233M        535M        434M
-Swap:          1.3G          0B        1.3G
+pi@raspberrypi:~$ free -h
+               total        used        free      shared  buff/cache   available
+Mem:           921Mi        46Mi       750Mi       0.0Ki       124Mi       819Mi
+Swap:          849Mi          0B       849Mi
 ```
 ```
-pi@raspberrypi:~ $ swapon
+pi@raspberrypi:~$ swapon
 NAME       TYPE      SIZE USED PRIO
-/dev/zram0 partition 1.2G   0B   75
 /var/swap  file      100M   0B   -2
-```
-```
-pi@raspberrypi:/opt/zram $ ls
-log.bind  oldlog  zram1  zram2
-```
-```
-pi@raspberrypi:/opt/zram $ top
-top - 23:18:21 up  1:28,  2 users,  load average: 0.31, 0.29, 0.29
-Tasks: 114 total,   1 running,  68 sleeping,   0 stopped,   0 zombie
-%Cpu(s):  1.9 us,  0.1 sy,  0.0 ni, 98.0 id,  0.0 wa,  0.0 hi,  0.0 si,  0.0 st
-KiB Mem :   949448 total,   153464 free,   223452 used,   572532 buff/cache
-KiB Swap:  1331192 total,  1331192 free,        0 used.   412052 avail Mem
-
-  PID USER      PR  NI    VIRT    RES    SHR S  %CPU %MEM     TIME+ COMMAND
- 1215 pi        20   0  600844 325968 287276 S   5.3 34.3   8:09.51 chromium-browse
- 2536 pi        20   0    8104   3204   2728 R   1.6  0.3   0:00.11 top
-  970 pi        20   0  775108 156128 112876 S   1.0 16.4  11:17.06 chromium-browse
- 1611 pi        20   0   11656   3772   3056 S   0.3  0.4   0:00.30 sshd
-    1 root      20   0   27072   5964   4824 S   0.0  0.6   0:02.51 systemd
-    2 root      20   0       0      0      0 S   0.0  0.0   0:00.00 kthreadd
-    4 root       0 -20       0      0      0 I   0.0  0.0   0:00.00 kworker/0:0H
-    6 root       0 -20       0      0      0 I   0.0  0.0   0:00.00 mm_percpu_wq
-    7 root      20   0       0      0      0 S   0.0  0.0   0:00.24 ksoftirqd/0
-    8 root      20   0       0      0      0 I   0.0  0.0   0:00.87 rcu_sched
-    9 root      20   0       0      0      0 I   0.0  0.0   0:00.00 rcu_bh
+/dev/zram0 partition 750M   0B   75
 ```
 
 ### Known issues
