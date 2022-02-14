@@ -7,7 +7,7 @@ if [[ "$(id -u)" -ne 0 ]]; then
   echo "ERROR: You need to be ROOT (sudo can be used)."
   exit 1
 fi
-if ! [[ -f /usr/local/sbin/zram-config ]] || ! [[ -f /usr/sbin/zram-config ]]; then
+if ! [[ -f /usr/local/sbin/zram-config || -f /usr/sbin/zram-config ]]; then
   echo "ERROR: zram-config is not installed."
   exit 1
 fi
