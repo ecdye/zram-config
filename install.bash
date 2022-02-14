@@ -19,7 +19,7 @@ if [[ $1 == "sync" ]]; then
   echo "#####     zsync service is now installed     #####"
   exit 0
 fi
-if [[ "$(systemctl is-active zram-config.service 2> /dev/null)" == "active" ]] || rc-service zram-config status; then
+if [[ "$(systemctl is-active zram-config.service 2> /dev/null)" == "active" ]] || rc-service zram-config status 2> /dev/null; then
   echo -e "ERROR: zram-config service is still running.\\nPlease run \"sudo ${BASEDIR}/update.bash\" to update zram-config instead."
   exit 1
 fi

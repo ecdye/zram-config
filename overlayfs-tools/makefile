@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -Wall -std=c99
 LDFLAGS = -lm
-ifeq (,$(wildcard /etc/alpine-release))
+ifneq (,$(wildcard /etc/alpine-release))
   LDFLAGS += -lfts
 endif
 
