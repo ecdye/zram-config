@@ -21,7 +21,9 @@ Both [StuartIanNaylor/zram-swap-config](https://github.com/StuartIanNaylor/zram-
 
 Also if the OverlayFS guys would actually make some official merge/snapshot tools and not just leave it as just enough for Docker that would be massively useful, and if anyone fancies shouting out that call please do.
 
-This tool is mainly develop and tested against raspbian. Alpine support is experimental at this stage. `zram-config` might work on other distributions as well but this is not tested.
+This tool is primarily developed and tested against Raspberry Pi OS.
+Any Debian derivative should also work out of the box, however there is no guarantee.  
+Experimental Alpine support has also been added, other distributions may work but once again, there is no guarantee.
 
 ### COMPATIBILITY WARNING
 
@@ -59,8 +61,8 @@ sudo ./zram-config/install.bash
 
 #### Manually start or stop
 
-On debian, use `sudo systemctl {start|stop} zram-config.service` to start or stop zram-config.
-Or on Alpine, use `sudo rc-service zram-config {start|stop}`
+On Debian, use `sudo systemctl {start|stop} zram-config.service` to start or stop zram-config.
+On Alpine, use `sudo rc-service zram-config {start|stop}`.
 This will ensure that any changes are properly synced to the persistent storage before system poweroff.
 
 #### Sync files to disk
@@ -119,7 +121,7 @@ Usually in `/opt` or `/var`, name optional.
 Usually in `/opt` or `/var`, name optional.
 
 If you need multiple zram swaps or zram directories, just create another entry in `/etc/ztab`.
-To do this simply add the new entries to the `/etc/ztab`, if you need to edit an active zram device you must stop zram with `sudo systemctl stop zram-config.service` on debian or `sudo rc-service zram-config stop` on Alpine and then edit any entries you need to.
+To do this simply add the new entries to the `/etc/ztab`, if you need to edit an active zram device you must stop zram with `sudo systemctl stop zram-config.service` on Debian or `sudo rc-service zram-config stop` on Alpine and then edit any entries you need to.
 Once finished, start zram using `sudo systemctl start zram-config.service` or `sudo rc-service zram-config start` which will only add the new entries if zram is already running.
 
 #### Example configuration
@@ -211,11 +213,6 @@ This chart from [facebook/zstd](https://github.com/facebook/zstd) provides a goo
 | lz4 1.9.3        | 2.101 |   740 MB/s |  4500 MB/s |
 | lzf 3.6 -1       | 2.077 |   410 MB/s |   830 MB/s |
 | snappy 1.1.9     | 2.073 |   550 MB/s |  1750 MB/s |
-
-With swap, zram changes what is normally a static assumption that a HD is providing the swap using `swapiness` and `page-cache` where default `swapiness` is 60 and page-cache is 3.
-Depending on the average load zram will benefit from a setting of 80-100 for `swapiness` and changing `page-cache` to 0 so that singular pages are written which will greatly reduce latency.
-It is a shame `swapiness` is not dynamically based on load as for many systems there is often a huge difference in boot startup to settled load.
-In some cases you may find you are reducing `swapiness` purely because of boot load.
 
 ### Reference
 

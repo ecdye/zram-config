@@ -36,9 +36,12 @@
 # If you need multiple zram swaps or zram directories, just create another entry
 # in this file. To do this simply add the new entries to this file, if you need
 # to edit an active zram device you must stop zram with
-# 'sudo systemctl stop zram-config.service' and then edit any entries you need
-# to. Once finished, start zram using 'sudo systemctl start zram-config.service'
-# which will only add the new entries if zram is already running.
+# 'sudo systemctl stop zram-config.service' on Debian or
+# 'sudo rc-service zram-config stop' on Alpine and then edit any entries you
+# need to. Once finished, start zram using
+# 'sudo systemctl start zram-config.service' or
+# 'sudo rc-service zram-config start' which will only add the new entries if
+# zram is already running.
 
 # swap	alg		mem_limit	disk_size	swap_priority	page-cluster	swappiness
 swap	lzo-rle		250M		750M		75		0		150

@@ -284,7 +284,7 @@ case "$1" in
 	stop)
 		echo "zram-config stop $(date +%Y-%m-%d-%H:%M:%S)" | tee -a "$ZLOG"
 		if ! [[ -f "$TMPDIR"/zram-device-list ]]; then
-			echo "zram-config already stoped, exiting..." | tee -a "$ZLOG"
+			echo "Stop: zram-config not running. Exiting!" | tee -a "$ZLOG"
 			exit 0
 		fi
 		tac "$TMPDIR"/zram-device-list > "$TMPDIR"/zram-device-list.rev
@@ -326,6 +326,10 @@ case "$1" in
 
 	sync)
 		echo "zram-config sync $(date +%Y-%m-%d-%H:%M:%S)" | tee -a "$ZLOG"
+		if ! [[ -f "$TMPDIR"/zram-device-list ]]; then
+			echo "Sync: zram-config not running. Exiting!" | tee -a "$ZLOG"
+			exit 0
+		fi
 		tac "$TMPDIR"/zram-device-list > "$TMPDIR"/zram-device-list.rev
 		while read -r line; do
 			case "$line" in
