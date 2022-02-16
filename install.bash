@@ -61,12 +61,12 @@ install -m 755 "${BASEDIR}/uninstall.bash" /usr/local/share/zram-config/uninstal
 install -m 644 "${BASEDIR}/zram-config.logrotate" /etc/logrotate.d/zram-config
 mkdir -p /usr/local/lib/zram-config/
 install -m 755 "${BASEDIR}/overlayfs-tools/overlay" /usr/local/lib/zram-config/overlay
+
+echo "Starting zram-config service"
 if [[ "$OS" == "alpine" ]]; then
-  echo "Starting zram-config service..."
   rc-update add zram-config boot
   rc-service zram-config start
 else
-  echo "Starting zram-config.service"
   systemctl daemon-reload
   systemctl enable --now zram-config.service
   until [[ $(systemctl show -p SubState --value zram-config) == "exited" ]]; do
