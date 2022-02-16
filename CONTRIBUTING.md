@@ -113,6 +113,7 @@ This step is optional and not needed for the acceptance of your pull request.
 The [ShellCheck](https://www.shellcheck.net/) linter can be run by using the following commands:
 
 ``` bash
+shellcheck -x -s bash tests/*.bash
 shellcheck -x -s bash install.bash
 shellcheck -x -s bash update.bash
 shellcheck -x -s bash uninstall.bash
