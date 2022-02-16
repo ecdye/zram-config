@@ -66,12 +66,12 @@ if ! [[ -d /usr/local/lib/zram-config ]]; then
   mkdir -p /usr/local/lib/zram-config
 fi
 install -m 755 "${BASEDIR}/overlayfs-tools/overlay" /usr/local/lib/zram-config/overlay
+
+echo "Starting zram-config service"
 if [[ $OS == "alpine" ]]; then
-  echo "Starting zram-config service..."
   rc-update add zram-config boot
   rc-service zram-config start
 else
-  echo "Starting zram-config.service"
   systemctl daemon-reload
   systemctl enable --now zram-config.service
 fi
