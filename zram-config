@@ -212,8 +212,7 @@ serviceConfiguration() {
 
 TMPDIR="/tmp"
 ZDIR="/opt/zram"
-ZSHARE="/usr/local/share/zram-config"
-ZLOG="${ZSHARE}/log/zram-config.log"
+ZLOG="/usr/local/share/zram-config/log/zram-config.log"
 OS="$(grep -o '^ID=.*$' /etc/os-release | cut -d'=' -f2)"
 if [[ -f /run/systemd/shutdown/scheduled ]]; then
 	SERVICE="1"
