@@ -1,8 +1,7 @@
 [Unit]
 Description=zram-config
 Documentation=https://github.com/ecdye/zram-config/blob/main/README.md
-Requires=local-fs.target
-After=local-fs.target
+RequiresMountsFor=/opt/zram
 
 [Service]
 Type=exec
