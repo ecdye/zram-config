@@ -1,0 +1,21 @@
+#!/sbin/openrc-run
+
+description="zram-config - https://github.com/ecdye/zram-config/blob/main/README.md"
+name="zram-config"
+
+depend() {
+  need localmount
+	after bootmisc
+}
+
+start() {
+	ebegin "Starting zram-config..."
+	/usr/sbin/zram-config "start"
+	eend $?
+}
+
+stop() {
+	ebegin "Stopping zram-config..."
+	/usr/sbin/zram-config "stop"
+	eend $?
+}

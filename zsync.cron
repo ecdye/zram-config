@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+
+/usr/sbin/zram-config "sync"

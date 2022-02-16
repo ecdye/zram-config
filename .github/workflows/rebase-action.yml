@@ -27,6 +27,3 @@ jobs:
           git checkout openHAB
           git rebase main
           git push --force-with-lease
-          git checkout openHAB2
-          git rebase main
-          git push --force-with-lease
