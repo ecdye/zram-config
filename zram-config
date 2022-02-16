@@ -179,7 +179,7 @@ syncZdir() {
 
 serviceConfiguration() {
 	if [[ $1 == "stop" ]]; then
-		echo "Stopping services that interfere with zram device configuration." >> "$ZLOG"
+		echo "serviceConfiguration: Stopping services that interfere with zram device configuration." >> "$ZLOG"
 		if [[ $OS == "alpine" ]]; then
 			if rc-service syslog status &> /dev/null; then
 				export syslogActiveAlpine="true"
@@ -197,7 +197,7 @@ serviceConfiguration() {
 			fi
 		fi
 	elif [[ $1 == "start" ]]; then
-		echo "Restarting services that interfere with zram device configuration." >> "$ZLOG"
+		echo "serviceConfiguration: Restarting services that interfere with zram device configuration." >> "$ZLOG"
 		if [[ -n $journaldActive ]]; then
 			systemctl --no-block restart systemd-journald.socket systemd-journald-audit.socket systemd-journald-dev-log.socket >> "$ZLOG" 2>&1 || return 1
 		fi
@@ -250,7 +250,7 @@ case "$1" in
 							entry="$(grep "${1}.*${5}" "$TMPDIR"/zram-device-list)"
 						fi
 						if [[ -n $entry ]]; then
-							echo "Entry ${entry} already exists as a zram device, skipping recreation of device." >> "$ZLOG"
+							echo "Start: Entry ${entry} already exists as a zram device, skipping recreation of device." >> "$ZLOG"
 							continue
 						fi
 					fi
@@ -275,7 +275,7 @@ case "$1" in
 			esac
 		done < /etc/ztab
 		if [[ $ZTAB_EMPTY == "true" ]]; then
-			echo "Configuration file '/etc/ztab' is empty and needs to be configured. Exiting!" | tee -a "$ZLOG"
+			echo "Start: Configuration file '/etc/ztab' is empty and needs to be configured. Exiting!" | tee -a "$ZLOG"
 			exit 1
 		fi
 		;;
