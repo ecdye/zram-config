@@ -60,7 +60,7 @@ sudo ./zram-config/install.bash
 #### Manually start or stop
 
 On debian, use `sudo systemctl {start|stop} zram-config.service` to start or stop zram-config.
-Or on Alpine, use `sudo rc-service rc-service zram-config {start|stop}`
+Or on Alpine, use `sudo rc-service zram-config {start|stop}`
 This will ensure that any changes are properly synced to the persistent storage before system poweroff.
 
 #### Sync files to disk
@@ -119,8 +119,8 @@ Usually in `/opt` or `/var`, name optional.
 Usually in `/opt` or `/var`, name optional.
 
 If you need multiple zram swaps or zram directories, just create another entry in `/etc/ztab`.
-To do this simply add the new entries to the `/etc/ztab`, if you need to edit an active zram device you must stop zram with `sudo systemctl stop zram-config.service` on debian or `sudo rc-service rc-service zram-config stop` on Alpine and then edit any entries you need to.
-Once finished, start zram using `sudo systemctl start zram-config.service` or `sudo rc-service rc-service zram-config start` which will only add the new entries if zram is already running.
+To do this simply add the new entries to the `/etc/ztab`, if you need to edit an active zram device you must stop zram with `sudo systemctl stop zram-config.service` on debian or `sudo rc-service zram-config stop` on Alpine and then edit any entries you need to.
+Once finished, start zram using `sudo systemctl start zram-config.service` or `sudo rc-service zram-config start` which will only add the new entries if zram is already running.
 
 #### Example configuration
 
