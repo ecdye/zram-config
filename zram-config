@@ -180,14 +180,21 @@ syncZdir() {
 serviceConfiguration() {
 	if [[ $1 == "stop" ]]; then
 		echo "Stopping services that interfere with zram device configuration." >> "$ZLOG"
-		if [[ $(systemctl is-active rsyslog.service) == "active" ]]; then
-			export rsyslogActive="true"
-			systemctl --no-block stop syslog.socket >> "$ZLOG" 2>&1 || return 1
-		fi
-		if [[ $(systemctl is-active systemd-journald.service) == "active" ]]; then
-			export journaldActive="true"
-			journalctl --flush >> "$ZLOG" 2>&1 || return 1
-			systemctl --no-block stop systemd-journald.socket systemd-journald-audit.socket systemd-journald-dev-log.socket >> "$ZLOG" 2>&1 || return 1
+		if [[ $OS == "alpine" ]]; then
+			if rc-service syslog status &> /dev/null; then
+				export syslogActiveAlpine="true"
+				rc-service syslog stop >> "$ZLOG" 2>&1 || return 1
+			fi
+		else
+			if [[ $(systemctl is-active rsyslog.service) == "active" ]]; then
+				export rsyslogActive="true"
+				systemctl --no-block stop syslog.socket >> "$ZLOG" 2>&1 || return 1
+			fi
+			if [[ $(systemctl is-active systemd-journald.service) == "active" ]]; then
+				export journaldActive="true"
+				journalctl --flush >> "$ZLOG" 2>&1 || return 1
+				systemctl --no-block stop systemd-journald.socket systemd-journald-audit.socket systemd-journald-dev-log.socket >> "$ZLOG" 2>&1 || return 1
+			fi
 		fi
 	elif [[ $1 == "start" ]]; then
 		echo "Restarting services that interfere with zram device configuration." >> "$ZLOG"
@@ -197,6 +204,9 @@ serviceConfiguration() {
 		if [[ -n $rsyslogActive ]]; then
 			systemctl --no-block restart syslog.socket >> "$ZLOG" 2>&1 || return 1
 		fi
+		if [[ -n $syslogActiveAlpine ]]; then
+			rc-service syslog start >> "$ZLOG" 2>&1 || return 1
+		fi
 	fi
 }
 
@@ -204,6 +214,7 @@ TMPDIR="/tmp"
 ZDIR="/opt/zram"
 ZSHARE="/usr/local/share/zram-config"
 ZLOG="${ZSHARE}/log/zram-config.log"
+OS="$(grep -o '^ID=.*$' /etc/os-release | cut -d'=' -f2)"
 if [[ -f /run/systemd/shutdown/scheduled ]]; then
 	SERVICE="1"
 fi
@@ -272,6 +283,10 @@ case "$1" in
 
 	stop)
 		echo "zram-config stop $(date +%Y-%m-%d-%H:%M:%S)" | tee -a "$ZLOG"
+		if ! [[ -f "$TMPDIR"/zram-device-list ]]; then
+			echo "zram-config already stoped, exiting..." | tee -a "$ZLOG"
+			exit 0
+		fi
 		tac "$TMPDIR"/zram-device-list > "$TMPDIR"/zram-device-list.rev
 		while read -r line; do
 			case "$line" in

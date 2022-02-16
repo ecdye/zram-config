@@ -21,6 +21,8 @@ Both [StuartIanNaylor/zram-swap-config](https://github.com/StuartIanNaylor/zram-
 
 Also if the OverlayFS guys would actually make some official merge/snapshot tools and not just leave it as just enough for Docker that would be massively useful, and if anyone fancies shouting out that call please do.
 
+This tool is mainly develop and tested against raspbian. Alpine support is experimental at this stage. `zram-config` might work on other distributions as well but this is not tested.
+
 ### COMPATIBILITY WARNING
 
 The Raspberry Pi 4 8GB model can exhibit issues with zram due to a Linux kernel bug.
@@ -57,7 +59,8 @@ sudo ./zram-config/install.bash
 
 #### Manually start or stop
 
-Use `sudo systemctl {start|stop} zram-config.service` to start or stop zram-config.
+On debian, use `sudo systemctl {start|stop} zram-config.service` to start or stop zram-config.
+Or on Alpine, use `sudo rc-service zram-config {start|stop}`
 This will ensure that any changes are properly synced to the persistent storage before system poweroff.
 
 #### Sync files to disk
@@ -116,8 +119,8 @@ Usually in `/opt` or `/var`, name optional.
 Usually in `/opt` or `/var`, name optional.
 
 If you need multiple zram swaps or zram directories, just create another entry in `/etc/ztab`.
-To do this simply add the new entries to the `/etc/ztab`, if you need to edit an active zram device you must stop zram with `sudo systemctl stop zram-config.service` and then edit any entries you need to.
-Once finished, start zram using `sudo systemctl start zram-config.service` which will only add the new entries if zram is already running.
+To do this simply add the new entries to the `/etc/ztab`, if you need to edit an active zram device you must stop zram with `sudo systemctl stop zram-config.service` on debian or `sudo rc-service zram-config stop` on Alpine and then edit any entries you need to.
+Once finished, start zram using `sudo systemctl start zram-config.service` or `sudo rc-service zram-config start` which will only add the new entries if zram is already running.
 
 #### Example configuration
 

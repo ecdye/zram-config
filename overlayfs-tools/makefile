@@ -1,11 +1,14 @@
-CFLAGS = -Wall -std=c99
-LFLAGS = -lm
 CC = gcc
+CFLAGS = -Wall -std=c99
+LDFLAGS = -lm
+ifneq (,$(wildcard /etc/alpine-release))
+  LDFLAGS += -lfts
+endif
 
 all: overlay
 
 overlay: main.o logic.o sh.o
-	$(CC) $(LFLAGS) main.o logic.o sh.o -o overlay
+	$(CC) main.o logic.o sh.o -o overlay $(LDFLAGS)
 
 main.o: main.c logic.h
 	$(CC) $(CFLAGS) -c main.c
