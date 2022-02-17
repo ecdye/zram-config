@@ -6,20 +6,13 @@
 ## Overview
 
 This is a complete zram-config utility for swap, directories, and logs to reduce SD, NAND and eMMC block wear.
-zram-config implements zram to prevent frequent writing to the disk and allow near ram speed access to working directories with varying compression ratios depending on the compression algorithm.
+Furthermore zram allows near RAM speed access to working directories, and prevents frequent writing to persistent storage.
+Even more importantly, data stored in zram can be compressed to conserve memory.
 
 A ztab table in `/etc/ztab` is used to configure where any combination and number of zram drives are to be created.
-This project uses an OverlayFS mount with zram so that syncFromDisk on start is not needed.
-In theory this should allow for faster boots and larger directories as no complete directory copy is needed as it is the lower mount in the OverlayFS.
-Many thanks go to [@kmxz](https://github.com/kmxz) for [kmxz/overlayfs-tools](https://github.com/kmxz/overlayfs-tools) which make this project possible.
-
-The rationale for zram-config is that many distributions have `zram-config` packages that are actually broken, even by name, as often they are a zram-swap-config package in reality.
-But even then they do not check for other zram services or change the parameters of swap from HD based configurations to ram optimized ones.
-If all you are looking for is a zram-swap utility see [StuartIanNaylor/zram-swap-config](https://github.com/StuartIanNaylor/zram-swap-config).
-
-Both [StuartIanNaylor/zram-swap-config](https://github.com/StuartIanNaylor/zram-swap-config) and [ecdye/zram-config](https://github.com/ecdye/zram-config) are great examples for distributions to get their zram packages updated.
-
-Also if the OverlayFS guys would actually make some official merge/snapshot tools and not just leave it as just enough for Docker that would be massively useful, and if anyone fancies shouting out that call please do.
+This project uses an OverlayFS mount with zram so that files do not need to be copied from the persistent storage on startup.
+In theory this should allow for faster boots and larger directories as no complete directory copy is needed.
+A modified version of [kmxz/overlayfs-tools](https://github.com/kmxz/overlayfs-tools) is used to implement the OverlayFS mount.
 
 This tool is primarily developed and tested against Raspberry Pi OS.
 Any Debian derivative should also work out of the box, however there is no guarantee.  
