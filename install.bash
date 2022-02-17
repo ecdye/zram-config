@@ -8,6 +8,7 @@ if [[ "$(id -u)" -ne 0 ]]; then
   exit 1
 fi
 if [[ $1 == "sync" ]]; then
+  echo "Installing zram sync service"
   if [[ "$OS" == "alpine" ]]; then
     install -m 755 "$BASEDIR"/service/OpenRC/zsync.cron /etc/periodic/daily/zsync
   else
@@ -37,7 +38,7 @@ elif ! dpkg -s 'gcc' 'make' 'libc6-dev' &> /dev/null; then
 fi
 
 if [[ $OS == "ubuntu" ]] && [[ $(bc -l <<< "$(grep -o '^VERSION_ID=.*$' /etc/os-release | cut -d'=' -f2 | tr -d '"') >= 21.10") -eq 1 ]]; then
-  echo "Install zram module package for Ubuntu (linux-modules-extra-raspi)"
+  echo "Installing zram module package for Ubuntu (linux-modules-extra-raspi)"
   if ! dpkg -s 'linux-modules-extra-raspi' &> /dev/null; then
     apt-get install --yes linux-modules-extra-raspi || exit 1
   fi
