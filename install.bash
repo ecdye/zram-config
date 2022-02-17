@@ -9,10 +9,10 @@ if [[ "$(id -u)" -ne 0 ]]; then
 fi
 if [[ $1 == "sync" ]]; then
   if [[ "$OS" == "alpine" ]]; then
-    install -m 755 "$BASEDIR"/zsync.cron /etc/periodic/daily/zsync
+    install -m 755 "$BASEDIR"/service/OpenRC/zsync.cron /etc/periodic/daily/zsync
   else
-    install -m 644 "$BASEDIR"/zsync.timer /etc/systemd/system/
-    install -m 644 "$BASEDIR"/zsync.service /etc/systemd/system/
+    install -m 644 "$BASEDIR"/service/SystemD/zsync.timer /etc/systemd/system/
+    install -m 644 "$BASEDIR"/service/SystemD/zsync.service /etc/systemd/system/
     systemctl daemon-reload
     systemctl enable --now zsync.timer
   fi
@@ -47,20 +47,20 @@ make --always-make --directory="${BASEDIR}/overlayfs-tools"
 
 echo "Installing zram-config files"
 if [[ "$OS" == "alpine" ]]; then
-  install -m 755 "${BASEDIR}/zram-config" /usr/sbin/
-  install -m 755 "${BASEDIR}/zram-config.openrc" /etc/init.d/zram-config
+  install -m 755 "$BASEDIR"/zram-config /usr/sbin/
+  install -m 755 "$BASEDIR"/service/OpenRC/zram-config.openrc /etc/init.d/zram-config
 else
-  install -m 755 "${BASEDIR}/zram-config" /usr/local/sbin/
-  install -m 644 "${BASEDIR}/zram-config.service" /etc/systemd/system/zram-config.service
+  install -m 755 "$BASEDIR"/zram-config /usr/local/sbin/
+  install -m 644 "$BASEDIR"/service/SystemD/zram-config.service /etc/systemd/system/zram-config.service
   echo "ReadWritePaths=/usr/local/share/zram-config/log" >> /lib/systemd/system/logrotate.service
 fi
-install -m 644 "${BASEDIR}/ztab" /etc/ztab
+install -m 644 "$BASEDIR"/ztab /etc/ztab
 mkdir -p /usr/local/share/zram-config/log
 ln -s /usr/local/share/zram-config/log /var/log/zram-config
-install -m 755 "${BASEDIR}/uninstall.bash" /usr/local/share/zram-config/uninstall.bash
-install -m 644 "${BASEDIR}/zram-config.logrotate" /etc/logrotate.d/zram-config
+install -m 755 "$BASEDIR"/uninstall.bash /usr/local/share/zram-config/uninstall.bash
+install -m 644 "$BASEDIR"/service/zram-config.logrotate /etc/logrotate.d/zram-config
 mkdir -p /usr/local/lib/zram-config/
-install -m 755 "${BASEDIR}/overlayfs-tools/overlay" /usr/local/lib/zram-config/overlay
+install -m 755 "$BASEDIR"/overlayfs-tools/overlay /usr/local/lib/zram-config/overlay
 
 echo "Starting zram-config service"
 if [[ "$OS" == "alpine" ]]; then
