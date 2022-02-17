@@ -94,14 +94,6 @@ Signed-off-by: Joe Smith <joe.smith@email.com>
 
 using your real name (sorry, no pseudonyms or anonymous contributions) and an e-mail address under which you can be reached (sorry, no GitHub no-reply e-mail addresses (such as username@users.noreply.github.com) or other non-reachable addresses are allowed).
 
-#### Small patch exception
-
-There are a few exceptions to the signing requirement.
-Currently these are:
-
-*   Your patch fixes spelling or grammar errors.
-*   Your patch is a single line change to documentation.
-
 #### Sign your Work using GPG
 
 You can additionally sign your contribution using GPG.
