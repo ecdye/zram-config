@@ -18,12 +18,6 @@ This tool is primarily developed and tested against Raspberry Pi OS.
 Any Debian derivative should also work out of the box, however there is no guarantee.  
 Experimental Alpine support has also been added, other distributions may work but once again, there is no guarantee.
 
-### COMPATIBILITY WARNING
-
-The Raspberry Pi 4 8GB model can exhibit issues with zram due to a Linux kernel bug.
-This bug has been fixed as of Raspberry Pi Kernel version 1.20210527.
-See [raspberrypi/linux@cef3970381](https://github.com/raspberrypi/linux/commit/cef397038167ac15d085914493d6c86385773709) for more details about the issue.
-
 ## A Brief Usage Guide
 
 ### Table of Contents
@@ -40,6 +34,7 @@ See [raspberrypi/linux@cef3970381](https://github.com/raspberrypi/linux/commit/c
     -   [Conflicts with services](#conflicts-with-services)
     -   [Swapiness on older Linux kernel versions](#swapiness-on-older-linux-kernel-versions)
     -   [Failure to work without `zramctl`](#failure-to-work-without-zramctl)
+    -   [Raspberry Pi 4 8GB compatibility](#raspberry-pi-4-8gb-compatibility)
 7.  [Performance](#performance)
 8.  [Reference](#reference)
 
@@ -195,6 +190,12 @@ A potential resolution may be that the `util-linux` package is not installed on 
 
 Please note that just running the `zramctl` command to test if it is present will not work unless the zram kernel module has already been loaded.
 The kernel module is automatically loaded by zram-config, so even though it may seem like `zramctl` is not installed when attempting to test before running it actually is.
+
+#### Raspberry Pi 4 8GB compatibility
+
+The Raspberry Pi 4 8GB model can exhibit issues with zram due to a Linux kernel bug.
+This bug has been fixed as of Raspberry Pi Kernel version 1.20210527.
+See [raspberrypi/linux@cef3970381](https://github.com/raspberrypi/linux/commit/cef397038167ac15d085914493d6c86385773709) for more details about the issue.
 
 ### Performance
 
