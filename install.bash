@@ -23,7 +23,7 @@ if [[ "$(systemctl is-active zram-config.service 2> /dev/null)" == "active" ]] |
   echo -e "ERROR: zram-config service is still running.\\nPlease run \"sudo ${BASEDIR}/update.bash\" to update zram-config instead."
   exit 1
 fi
-if [[ -f /usr/local/sbin/zram-config ]] || [[ -f /usr/sbin/zram-config ]]; then
+if [[ -s /usr/local/sbin/zram-config ]] || [[ -s /usr/sbin/zram-config ]]; then
   echo -e "ERROR: zram-config is already installed.\\nPlease run \"sudo ${BASEDIR}/update.bash\" to update zram-config instead."
   exit 1
 fi

@@ -214,7 +214,7 @@ TMPDIR="/tmp"
 ZDIR="/opt/zram"
 ZLOG="/usr/local/share/zram-config/log/zram-config.log"
 OS="$(grep -o '^ID=.*$' /etc/os-release | cut -d'=' -f2)"
-if [[ -f /run/systemd/shutdown/scheduled ]]; then
+if [[ -s /run/systemd/shutdown/scheduled ]]; then
 	SERVICE="1"
 fi
 
@@ -243,7 +243,7 @@ case "$1" in
 					ALG="$2"
 					MEM_SIZE="$3"
 					DISK_SIZE="$4"
-					if [[ -f "$TMPDIR"/zram-device-list ]]; then
+					if [[ -s "$TMPDIR"/zram-device-list ]]; then
 						if [[ $1 == "swap" ]]; then
 							entry="$(grep "^swap" "$TMPDIR"/zram-device-list)"
 						else
@@ -282,7 +282,7 @@ case "$1" in
 
 	stop)
 		echo "zram-config stop $(date +%Y-%m-%d-%H:%M:%S)" | tee -a "$ZLOG"
-		if ! [[ -f "$TMPDIR"/zram-device-list ]]; then
+		if ! [[ -s "$TMPDIR"/zram-device-list ]]; then
 			echo "Stop: zram-config not running. Exiting!" | tee -a "$ZLOG"
 			exit 0
 		fi
@@ -325,7 +325,7 @@ case "$1" in
 
 	sync)
 		echo "zram-config sync $(date +%Y-%m-%d-%H:%M:%S)" | tee -a "$ZLOG"
-		if ! [[ -f "$TMPDIR"/zram-device-list ]]; then
+		if ! [[ -s "$TMPDIR"/zram-device-list ]]; then
 			echo "Sync: zram-config not running. Exiting!" | tee -a "$ZLOG"
 			exit 0
 		fi
