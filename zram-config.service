@@ -1,14 +1,12 @@
 [Unit]
 Description=zram-config
 Documentation=https://github.com/ecdye/zram-config/blob/main/README.md
-RequiresMountsFor=/opt/zram
 
 [Service]
 Type=exec
 TimeoutSec=120
 RemainAfterExit=yes
 ExecStart=/usr/local/sbin/zram-config "start"
-ExecReload=/usr/local/sbin/zram-config "start"
 ExecStop=/usr/local/sbin/zram-config "stop"
 
 [Install]
