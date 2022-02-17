@@ -194,7 +194,7 @@ A more in depth version of this function is used in the `openHAB` branch that ca
 When running zram swap on Linux kernel versions older than 5.8 swappiness has a maximum value of 100.
 If you observe issues runnning on older kernel versions try setting the default value of 150 back to 100.
 
-### Failure to work without `zramctl`
+#### Failure to work without `zramctl`
 
 If for some reason your distribution does not contain the `zramctl` command, then zram-config will not work properly.
 This is because zram-config uses `zramctl` internally to configure zram devices.
