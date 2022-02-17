@@ -9,10 +9,11 @@ This is a complete zram-config utility for swap, directories, and logs to reduce
 Furthermore zram allows near RAM speed access to working directories, and prevents frequent writing to persistent storage.
 Even more importantly, data stored in zram can be compressed to conserve memory.
 
-A ztab table in `/etc/ztab` is used to configure where any combination and number of zram drives are to be created.
-This project uses an OverlayFS mount with zram so that files do not need to be copied from the persistent storage on startup.
+A table located at `/etc/ztab` is used to configure any number and type of zram devices.
+Using the table an OverlayFS mount is used to mount the newly created zram device as the upper filesystem of the OverlayFS.
+OverlayFS is used so that files do not need to be copied from persistent storage to RAM on startup.
 In theory this should allow for faster boots and larger directories as no complete directory copy is needed.
-A modified version of [kmxz/overlayfs-tools](https://github.com/kmxz/overlayfs-tools) is used to implement the OverlayFS mount.
+A modified version of [kmxz/overlayfs-tools](https://github.com/kmxz/overlayfs-tools) is used to implement the OverlayFS sync logic.
 
 This tool is primarily developed and tested against Raspberry Pi OS.
 Any Debian derivative should also work out of the box, however there is no guarantee.  
