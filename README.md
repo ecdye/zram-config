@@ -46,7 +46,7 @@ See [raspberrypi/linux@cef3970381](https://github.com/raspberrypi/linux/commit/c
 6.  [Known issues](#known-issues)
     -   [Conflicts with services](#conflicts-with-services)
     -   [Swapiness on older Linux kernel versions](#swapiness-on-older-linux-kernel-versions)
-    -   [Failure to work without `zramctl`](#failure-to work-without-zramctl)
+    -   [Failure to work without `zramctl`](#failure-to-work-without-zramctl)
 7.  [Performance](#performance)
 8.  [Reference](#reference)
 
