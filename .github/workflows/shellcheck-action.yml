@@ -6,10 +6,12 @@ on:
     paths:
       - 'zram-config'
       - '**.bash'
+      - '.github/workflows/shellcheck-action.yml'
   pull_request:
     paths:
       - 'zram-config'
       - '**.bash'
+      - '.github/workflows/shellcheck-action.yml'
 
 jobs:
   shellcheck:
