@@ -25,6 +25,15 @@ jobs:
           lzip -9 --keep --verbose --verbose zram-config-${tag}.tar
           gpg --detach-sign --armor zram-config-${tag}.tar.lz
           gpg --verify zram-config-${tag}.tar.lz.asc zram-config-${tag}.tar.lz
+          xz -9 --keep --verbose --verbose zram-config-${tag}.tar
+          gpg --detach-sign --armor zram-config-${tag}.tar.xz
+          gpg --verify zram-config-${tag}.tar.lz.asc zram-config-${tag}.tar.xz
+          gzip -9 --keep --verbose --verbose zram-config-${tag}.tar
+          gpg --detach-sign --armor zram-config-${tag}.tar.gz
+          gpg --verify zram-config-${tag}.tar.lz.asc zram-config-${tag}.tar.gz
+          zstd -22 --rsyncable --ultra --keep --verbose --verbose zram-config-${tag}.tar
+          gpg --detach-sign --armor zram-config-${tag}.tar.zst
+          gpg --verify zram-config-${tag}.tar.lz.asc zram-config-${tag}.tar.zst
           unset tag
         shell: bash
       - uses: "marvinpinto/action-automatic-releases@v1.2.1"
@@ -34,5 +43,5 @@ jobs:
           automatic_release_tag: "${{ github.ref_name }}"
           prerelease: false
           files: |
-            zram-config-*.tar.lz
-            zram-config-*.tar.lz.asc
+            zram-config-*.tar.*
+            zram-config-*.tar.*.asc
