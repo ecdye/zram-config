@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-mountImageFile() {
+imageFile() {
   local loopPrefix
 
   if [[ $1 == "mount" ]]; then
@@ -26,17 +26,17 @@ if [[ $1 == "setup" ]]; then
   fi
   qemu-img resize -f raw "$3" 4G
   echo ", +" | sfdisk -N 2 "$3"
-  mountImageFile "mount" "$3"
+  imageFile "mount" "$3"
   rsync -avr --exclude="*.zip" --exclude="*.img" --exclude="*.sig" --exclude="tests/fs" --exclude="tests/dtb" --exclude="tests/kernel" ./ tests/fs/opt/zram
   systemd-nspawn --directory="tests/fs" /opt/zram/tests/install-packages.bash
-  echo "set enable-bracketed-paste off" >> tests/fs/etc/inputrc  # Prevents weird character output when running the image in tests
+  echo "set enable-bracketed-paste off" >> tests/fs/etc/inputrc  # Prevents weird character output
   cp tests/fs/boot/kernel* tests/kernel
   cp tests/fs/boot/*.dtb tests/dtb
-  mountImageFile "umount" "$3"
+  imageFile "umount" "$3"
 elif [[ $1 == "copy-logs" ]]; then
-  mountImageFile "mount" "$2"
+  imageFile "mount" "$2"
   cp tests/fs/opt/zram/logs.tar .
-  mountImageFile "umount" "$2"
+  imageFile "umount" "$2"
 fi
 
 exit 0
