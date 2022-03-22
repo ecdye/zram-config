@@ -32,7 +32,7 @@ jobs:
            echo "::set-output name=imagezip::$(basename "$(curl "https://downloads.raspberrypi.org/raspios_lite_armhf_latest" -s -L -I  -o /dev/null -w '%{url_effective}')")"
            echo "::set-output name=image::$(echo "$(basename "$(curl "https://downloads.raspberrypi.org/raspios_lite_armhf_latest" -s -L -I  -o /dev/null -w '%{url_effective}')")" | sed -e 's/.zip/.img/')"
        - name: Cache Raspberry Pi OS 32bit image
-         uses: actions/cache@v2.1.7
+         uses: actions/cache@v3
          with:
            path: ${{ steps.setup.outputs.image }}
            key: ${{ steps.setup.outputs.image }}-${{ secrets.CACHE_VERSION }}
