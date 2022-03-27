@@ -220,7 +220,7 @@ fi
 
 case "$1" in
 	start)
-		echo "zram-config start $(date +%Y-%m-%d-%H:%M:%S)" | tee -a "$ZLOG"
+		echo "zram-config start $(printf "%(%F-%T-%Z)T\\n" "-1")" | tee -a "$ZLOG"
 		ZTAB_EMPTY="true"
 		while read -r line; do
 			case "$line" in
@@ -281,7 +281,7 @@ case "$1" in
 		;;
 
 	stop)
-		echo "zram-config stop $(date +%Y-%m-%d-%H:%M:%S)" | tee -a "$ZLOG"
+		echo "zram-config stop $(printf "%(%F-%T-%Z)T\\n" "-1")" | tee -a "$ZLOG"
 		if ! [[ -s "$TMPDIR"/zram-device-list ]]; then
 			echo "Stop: zram-config not running. Exiting!" | tee -a "$ZLOG"
 			exit 0
@@ -324,7 +324,7 @@ case "$1" in
 		;;
 
 	sync)
-		echo "zram-config sync $(date +%Y-%m-%d-%H:%M:%S)" | tee -a "$ZLOG"
+		echo "zram-config sync $(printf "%(%F-%T-%Z)T\\n" "-1")" | tee -a "$ZLOG"
 		if ! [[ -s "$TMPDIR"/zram-device-list ]]; then
 			echo "Sync: zram-config not running. Exiting!" | tee -a "$ZLOG"
 			exit 0
