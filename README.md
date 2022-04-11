@@ -16,7 +16,7 @@ In theory this should allow for faster boots and larger directories as no comple
 A modified version of [kmxz/overlayfs-tools](https://github.com/kmxz/overlayfs-tools) is used to implement the OverlayFS sync logic.
 
 This tool is primarily developed and tested against Raspberry Pi OS.
-Any Debian derivative should also work out of the box, however there is no guarantee.  
+Any Debian derivative should also work out of the box, however there is no guarantee.
 Experimental Alpine support has also been added, other distributions may work but once again, there is no guarantee.
 
 ## A Brief Usage Guide
@@ -38,8 +38,6 @@ Experimental Alpine support has also been added, other distributions may work bu
     -   [Raspberry Pi 4 8GB compatibility](#raspberry-pi-4-8gb-compatibility)
 7.  [Performance](#performance)
 8.  [Reference](#reference)
-
-
 
 ### Install
 
@@ -208,16 +206,16 @@ It is only under intense loads that the slight overhead of zram compression beco
 
 This chart from [facebook/zstd](https://github.com/facebook/zstd) provides a good benchmark for the performance of the different compressors.
 
-| Compressor name  | Ratio | Compression| Decompress.|
-|:-----------------|------:|-----------:|-----------:|
-| zstd 1.5.1 -1    | 2.887 |   530 MB/s |  1700 MB/s |
-| zlib 1.2.11 -1   | 2.743 |    95 MB/s |   400 MB/s |
-| brotli 1.0.9 -0  | 2.702 |   395 MB/s |   450 MB/s |
-| quicklz 1.5.0 -1 | 2.238 |   540 MB/s |   760 MB/s |
-| lzo1x 2.10 -1    | 2.106 |   660 MB/s |   845 MB/s |
-| lz4 1.9.3        | 2.101 |   740 MB/s |  4500 MB/s |
-| lzf 3.6 -1       | 2.077 |   410 MB/s |   830 MB/s |
-| snappy 1.1.9     | 2.073 |   550 MB/s |  1750 MB/s |
+| Compressor name  | Ratio | Compression | Decompression |
+|:-----------------|------:|------------:|--------------:|
+| zstd 1.5.1 -1    | 2.887 |    530 MB/s |     1700 MB/s |
+| zlib 1.2.11 -1   | 2.743 |     95 MB/s |      400 MB/s |
+| brotli 1.0.9 -0  | 2.702 |    395 MB/s |      450 MB/s |
+| quicklz 1.5.0 -1 | 2.238 |    540 MB/s |      760 MB/s |
+| lzo1x 2.10 -1    | 2.106 |    660 MB/s |      845 MB/s |
+| lz4 1.9.3        | 2.101 |    740 MB/s |     4500 MB/s |
+| lzf 3.6 -1       | 2.077 |    410 MB/s |      830 MB/s |
+| snappy 1.1.9     | 2.073 |    550 MB/s |     1750 MB/s |
 
 ### Reference
 
