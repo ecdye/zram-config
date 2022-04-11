@@ -53,3 +53,9 @@ jobs:
          with:
            name: logs.tar
            path: logs.tar
+       - name: Upload image
+         if: always()
+         uses: actions/upload-artifact@v2
+         with:
+           name: ${{ steps.setup.outputs.image }}
+           path: ${{ steps.setup.outputs.image }}
