@@ -31,7 +31,6 @@ if [[ $1 == "setup" ]]; then
   rsync -avr --exclude="*.img" --exclude="*.sig" --exclude="tests/fs" --exclude="tests/dtb" --exclude="tests/kernel" ./ tests/fs/opt/zram
   systemd-nspawn --directory="tests/fs" /opt/zram/tests/install-packages.bash
   echo "set enable-bracketed-paste off" >> tests/fs/etc/inputrc  # Prevents weird character output
-  # shellcheck disable=SC2016
   cp tests/fs/boot/kernel* tests/kernel
   cp tests/fs/boot/*.dtb tests/dtb
   imageFile "umount" "$3"
