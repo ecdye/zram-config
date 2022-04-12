@@ -2,8 +2,8 @@
 
 set retval 0
 set timeout -1
-set loginUser "test"
-set loginPassword "pass"
+set loginUser "pi"
+set loginPassword "raspberry"
 
 spawn qemu-system-aarch64 -machine "raspi3b" -cpu arm1176 -m 1G -drive "format=raw,file=raspios.img" -dtb "./tests/dtb/bcm2710-rpi-3-b.dtb" -kernel "./tests/kernel/kernel8.img" -append "loglevel=0 quiet console=ttyAMA0,115200 root=/dev/mmcblk0p2 rootfstype=ext4 fsck.repair=yes rootwait" -nographic -serial mon:stdio
 
@@ -17,7 +17,7 @@ expect {
     send "$loginPassword\r"
     exp_continue
   }
-  "test@raspberrypi:~$ " {
+  "pi@raspberrypi:~$ " {
     send "sudo /opt/zram/install.bash\r"
   }
   "Login incorrect" {
@@ -26,25 +26,25 @@ expect {
 }
 
 # Run tests
-expect "test@raspberrypi:~$ "
+expect "pi@raspberrypi:~$ "
 send "/opt/zram/tests/test-zram-devices.bash\r"
 expect {
   -re "Test failed:.*$" {
     set retval 1
     exp_continue
   }
-  "test@raspberrypi:~$ " {
+  "pi@raspberrypi:~$ " {
     send "sudo /opt/zram/uninstall.bash\r"
   }
 }
-expect "test@raspberrypi:~$ "
+expect "pi@raspberrypi:~$ "
 send "/opt/zram/tests/test-zram-devices.bash removal\r"
 expect {
   -re "Test failed:.*$" {
     set retval 1
     exp_continue
   }
-  "test@raspberrypi:~$ " {
+  "pi@raspberrypi:~$ " {
     send "sudo shutdown -h now\r"
   }
 }

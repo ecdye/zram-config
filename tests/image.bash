@@ -32,7 +32,8 @@ if [[ $1 == "setup" ]]; then
   systemd-nspawn --directory="tests/fs" /opt/zram/tests/install-packages.bash
   echo "set enable-bracketed-paste off" >> tests/fs/etc/inputrc  # Prevents weird character output
   # shellcheck disable=SC2016
-  echo -n 'test:$6$FdsTan/zaR7eKb8B$mSgk/5q/IFMYOVf2e/NdnUfWBi9clSciE1XD2bHsFNDko0k05zouZkbOPjUeDAYTdkLeWWEwjw5Bow0/le/uv1' > tests/fs/boot/userconf
+  echo 'echo "pi:raspberry" | chpasswd' >> tests/fs/etc/rc.d/rc.local
+  chmod +x tests/fs/etc/rc.d/rc.local
   cp tests/fs/boot/kernel* tests/kernel
   cp tests/fs/boot/*.dtb tests/dtb
   imageFile "umount" "$3"
