@@ -33,7 +33,7 @@ if [[ $1 == "setup" ]]; then
   echo "set enable-bracketed-paste off" >> tests/fs/etc/inputrc  # Prevents weird character output
   # shellcheck disable=SC2016
   echo 'echo "pi:raspberry" | chpasswd' >> tests/fs/etc/rc.local
-  chmod +x tests/fs/etc/rc.d/rc.local
+  chmod +x tests/fs/etc/rc.local
   cp tests/fs/boot/kernel* tests/kernel
   cp tests/fs/boot/*.dtb tests/dtb
   imageFile "umount" "$3"
