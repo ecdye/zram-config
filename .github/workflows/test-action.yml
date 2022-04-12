@@ -28,7 +28,7 @@ jobs:
            sudo -E bash -c set
            sudo add-apt-repository 'deb http://us.archive.ubuntu.com/ubuntu/ jammy universe'
            sudo apt-get update
-           sudo apt-get install --yes gnupg xz-utils expect systemd-container qemu-user-static qemu-utils qemu-system-arm
+           sudo apt-get install --yes gnupg xz-utils expect systemd-container qemu-user-static qemu-utils qemu-system-arm=1:6.2+dfsg-2ubuntu5
            echo "::set-output name=imagexz::$(basename "$(curl "https://downloads.raspberrypi.org/raspios_lite_armhf_latest" -s -L -I  -o /dev/null -w '%{url_effective}')")"
            echo "::set-output name=image::$(echo "$(basename "$(curl "https://downloads.raspberrypi.org/raspios_lite_armhf_latest" -s -L -I  -o /dev/null -w '%{url_effective}')")" | sed -e 's/.xz//')"
        - name: Cache Raspberry Pi OS 32bit image
