@@ -26,9 +26,9 @@ jobs:
          id: setup
          run: |
            sudo -E bash -c set
-           sudo add-apt-repository ppa:canonical-server/server-backports
+           sudo add-apt-repository 'deb http://ftp.de.debian.org/debian sid main'
            sudo apt-get update
-           sudo apt-get install --yes gnupg xz-utils expect systemd-container qemu-user-static qemu-utils qemu-system-aarch64
+           sudo apt-get install --yes gnupg xz-utils expect systemd-container qemu-user-static qemu-utils qemu-system-aarch64=6.2
            echo "::set-output name=imagexz::$(basename "$(curl "https://downloads.raspberrypi.org/raspios_lite_armhf_latest" -s -L -I  -o /dev/null -w '%{url_effective}')")"
            echo "::set-output name=image::$(echo "$(basename "$(curl "https://downloads.raspberrypi.org/raspios_lite_armhf_latest" -s -L -I  -o /dev/null -w '%{url_effective}')")" | sed -e 's/.xz//')"
        - name: Cache Raspberry Pi OS 32bit image
@@ -53,9 +53,3 @@ jobs:
          with:
            name: logs.tar
            path: logs.tar
-       - name: Upload image
-         if: always()
-         uses: actions/upload-artifact@v2
-         with:
-           name: ${{ steps.setup.outputs.image }}
-           path: ${{ steps.setup.outputs.image }}
