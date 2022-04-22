@@ -26,32 +26,32 @@ createZdevice() {
 	echo "createZdevice: zram${RAM_DEV} created comp_algorithm=${ALG} mem_limit=${MEM_SIZE} disksize=${DISK_SIZE}." >> "$ZLOG"
 }
 
-createZswap() {
-	echo "createZswap: Beginning creation of zswap device." >> "$ZLOG"
+createZram() {
+	echo "createZram: Beginning creation of zram device." >> "$ZLOG"
 	createZdevice || return 1
 	mkswap --label "zram-config${RAM_DEV}" "/dev/zram${RAM_DEV}" >> "$ZLOG" 2>&1 || return 1
 
 	if [[ -n $PRIORITY ]]; then
 		swapon -v -p "$PRIORITY" "/dev/zram${RAM_DEV}" >> "$ZLOG" 2>&1 || return 1
 	else
-		echo "createZswap: No swap priority provided for zram${RAM_DEV}. Exiting!" | tee -a "$ZLOG"
+		echo "createZram: No swap priority provided for zram${RAM_DEV}. Exiting!" | tee -a "$ZLOG"
 		return 1
 	fi
 
 	if [[ -n $PAGE_CLUSTER ]]; then
 		sysctl vm.page-cluster="$PAGE_CLUSTER" >> "$ZLOG" 2>&1 || return 1
 	else
-		echo "createZswap: zram${RAM_DEV} no page_cluster" >> "$ZLOG"
+		echo "createZram: zram${RAM_DEV} no page_cluster" >> "$ZLOG"
 	fi
 
 	if [[ -n $SWAPPINESS ]]; then
 		sysctl vm.swappiness="$SWAPPINESS" >> "$ZLOG" 2>&1 || return 1
 	else
-		echo "createZswap: zram${RAM_DEV} no swappiness" >> "$ZLOG"
+		echo "createZram: zram${RAM_DEV} no swappiness" >> "$ZLOG"
 	fi
 
 	echo "swap		/zram${RAM_DEV}		zram-config${RAM_DEV}" >> "$TMPDIR"/zram-device-list
-	echo "createZswap: Completed zswap device creation." >> "$ZLOG"
+	echo "createZram: Completed zram device creation." >> "$ZLOG"
 }
 
 createZdir() {
@@ -152,13 +152,13 @@ removeZdir() {
 	echo "removeZdir: Device /dev$ZRAM_DEV removed." >> "$ZLOG"
 }
 
-removeZswap() {
-	echo "removeZswap: Beginning removal of device /dev${ZRAM_DEV}." >> "$ZLOG"
+removeZram() {
+	echo "removeZram: Beginning removal of device /dev${ZRAM_DEV}." >> "$ZLOG"
 
 	swapoff --verbose "/dev${ZRAM_DEV}" >> "$ZLOG" 2>&1 || return 1
 	zramctl --reset "/dev${ZRAM_DEV}" >> "$ZLOG" 2>&1 || return 1
 
-	echo "removeZswap: Device /dev$ZRAM_DEV removed." >> "$ZLOG"
+	echo "removeZram: Device /dev$ZRAM_DEV removed." >> "$ZLOG"
 }
 
 syncZdir() {
@@ -261,7 +261,7 @@ case "$1" in
 							PRIORITY="$5"
 							PAGE_CLUSTER="$6"
 							SWAPPINESS="$7"
-							createZswap
+							createZram
 							;;
 
 						dir|log)
@@ -307,7 +307,7 @@ case "$1" in
 					case "$1" in
 						swap)
 							ZRAM_DEV="$2"
-							removeZswap
+							removeZram
 							;;
 
 						dir|log)
