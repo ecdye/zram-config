@@ -10,6 +10,7 @@ createZdevice() {
 
 	if [[ -z $RAM_DEV ]]; then
 		echo "createZdevice: Failed to find an open zram device, trying one more time!" >> "$ZLOG"
+		sleep 0.2
 		RAM_DEV="$(zramctl --find --size "$DISK_SIZE" --algorithm "$ALG" | tr -dc '0-9')"
 		if [[ -z $RAM_DEV ]]; then
 			echo "createZdevice: Failed to find an open zram device. Exiting!" | tee -a "$ZLOG"
