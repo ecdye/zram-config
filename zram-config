@@ -5,7 +5,7 @@ createZdevice() {
 
 	echo "createZdevice: Beginning creation of zDevice."
 	if ! [[ -d "/sys/class/zram-control" ]]; then
-		modprobe --verbose zram >> "$ZLOG" 2>&1 || return 1
+		modprobe --verbose zram num_devices=0 >> "$ZLOG" 2>&1 || return 1
 	fi
 
 	RAM_DEV="$(cat /sys/class/zram-control/hot_add)"
