@@ -1,23 +1,41 @@
 #!/usr/bin/env bash
 
 createZdevice() {
+	local retval=0
+
 	echo "createZdevice: Beginning creation of zDevice."
 	if ! [[ -d "/sys/class/zram-control" ]]; then
 		modprobe --verbose zram >> "$ZLOG" 2>&1 || return 1
 	fi
 
-	RAM_DEV="$(zramctl --find --size "$DISK_SIZE" --algorithm "$ALG" | tr -dc '0-9')"
+	RAM_DEV="$(cat /sys/class/zram-control/hot_add)"
 
 	if [[ -z $RAM_DEV ]]; then
 		echo "createZdevice: Failed to find an open zram device, trying one more time!" >> "$ZLOG"
-		RAM_DEV="$(zramctl --find --size "$DISK_SIZE" --algorithm "$ALG" | tr -dc '0-9')"
+		RAM_DEV="$(cat /sys/class/zram-control/hot_add)"
 		if [[ -z $RAM_DEV ]]; then
 			echo "createZdevice: Failed to find an open zram device. Exiting!" | tee -a "$ZLOG"
 			return 1
 		fi
 	fi
 
-	echo "$MEM_SIZE" > "/sys/block/zram${RAM_DEV}/mem_limit"
+	if ! echo "$ALG" > "/sys/block/zram${RAM_DEV}/comp_algorithm"; then
+		echo "createZdevice: zram${RAM_DEV}, Failed to set compression algorithm! Exiting!" | tee -a "$ZLOG"
+		retval=1
+	fi
+	if ! echo "$DISK_SIZE" > "/sys/block/zram${RAM_DEV}/disksize"; then
+		echo "createZdevice: zram${RAM_DEV}, Failed to set disk size! Exiting!" | tee -a "$ZLOG"
+		retval=1
+	fi
+	if ! echo "$MEM_SIZE" > "/sys/block/zram${RAM_DEV}/mem_limit"; then
+		echo "createZdevice: zram${RAM_DEV}, Failed to set memory limit! Exiting!" | tee -a "$ZLOG"
+		retval=1
+	fi
+	if [[ $retval -ne 0 ]]; then
+		echo "$RAM_DEV" > /sys/class/zram-control/hot_remove
+		return 1
+	fi
+
 	if [[ $MEM_SIZE == 0 ]]; then
 		echo "createZdevice: zram${RAM_DEV} no mem_limit" >> "$ZLOG"
 	fi
@@ -142,7 +160,7 @@ removeZdir() {
 	rm -rfv "${ZDIR}${BIND_DIR}" >> "$ZLOG" 2>&1 || return 1
 
 	if [[ -z $SERVICE ]]; then  # We don't care about device reset when shutting down system
-		until zramctl --reset "/dev${ZRAM_DEV}" >> "$ZLOG" 2>&1 || [[ count -ge 5 ]]; do
+		until echo "${ZRAM_DEV//[!0-9]/}" > /sys/class/zram-control/hot_remove || [[ count -ge 5 ]]; do
 			count=$(( count + 1 ))
 			sleep 5
 		done
@@ -155,7 +173,7 @@ removeZswap() {
 	echo "removeZswap: Beginning removal of device /dev${ZRAM_DEV}." >> "$ZLOG"
 
 	swapoff --verbose "/dev${ZRAM_DEV}" >> "$ZLOG" 2>&1 || return 1
-	zramctl --reset "/dev${ZRAM_DEV}" >> "$ZLOG" 2>&1 || return 1
+	echo "${ZRAM_DEV//[!0-9]/}" > /sys/class/zram-control/hot_remove || return 1
 
 	echo "removeZswap: Device /dev$ZRAM_DEV removed." >> "$ZLOG"
 }

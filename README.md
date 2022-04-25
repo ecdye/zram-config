@@ -34,7 +34,6 @@ Experimental Alpine support has also been added, other distributions may work bu
 6.  [Known issues](#known-issues)
     -   [Conflicts with services](#conflicts-with-services)
     -   [Swapiness on older Linux kernel versions](#swapiness-on-older-linux-kernel-versions)
-    -   [Failure to work without `zramctl`](#failure-to-work-without-zramctl)
     -   [Raspberry Pi 4 8GB compatibility](#raspberry-pi-4-8gb-compatibility)
 7.  [Performance](#performance)
 8.  [Reference](#reference)
@@ -180,15 +179,6 @@ A more in depth version of this function is used in the `openHAB` branch that ca
 
 When running zram swap on Linux kernel versions older than 5.8 swappiness has a maximum value of 100.
 If you observe issues runnning on older kernel versions try setting the default value of 150 back to 100.
-
-#### Failure to work without `zramctl`
-
-If for some reason your distribution does not contain the `zramctl` command, then zram-config will not work properly.
-This is because zram-config uses `zramctl` internally to configure zram devices.
-A potential resolution may be that the `util-linux` package is not installed on your system as that is typically where `zramctl` is provided.
-
-Please note that just running the `zramctl` command to test if it is present will not work unless the zram kernel module has already been loaded.
-The kernel module is automatically loaded by zram-config, so even though it may seem like `zramctl` is not installed when attempting to test before running it actually is.
 
 #### Raspberry Pi 4 8GB compatibility
 
