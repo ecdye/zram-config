@@ -127,6 +127,7 @@ log	lzo-rle		50M		150M		/var/log		/opt/zram/log.bind	/opt/zram/oldlog
 ### Is it working?
 
 Run `zramctl` in your preferred shell and if you see and output similar to below, yes it is working.
+Please note that if the `zramctl` command is missing, you will need to install the `util-linux` package to have a convenient way to view the zram status.
 
 ```
 pi@raspberrypi:~$ zramctl
