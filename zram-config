@@ -5,7 +5,7 @@ createZdevice() {
 
 	echo "createZdevice: Beginning creation of zDevice."
 	if ! [[ -d "/sys/class/zram-control" ]]; then
-		modprobe --verbose zram num_devices=0 >> "$ZLOG" 2>&1 || return 1
+		modprobe --verbose zram num_devices=0 &>> "$ZLOG" || return 1
 	fi
 
 	RAM_DEV="$(cat /sys/class/zram-control/hot_add)"
@@ -46,23 +46,23 @@ createZdevice() {
 createZswap() {
 	echo "createZswap: Beginning creation of zswap device." >> "$ZLOG"
 	createZdevice || return 1
-	mkswap --label "zram-config${RAM_DEV}" "/dev/zram${RAM_DEV}" >> "$ZLOG" 2>&1 || return 1
+	mkswap --label "zram-config${RAM_DEV}" "/dev/zram${RAM_DEV}" &>> "$ZLOG" || return 1
 
 	if [[ -n $PRIORITY ]]; then
-		swapon -v -p "$PRIORITY" "/dev/zram${RAM_DEV}" >> "$ZLOG" 2>&1 || return 1
+		swapon -v -p "$PRIORITY" "/dev/zram${RAM_DEV}" &>> "$ZLOG" || return 1
 	else
 		echo "createZswap: No swap priority provided for zram${RAM_DEV}. Exiting!" | tee -a "$ZLOG"
 		return 1
 	fi
 
 	if [[ -n $PAGE_CLUSTER ]]; then
-		sysctl vm.page-cluster="$PAGE_CLUSTER" >> "$ZLOG" 2>&1 || return 1
+		sysctl vm.page-cluster="$PAGE_CLUSTER" &>> "$ZLOG" || return 1
 	else
 		echo "createZswap: zram${RAM_DEV} no page_cluster" >> "$ZLOG"
 	fi
 
 	if [[ -n $SWAPPINESS ]]; then
-		sysctl vm.swappiness="$SWAPPINESS" >> "$ZLOG" 2>&1 || return 1
+		sysctl vm.swappiness="$SWAPPINESS" &>> "$ZLOG" || return 1
 	else
 		echo "createZswap: zram${RAM_DEV} no swappiness" >> "$ZLOG"
 	fi
@@ -87,7 +87,7 @@ createZdir() {
 	fi
 
 	echo "createZdir: Beginning creation of ${ZDIR}/zram${RAM_DEV}." >> "$ZLOG"
-	mkdir -p "${ZDIR}${BIND_DIR}" >> "$ZLOG" 2>&1 || return 1
+	mkdir -p "${ZDIR}${BIND_DIR}" &>> "$ZLOG" || return 1
 
 	dirPerm="$(stat -c "%a" "$TARGET_DIR")"
 	dirUser="$(stat -c "%u" "$TARGET_DIR")"
@@ -95,8 +95,8 @@ createZdir() {
 
 	echo "createZdir: dirPerm - ${TARGET_DIR} ${dirPerm} ${dirUser}:${dirGroup}" >> "$ZLOG"
 
-	mount --verbose --bind "${TARGET_DIR}/" "${ZDIR}${BIND_DIR}/" >> "$ZLOG" 2>&1 || return 1
-	mount --verbose --make-private "${ZDIR}${BIND_DIR}/" >> "$ZLOG" 2>&1 || return 1
+	mount --verbose --bind "${TARGET_DIR}/" "${ZDIR}${BIND_DIR}/" &>> "$ZLOG" || return 1
+	mount --verbose --make-private "${ZDIR}${BIND_DIR}/" &>> "$ZLOG" || return 1
 
 	dirMountOpt="$(awk -v a="${ZDIR}${BIND_DIR}" '$2 == a {print $4}' /proc/mounts | head -1)"
 	dirFSType="$(awk -v a="${ZDIR}${BIND_DIR}" '$2 == a {print $3}' /proc/mounts | head -1)"
@@ -104,13 +104,13 @@ createZdir() {
 	echo "createZdir: dirMountOpt - ${dirMountOpt}; dirFsType: ${dirFSType}" >> "$ZLOG"
 	createZdevice || return 1
 
-	mke2fs -v -t "$dirFSType" "/dev/zram${RAM_DEV}" >> "$ZLOG" 2>&1 || return 1
-	mkdir -p "${ZDIR}/zram${RAM_DEV}" >> "$ZLOG" 2>&1 || return 1
-	mount --verbose --types "$dirFSType" -o "$dirMountOpt" "/dev/zram${RAM_DEV}" "${ZDIR}/zram${RAM_DEV}/" >> "$ZLOG" 2>&1 || return 1
-	mkdir -p "${ZDIR}/zram${RAM_DEV}/upper" "${ZDIR}/zram${RAM_DEV}/workdir" "$TARGET_DIR" >> "$ZLOG" 2>&1 || return 1
-	mount --verbose --types overlay -o "redirect_dir=on,lowerdir=${ZDIR}${BIND_DIR},upperdir=${ZDIR}/zram${RAM_DEV}/upper,workdir=${ZDIR}/zram${RAM_DEV}/workdir" "overlay${RAM_DEV}" "$TARGET_DIR" >> "$ZLOG" 2>&1 || return 1
-	chown "${dirUser}:${dirGroup}" "${ZDIR}/zram${RAM_DEV}/upper" "${ZDIR}/zram${RAM_DEV}/workdir" "$TARGET_DIR" >> "$ZLOG" 2>&1 || return 1
-	chmod "$dirPerm" "${ZDIR}/zram${RAM_DEV}/upper" "${ZDIR}/zram${RAM_DEV}/workdir" "$TARGET_DIR" >> "$ZLOG" 2>&1 || return 1
+	mke2fs -v -t "$dirFSType" "/dev/zram${RAM_DEV}" &>> "$ZLOG" || return 1
+	mkdir -p "${ZDIR}/zram${RAM_DEV}" &>> "$ZLOG" || return 1
+	mount --verbose --types "$dirFSType" -o "$dirMountOpt" "/dev/zram${RAM_DEV}" "${ZDIR}/zram${RAM_DEV}/" &>> "$ZLOG" || return 1
+	mkdir -p "${ZDIR}/zram${RAM_DEV}/upper" "${ZDIR}/zram${RAM_DEV}/workdir" "$TARGET_DIR" &>> "$ZLOG" || return 1
+	mount --verbose --types overlay -o "redirect_dir=on,lowerdir=${ZDIR}${BIND_DIR},upperdir=${ZDIR}/zram${RAM_DEV}/upper,workdir=${ZDIR}/zram${RAM_DEV}/workdir" "overlay${RAM_DEV}" "$TARGET_DIR" &>> "$ZLOG" || return 1
+	chown "${dirUser}:${dirGroup}" "${ZDIR}/zram${RAM_DEV}/upper" "${ZDIR}/zram${RAM_DEV}/workdir" "$TARGET_DIR" &>> "$ZLOG" || return 1
+	chmod "$dirPerm" "${ZDIR}/zram${RAM_DEV}/upper" "${ZDIR}/zram${RAM_DEV}/workdir" "$TARGET_DIR" &>> "$ZLOG" || return 1
 
 	echo "${ZTYPE}		/zram${RAM_DEV}		${TARGET_DIR}		${BIND_DIR}" >> "$TMPDIR"/zram-device-list
 
@@ -126,9 +126,9 @@ mergeOverlay() {
 	echo "mergeOverlay: Beginning merge of ${ZDIR}${BIND_DIR}." >> "$ZLOG"
 	ls -la "$ZDIR" "${ZDIR}${BIND_DIR}" "${ZDIR}${ZRAM_DEV}/upper" >> "$ZLOG"
 	cd /usr/local/lib/zram-config/ || return 1
-	(./overlay merge --yes --lowerdir="${ZDIR}${BIND_DIR}" --upperdir="${ZDIR}${ZRAM_DEV}/upper") >> "$ZLOG" 2>&1 || return 1
-	bash -x -- *.sh >> "$ZLOG" 2>&1
-	rm -fv -- *.sh >> "$ZLOG" 2>&1 || return 1
+	(./overlay merge --yes --lowerdir="${ZDIR}${BIND_DIR}" --upperdir="${ZDIR}${ZRAM_DEV}/upper") &>> "$ZLOG" || return 1
+	bash -x -- *.sh &>> "$ZLOG"
+	rm -fv -- *.sh &>> "$ZLOG" || return 1
 	echo "mergeOverlay: Merge of ${ZDIR}${BIND_DIR} complete." >> "$ZLOG"
 }
 
@@ -140,24 +140,24 @@ removeZdir() {
 	echo "removeZdir: Beginning removal of device /dev${ZRAM_DEV}." >> "$ZLOG"
 
 	[[ -z $TARGET_DIR ]] && return 1
-	if ! (umount --verbose "${TARGET_DIR}/" >> "$ZLOG" 2>&1); then
-		[[ -x $(command -v lsof) ]] && lsof "${TARGET_DIR}/" >> "$ZLOG" 2>&1
-		umount --verbose --lazy "${TARGET_DIR}/" >> "$ZLOG" 2>&1 || return 1
+	if ! umount --verbose "${TARGET_DIR}/" &>> "$ZLOG"; then
+		[[ -x $(command -v lsof) ]] && lsof "${TARGET_DIR}/" &>> "$ZLOG"
+		umount --verbose --lazy "${TARGET_DIR}/" &>> "$ZLOG" || return 1
 	fi
 
-	mergeOverlay >> "$ZLOG" 2>&1 || return 1
+	mergeOverlay &>> "$ZLOG" || return 1
 
 	[[ -z $ZRAM_DEV ]] && return 1
-	if ! (umount --verbose "${ZDIR}${ZRAM_DEV}/" >> "$ZLOG" 2>&1); then
-		umount --verbose --lazy "${ZDIR}${ZRAM_DEV}/" >> "$ZLOG" 2>&1 || return 1
+	if ! umount --verbose "${ZDIR}${ZRAM_DEV}/" &>> "$ZLOG"; then
+		umount --verbose --lazy "${ZDIR}${ZRAM_DEV}/" &>> "$ZLOG" || return 1
 	fi
-	rm -rfv "${ZDIR}${ZRAM_DEV}" >> "$ZLOG" 2>&1 || return 1
+	rm -rfv "${ZDIR}${ZRAM_DEV}" &>> "$ZLOG" || return 1
 
 	[[ -z $BIND_DIR ]] && return 1
-	if ! (umount --verbose "${ZDIR}${BIND_DIR}/" >> "$ZLOG" 2>&1); then
-		umount --verbose --lazy "${ZDIR}${BIND_DIR}/" >> "$ZLOG" 2>&1 || return 1
+	if ! umount --verbose "${ZDIR}${BIND_DIR}/" &>> "$ZLOG"; then
+		umount --verbose --lazy "${ZDIR}${BIND_DIR}/" &>> "$ZLOG" || return 1
 	fi
-	rm -rfv "${ZDIR}${BIND_DIR}" >> "$ZLOG" 2>&1 || return 1
+	rm -rfv "${ZDIR}${BIND_DIR}" &>> "$ZLOG" || return 1
 
 	if [[ -z $SERVICE ]]; then  # We don't care about device reset when shutting down system
 		until echo "${ZRAM_DEV//[!0-9]/}" > /sys/class/zram-control/hot_remove || [[ count -ge 5 ]]; do
@@ -172,7 +172,7 @@ removeZdir() {
 removeZswap() {
 	echo "removeZswap: Beginning removal of device /dev${ZRAM_DEV}." >> "$ZLOG"
 
-	swapoff --verbose "/dev${ZRAM_DEV}" >> "$ZLOG" 2>&1 || return 1
+	swapoff --verbose "/dev${ZRAM_DEV}" &>> "$ZLOG" || return 1
 	echo "${ZRAM_DEV//[!0-9]/}" > /sys/class/zram-control/hot_remove || return 1
 
 	echo "removeZswap: Device /dev$ZRAM_DEV removed." >> "$ZLOG"
@@ -182,15 +182,15 @@ syncZdir() {
 	echo "syncZdir: Beginning sync of device /dev${ZRAM_DEV}." >> "$ZLOG"
 
 	[[ -z $TARGET_DIR ]] && return 1
-	if ! (umount --verbose "${TARGET_DIR}/" >> "$ZLOG" 2>&1); then
-		[[ -x $(command -v lsof) ]] && lsof "${TARGET_DIR}/" >> "$ZLOG" 2>&1
-		umount --verbose --lazy "${TARGET_DIR}/" >> "$ZLOG" 2>&1 || return 1
+	if ! umount --verbose "${TARGET_DIR}/" &>> "$ZLOG"; then
+		[[ -x $(command -v lsof) ]] && lsof "${TARGET_DIR}/" &>> "$ZLOG"
+		umount --verbose --lazy "${TARGET_DIR}/" &>> "$ZLOG" || return 1
 	fi
 
-	mergeOverlay >> "$ZLOG" 2>&1 || return 1
+	mergeOverlay &>> "$ZLOG" || return 1
 
-	mkdir -p "${ZDIR}${ZRAM_DEV}/upper" "${ZDIR}${ZRAM_DEV}/workdir" "$TARGET_DIR" >> "$ZLOG" 2>&1 || return 1
-	mount --verbose --types overlay -o "redirect_dir=on,lowerdir=${ZDIR}${BIND_DIR},upperdir=${ZDIR}${ZRAM_DEV}/upper,workdir=${ZDIR}${ZRAM_DEV}/workdir" "overlay${ZRAM_DEV//[!0-9]/}" "$TARGET_DIR" >> "$ZLOG" 2>&1 || return 1
+	mkdir -p "${ZDIR}${ZRAM_DEV}/upper" "${ZDIR}${ZRAM_DEV}/workdir" "$TARGET_DIR" &>> "$ZLOG" || return 1
+	mount --verbose --types overlay -o "redirect_dir=on,lowerdir=${ZDIR}${BIND_DIR},upperdir=${ZDIR}${ZRAM_DEV}/upper,workdir=${ZDIR}${ZRAM_DEV}/workdir" "overlay${ZRAM_DEV//[!0-9]/}" "$TARGET_DIR" &>> "$ZLOG" || return 1
 
 	echo "syncZdir: Device /dev$ZRAM_DEV synced." >> "$ZLOG"
 }
@@ -201,29 +201,29 @@ serviceConfiguration() {
 		if [[ $OS == "alpine" ]]; then
 			if rc-service syslog status &> /dev/null; then
 				export syslogActiveAlpine="true"
-				rc-service syslog stop >> "$ZLOG" 2>&1 || return 1
+				rc-service syslog stop &>> "$ZLOG" || return 1
 			fi
 		else
 			if [[ $(systemctl is-active rsyslog.service) == "active" ]]; then
 				export rsyslogActive="true"
-				systemctl --no-block stop syslog.socket >> "$ZLOG" 2>&1 || return 1
+				systemctl --no-block stop syslog.socket &>> "$ZLOG" || return 1
 			fi
 			if [[ $(systemctl is-active systemd-journald.service) == "active" ]]; then
 				export journaldActive="true"
-				journalctl --flush >> "$ZLOG" 2>&1 || return 1
-				systemctl --no-block stop systemd-journald.socket systemd-journald-audit.socket systemd-journald-dev-log.socket >> "$ZLOG" 2>&1 || return 1
+				journalctl --flush &>> "$ZLOG" || return 1
+				systemctl --no-block stop systemd-journald.socket systemd-journald-audit.socket systemd-journald-dev-log.socket &>> "$ZLOG" || return 1
 			fi
 		fi
 	elif [[ $1 == "start" ]]; then
 		echo "serviceConfiguration: Restarting services that interfere with zram device configuration." >> "$ZLOG"
 		if [[ -n $journaldActive ]]; then
-			systemctl --no-block restart systemd-journald.socket systemd-journald-audit.socket systemd-journald-dev-log.socket >> "$ZLOG" 2>&1 || return 1
+			systemctl --no-block restart systemd-journald.socket systemd-journald-audit.socket systemd-journald-dev-log.socket &>> "$ZLOG" || return 1
 		fi
 		if [[ -n $rsyslogActive ]]; then
-			systemctl --no-block restart syslog.socket >> "$ZLOG" 2>&1 || return 1
+			systemctl --no-block restart syslog.socket &>> "$ZLOG" || return 1
 		fi
 		if [[ -n $syslogActiveAlpine ]]; then
-			rc-service syslog start >> "$ZLOG" 2>&1 || return 1
+			rc-service syslog start &>> "$ZLOG" || return 1
 		fi
 	fi
 }
