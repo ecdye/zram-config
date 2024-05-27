@@ -71,6 +71,12 @@ Note that this sync service is not installed by default, you must install it sep
 sudo /path/to/zram-config/update.bash
 ```
 
+To make changes to the code or checkout a specific branch/tag and prevent it from updating/resetting all changes run the following instead.
+
+``` shell
+sudo /path/to/zram-config/update.bash custom
+```
+
 ### Uninstall
 
 ``` shell

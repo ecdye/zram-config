@@ -27,11 +27,13 @@ if [[ $OS == "ubuntu" ]] && [[ $(bc -l <<< "$(grep -o '^VERSION_ID=.*$' /etc/os-
   fi
 fi
 
-git -C "$BASEDIR" fetch origin
-git -C "$BASEDIR" fetch --tags --force --prune
-git -C "$BASEDIR" clean --force -x -d
-git -C "$BASEDIR" checkout main
-git -C "$BASEDIR" reset --hard origin/main
+if [[ $1 != "custom" ]]; then
+  git -C "$BASEDIR" fetch origin
+  git -C "$BASEDIR" fetch --tags --force --prune
+  git -C "$BASEDIR" clean --force -x -d
+  git -C "$BASEDIR" checkout main
+  git -C "$BASEDIR" reset --hard origin/main
+fi
 
 make --always-make --directory="${BASEDIR}/overlayfs-tools"
 
