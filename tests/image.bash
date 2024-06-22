@@ -32,7 +32,12 @@ if [[ $1 == "setup" ]]; then
   systemd-nspawn --directory="tests/fs" /opt/zram/tests/install-packages.bash
   echo "set enable-bracketed-paste off" >> tests/fs/etc/inputrc  # Prevents weird character output
   cp tests/fs/boot/kernel* tests/kernel
-  cp tests/fs/boot/*.dtb tests/dtb
+  # Compile a customized DTB
+  git clone https://github.com/raspberrypi/utils.git
+  cmake utils/dtmerge
+  make
+  sudo make install
+  dtmerge tests/fs/boot/bcm2710-rpi-3-b-plus.dtb custom.dtb tests/fs/boot/overlays/disable-bt.dtbo uart0=on
   imageFile "umount" "$3"
 elif [[ $1 == "copy-logs" ]]; then
   imageFile "mount" "$2"

@@ -28,9 +28,9 @@ jobs:
            sudo -E bash -c set
            sudo add-apt-repository ppa:canonical-server/server-backports
            sudo apt-get update
-           sudo apt-get install --yes gnupg xz-utils expect systemd-container qemu-user-static qemu-utils qemu-system-arm
-           echo "::set-output name=imagexz::$(basename "$(curl "https://downloads.raspberrypi.org/raspios_lite_armhf_latest" -s -L -I  -o /dev/null -w '%{url_effective}')")"
-           echo "::set-output name=image::$(echo "$(basename "$(curl "https://downloads.raspberrypi.org/raspios_lite_armhf_latest" -s -L -I  -o /dev/null -w '%{url_effective}')")" | sed -e 's/.xz//')"
+           sudo apt-get install --yes gnupg xz-utils expect systemd-container qemu-user-static qemu-utils qemu-system-arm libfdt-dev
+           echo "imagexz=$(basename "$(curl "https://downloads.raspberrypi.org/raspios_lite_armhf_latest" -s -L -I  -o /dev/null -w '%{url_effective}')")" >> $GITHUB_OUTPUT
+           echo "image=$(echo "$(basename "$(curl "https://downloads.raspberrypi.org/raspios_lite_armhf_latest" -s -L -I  -o /dev/null -w '%{url_effective}')")" | sed -e 's/.xz//')" >> $GITHUB_OUTPUT
        - name: Cache Raspberry Pi OS 32bit image
          uses: actions/cache@v4
          with:
