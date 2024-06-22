@@ -201,18 +201,7 @@ You might have text based low impact directories such as `/var/log` or `/var/cac
 With `/tmp` and `/run`, zram is unnecessary because they are RAM mounted as `tmpfs` and, if memory gets short, then the zram swap will provide extra.
 It is only under intense loads that the slight overhead of zram compression becomes noticeable.
 
-This chart from [facebook/zstd](https://github.com/facebook/zstd) provides a good benchmark for the performance of the different compressors.
-
-| Compressor name  | Ratio | Compression | Decompression |
-|:-----------------|------:|------------:|--------------:|
-| zstd 1.5.1 -1    | 2.887 |    530 MB/s |     1700 MB/s |
-| zlib 1.2.11 -1   | 2.743 |     95 MB/s |      400 MB/s |
-| brotli 1.0.9 -0  | 2.702 |    395 MB/s |      450 MB/s |
-| quicklz 1.5.0 -1 | 2.238 |    540 MB/s |      760 MB/s |
-| lzo1x 2.10 -1    | 2.106 |    660 MB/s |      845 MB/s |
-| lz4 1.9.3        | 2.101 |    740 MB/s |     4500 MB/s |
-| lzf 3.6 -1       | 2.077 |    410 MB/s |      830 MB/s |
-| snappy 1.1.9     | 2.073 |    550 MB/s |     1750 MB/s |
+This chart from [facebook/zstd](https://github.com/facebook/zstd?tab=readme-ov-file#benchmarks) provides a good benchmark for the performance of the different compressors.
 
 ### Reference
 
