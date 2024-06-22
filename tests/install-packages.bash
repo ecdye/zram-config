@@ -2,9 +2,9 @@
 
 export DEBIAN_FRONTEND="noninteractive"
 
-apt-get --quiet update
-apt-get --quiet upgrade --yes
-apt-get --quiet install --fix-broken --yes
+# apt-get --quiet update
+# apt-get --quiet upgrade --yes
+# apt-get --quiet install --fix-broken --yes
 apt-get --quiet install --yes gcc make libc6-dev
 apt-get --quiet autoremove --yes
 systemctl mask rpi-eeprom-update.service hciuart.service systemd-logind.service

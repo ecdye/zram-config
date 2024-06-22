@@ -39,7 +39,7 @@ if [[ $1 == "setup" ]]; then
   cmake utils/dtmerge
   make
   sudo make install
-  cp ../tests/dtb/bcm2710-rpi-3-b.dtb custom.dtb
+  cp tests/dtb/bcm2710-rpi-3-b.dtb custom.dtb
   # (dtparam=uart0=on)
   dtmerge custom.dtb merged.dtb - uart0=on
   mv merged.dtb custom.dtb
