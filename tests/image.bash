@@ -44,7 +44,7 @@ if [[ $1 == "setup" ]]; then
   dtmerge custom.dtb merged.dtb - uart0=on
   mv merged.dtb custom.dtb
   # (dtoverlay=disable-bt)
-  dtmerge custom.dtb merged.dtb /boot/firmware/overlays/disable-bt.dtbo
+  dtmerge custom.dtb merged.dtb tests/fs/boot/firmware/overlays/disable-bt.dtbo
   mv merged.dtb custom.dtb
   imageFile "umount" "$3"
 elif [[ $1 == "copy-logs" ]]; then
