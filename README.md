@@ -35,6 +35,7 @@ Experimental Alpine support has also been added, other distributions may work bu
     -   [Conflicts with services](#conflicts-with-services)
     -   [Swapiness on older Linux kernel versions](#swapiness-on-older-linux-kernel-versions)
     -   [Raspberry Pi 4 8GB compatibility](#raspberry-pi-4-8gb-compatibility)
+    -   [Filesystem compatibility](#filesystem-compatibility)
 7.  [Performance](#performance)
 8.  [Reference](#reference)
 
@@ -192,6 +193,13 @@ If you observe issues runnning on older kernel versions try setting the default 
 The Raspberry Pi 4 8GB model can exhibit issues with zram due to a Linux kernel bug.
 This bug has been fixed as of Raspberry Pi Kernel version 1.20210527.
 See [raspberrypi/linux@cef3970381](https://github.com/raspberrypi/linux/commit/cef397038167ac15d085914493d6c86385773709) for more details about the issue.
+
+#### Filesystem compatibility
+
+By default zram-config should support most regular filesystems, as long as the tools are installed and available on the host system.
+In some cases, with niche filesystems some manual editing of the code may be required to enable support.
+
+Pull requests adding support for filesystems that don't work automatically are welcome.
 
 ### Performance
 
