@@ -33,6 +33,19 @@ if [[ $1 == "setup" ]]; then
   echo "set enable-bracketed-paste off" >> tests/fs/etc/inputrc  # Prevents weird character output
   cp tests/fs/boot/kernel* tests/kernel
   cp tests/fs/boot/*.dtb tests/dtb
+  # Compile a customized DTB
+  git clone https://github.com/raspberrypi/utils.git
+  # Get utilities
+  cmake utils/dtmerge
+  make
+  sudo make install
+  cp ../tests/dtb/bcm2710-rpi-3-b.dtb custom.dtb
+  # (dtparam=uart0=on)
+  dtmerge custom.dtb merged.dtb - uart0=on
+  mv merged.dtb custom.dtb
+  # (dtoverlay=disable-bt)
+  dtmerge custom.dtb merged.dtb /boot/firmware/overlays/disable-bt.dtbo
+  mv merged.dtb custom.dtb
   imageFile "umount" "$3"
 elif [[ $1 == "copy-logs" ]]; then
   imageFile "mount" "$2"
