@@ -29,9 +29,9 @@ if [[ -s /usr/local/sbin/zram-config ]] || [[ -s /usr/sbin/zram-config ]]; then
   exit 1
 fi
 
-if [[ $OS == "alpine" ]] && ! [[ "$(apk info 2> /dev/null | grep -E '^(gcc|make|fts-dev|linux-headers|util-linux-misc|musl-dev)' | tr '\n' ' ')" == "fts-dev gcc make util-linux-misc musl-dev linux-headers " ]]; then
-  echo "Installing needed packages (gcc, make, fts-dev, linux-headers, util-linux-misc, musl-dev)"
-  apk add gcc make fts-dev linux-headers util-linux-misc musl-dev || exit 1
+if [[ $OS == "alpine" ]] && ! [[ "$(apk info 2> /dev/null | grep -E '^(gcc|linux-headers|make|mount|musl-dev|musl-fts-dev|umount|util-linux-misc)' | sort | tr '\n' ' ')" == "gcc linux-headers make mount musl-dev musl-fts-dev umount util-linux-misc " ]]; then
+  echo "Installing needed packages (gcc, make, musl-fts-dev, linux-headers, util-linux-misc, musl-dev)"
+  apk add gcc linux-headers make mount musl-dev musl-fts-dev umount util-linux-misc || exit 1
 elif ! dpkg -s 'gcc' 'make' 'libc6-dev' &> /dev/null; then
   echo "Installing needed packages (gcc, make, libc6-dev)"
   apt-get install --yes gcc make libc6-dev || exit 1
