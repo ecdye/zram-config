@@ -6,6 +6,7 @@ Documentation=https://github.com/ecdye/zram-config/blob/main/README.md
 Type=exec
 TimeoutSec=120
 RemainAfterExit=yes
+WorkingDirectory=/usr/local/lib/zram-config
 ExecStart=/usr/local/sbin/zram-config "start"
 ExecStop=/usr/local/sbin/zram-config "stop"
 

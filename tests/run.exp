@@ -32,7 +32,7 @@ expect {
     exp_continue
   }
   "pi@raspberrypi:~$ " {
-    send "sudo /opt/zram/install.bash\r"
+    send "sudo date -s \"DATESED\"\r"
   }
   "Login incorrect" {
     exit 1
@@ -40,6 +40,8 @@ expect {
 }
 
 # Run tests
+expect "pi@raspberrypi:~$ "
+send "sudo /opt/zram/install.bash\r"
 expect "pi@raspberrypi:~$ "
 send "/opt/zram/tests/test-zram-devices.bash\r"
 expect {
