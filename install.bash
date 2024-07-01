@@ -29,12 +29,12 @@ if [[ -s /usr/local/sbin/zram-config ]] || [[ -s /usr/sbin/zram-config ]]; then
   exit 1
 fi
 
-if [[ $OS == "alpine" ]] && ! [[ "$(apk info 2> /dev/null | grep -E '^(gcc|make|fts-dev|linux-headers|util-linux-misc|musl-dev)' | tr '\n' ' ')" == "fts-dev gcc make util-linux-misc musl-dev linux-headers " ]]; then
-  echo "Installing needed packages (gcc, make, fts-dev, linux-headers, util-linux-misc, musl-dev)"
-  apk add gcc make fts-dev linux-headers util-linux-misc musl-dev || exit 1
-elif ! dpkg -s 'gcc' 'make' 'libc6-dev' &> /dev/null; then
-  echo "Installing needed packages (gcc, make, libc6-dev)"
-  apt-get install --yes gcc make libc6-dev || exit 1
+if [[ $OS == "alpine" ]] && ! [[ "$(apk info 2> /dev/null | grep -E '^(gcc|meson|fts-dev|linux-headers|util-linux-misc|musl-dev)' | tr '\n' ' ')" == "fts-dev gcc meson util-linux-misc musl-dev linux-headers " ]]; then
+  echo "Installing needed packages (gcc, meson, fts-dev, linux-headers, util-linux-misc, musl-dev)"
+  apk add gcc meson fts-dev linux-headers util-linux-misc musl-dev || exit 1
+elif ! dpkg -s 'gcc' 'meson' 'libc6-dev' &> /dev/null; then
+  echo "Installing needed packages (gcc, meson, libc6-dev)"
+  apt-get install --yes gcc meson libc6-dev || exit 1
 fi
 
 UBUNTU_VERSION="$(grep -o '^VERSION_ID=.*$' /etc/os-release | cut -d'=' -f2 | tr -d '"')"
@@ -45,7 +45,10 @@ if [[ $OS == "ubuntu" ]] && [[ $(bc -l <<< "$UBUNTU_VERSION >= 21.10") -eq 1 ]];
   fi
 fi
 
-make --always-make --directory="${BASEDIR}/overlayfs-tools"
+rm -rf "$BASEDIR"/overlayfs-tools/builddir
+meson setup "$BASEDIR"/overlayfs-tools/builddir "$BASEDIR"/overlayfs-tools || exit 1
+meson compile -C "$BASEDIR"/overlayfs-tools/builddir || exit 1
+meson install -C "$BASEDIR"/overlayfs-tools/builddir || exit 1
 
 echo "Installing zram-config files"
 if [[ "$OS" == "alpine" ]]; then
@@ -62,7 +65,6 @@ ln -s /usr/local/share/zram-config/log /var/log/zram-config
 install -m 755 "$BASEDIR"/uninstall.bash /usr/local/share/zram-config/uninstall.bash
 install -m 644 "$BASEDIR"/service/zram-config.logrotate /etc/logrotate.d/zram-config
 mkdir -p /usr/local/lib/zram-config/
-install -m 755 "$BASEDIR"/overlayfs-tools/overlay /usr/local/lib/zram-config/overlay
 
 echo "Starting zram-config service"
 if [[ "$OS" == "alpine" ]]; then

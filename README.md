@@ -13,7 +13,7 @@ A table located at `/etc/ztab` is used to configure any number and type of zram 
 Using the table an OverlayFS mount is used to mount the newly created zram device as the upper filesystem of the OverlayFS.
 OverlayFS is used so that files do not need to be copied from persistent storage to RAM on startup.
 In theory this should allow for faster boots and larger directories as no complete directory copy is needed.
-A modified version of [kmxz/overlayfs-tools](https://github.com/kmxz/overlayfs-tools) is used to implement the OverlayFS sync logic.
+A version of [kmxz/overlayfs-tools](https://github.com/kmxz/overlayfs-tools) is used to implement the OverlayFS sync logic.
 
 This tool is primarily developed and tested against Raspberry Pi OS.
 Any Debian derivative should also work out of the box, however there is no guarantee.
@@ -43,7 +43,7 @@ Experimental Alpine support has also been added, other distributions may work bu
 
 ``` shell
 sudo apt-get install git
-git clone https://github.com/ecdye/zram-config
+git clone --recurse-submodules https://github.com/ecdye/zram-config
 sudo ./zram-config/install.bash
 ```
 
@@ -209,7 +209,7 @@ You might have text based low impact directories such as `/var/log` or `/var/cac
 With `/tmp` and `/run`, zram is unnecessary because they are RAM mounted as `tmpfs` and, if memory gets short, then the zram swap will provide extra.
 It is only under intense loads that the slight overhead of zram compression becomes noticeable.
 
-This chart from [facebook/zstd](https://github.com/facebook/zstd?tab=readme-ov-file#benchmarks) provides a good benchmark for the performance of the different compressors.
+This chart in [facebook/zstd](https://github.com/facebook/zstd?tab=readme-ov-file#benchmarks) provides a good reference for the performance of the different compressors.
 
 ### Reference
 
