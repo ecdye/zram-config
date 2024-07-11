@@ -12,12 +12,12 @@ if ! [[ -f /usr/local/sbin/zram-config || -f /usr/sbin/zram-config ]]; then
   exit 1
 fi
 
-if [[ $OS == "alpine" ]] && ! [[ "$(apk info 2> /dev/null | grep -E '^(gcc|make|fts-dev|linux-headers|util-linux-misc|musl-dev)' | tr '\n' ' ')" == "fts-dev gcc make util-linux-misc musl-dev linux-headers " ]]; then
-  echo "Installing needed packages (gcc, make, fts-dev, linux-headers, util-linux-misc, musl-dev)"
-  apk add gcc make fts-dev linux-headers util-linux-misc musl-dev || exit 1
-elif ! dpkg -s 'gcc' 'make' 'libc6-dev' &> /dev/null; then
-  echo "Installing needed packages (gcc, make, libc6-dev)"
-  apt-get install --yes gcc make libc6-dev || exit 1
+if [[ $OS == "alpine" ]] && ! [[ "$(apk info 2> /dev/null | grep -E '^(gcc|meson|fts-dev|linux-headers|util-linux-misc|musl-dev)' | tr '\n' ' ')" == "fts-dev gcc meson util-linux-misc musl-dev linux-headers " ]]; then
+  echo "Installing needed packages (gcc, meson, fts-dev, linux-headers, util-linux-misc, musl-dev)"
+  apk add gcc meson fts-dev linux-headers util-linux-misc musl-dev || exit 1
+elif ! dpkg -s 'gcc' 'meson' 'libc6-dev' &> /dev/null; then
+  echo "Installing needed packages (gcc, meson, libc6-dev)"
+  apt-get install --yes gcc meson libc6-dev || exit 1
 fi
 
 if [[ $OS == "ubuntu" ]] && [[ $(bc -l <<< "$(grep -o '^VERSION_ID=.*$' /etc/os-release | cut -d'=' -f2 | tr -d '"') >= 21.10") -eq 1 ]]; then
@@ -33,9 +33,13 @@ if [[ $1 != "custom" ]]; then
   git -C "$BASEDIR" clean --force -x -d
   git -C "$BASEDIR" checkout main
   git -C "$BASEDIR" reset --hard origin/main
+  git -C "$BASEDIR" submodule update --init --recursive
 fi
 
-make --always-make --directory="${BASEDIR}/overlayfs-tools"
+rm -rf "$BASEDIR"/overlayfs-tools/builddir
+meson setup "$BASEDIR"/overlayfs-tools/builddir "$BASEDIR"/overlayfs-tools || exit 1
+meson compile -C "$BASEDIR"/overlayfs-tools/builddir || exit 1
+meson install -C "$BASEDIR"/overlayfs-tools/builddir || exit 1
 
 echo "Stopping zram-config service"
 if [[ $OS == "alpine" ]]; then
@@ -71,7 +75,6 @@ fi
 if ! [[ -d /usr/local/lib/zram-config ]]; then
   mkdir -p /usr/local/lib/zram-config
 fi
-install -m 755 "$BASEDIR"/overlayfs-tools/overlay /usr/local/lib/zram-config/overlay
 
 echo "Starting zram-config service"
 if [[ $OS == "alpine" ]]; then
