@@ -1,17 +1,13 @@
 name: Release
 
 on:
-  workflow_run:
-    workflows: [Test]
-    types:
-      - completed
-    branches:
-      - main
+  push:
+    tags:
+      - "v*.*.*"
 
 jobs:
   release:
     runs-on: "ubuntu-latest"
-    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event_name == 'create' && github.event.ref_type == 'tag' }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -31,6 +27,8 @@ jobs:
           unset tag
         shell: bash
       - uses: "softprops/action-gh-release@v2"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           generate_release_notes: true
           make_latest: true
