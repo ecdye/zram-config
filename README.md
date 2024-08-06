@@ -36,6 +36,7 @@ Experimental Alpine support has also been added, other distributions may work bu
     -   [Swapiness on older Linux kernel versions](#swapiness-on-older-linux-kernel-versions)
     -   [Raspberry Pi 4 8GB compatibility](#raspberry-pi-4-8gb-compatibility)
     -   [Filesystem compatibility](#filesystem-compatibility)
+    -   [Compatibility issues in virtual machines](#compatibility-issues-in-virtual-machines)
 7.  [Performance](#performance)
 8.  [Reference](#reference)
 
@@ -200,6 +201,15 @@ By default zram-config should support most regular filesystems, as long as the t
 In some cases, with niche filesystems some manual editing of the code may be required to enable support.
 
 Pull requests adding support for filesystems that don't work automatically are welcome.
+
+#### Compatibility issues in virtual machines
+
+When running zram-config in a virtual machine (VM), you may encounter compatibility issues due to the differences in how VMs handle memory and storage compared to physical hardware.
+Performance may vary, and certain features might not work as expected.
+It is also common for VMs to not have implemented emulation in their kernel for zram.
+If you experience issues, it may be better to not use zram-config in your VM environment.
+It is recommended to thoroughly test zram-config in your specific VM setup to ensure it meets your needs.
+
 
 ### Performance
 
