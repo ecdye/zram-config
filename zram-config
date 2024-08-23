@@ -126,7 +126,7 @@ createZdir() {
 mergeOverlay() {
 	echo "mergeOverlay: Beginning merge of ${ZDIR}${BIND_DIR}." >> "$ZLOG"
 	ls -la "$ZDIR" "${ZDIR}${BIND_DIR}" "${ZDIR}${ZRAM_DEV}/upper" >> "$ZLOG"
-	overlay merge --ignore-mounted --lowerdir="${ZDIR}${BIND_DIR}" --upperdir="${ZDIR}${ZRAM_DEV}/upper" &>> "$ZLOG" || return 1
+	overlay merge -i --lowerdir="${ZDIR}${BIND_DIR}" --upperdir="${ZDIR}${ZRAM_DEV}/upper" &>> "$ZLOG" || return 1
 	bash -x -- *.sh &>> "$ZLOG"
 	rm -fv -- *.sh &>> "$ZLOG" || return 1
 	echo "mergeOverlay: Merge of ${ZDIR}${BIND_DIR} complete." >> "$ZLOG"
