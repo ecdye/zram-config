@@ -239,7 +239,7 @@ removeZdir() {
 removeZswap() {
 	log "INFO" "Beginning removal of swap device."
 
-	if ! swapoff "/dev${ZRAM_DEV}" &> /dev/null; then
+	if [[ -z $SHUTDOWN ]] && swapoff "/dev${ZRAM_DEV}" &> /dev/null; then
 		log "ERROR" "Failed to swapoff /dev${ZRAM_DEV}."
 		return 1
 	fi
@@ -319,7 +319,7 @@ serviceConfiguration() {
 	fi
 }
 
-TMPDIR="/tmp"
+TMPDIR="/usr/local/lib/zram-config"
 ZDIR="/opt/zram"
 ZLOG="/usr/local/share/zram-config/log/zram-config.log"
 OS="$(grep -o '^ID=.*$' /etc/os-release | cut -d'=' -f2)"

@@ -76,6 +76,7 @@ check_zram_removal() {
 
 if [[ $1 == "removal" ]]; then
   check_zram_removal || exit 1
+  test -f /var/log/test.txt || echo "Test failed: /var/log/test.txt not found."
 else
   check_zram_mounts || exit 1
 fi
