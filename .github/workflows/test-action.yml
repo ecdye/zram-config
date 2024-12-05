@@ -5,12 +5,14 @@ on:
   push:
     paths:
       - 'zram-config'
+      - 'ztab'
       - '**.bash'
       - 'tests/**'
       - '.github/workflows/test-action.yml'
   pull_request:
     paths:
       - 'zram-config'
+      - 'ztab'
       - '**.bash'
       - 'tests/**'
       - '.github/workflows/test-action.yml'
@@ -52,4 +54,5 @@ jobs:
          if: always()
          uses: actions/upload-artifact@v4
          with:
+           name: logs.tar.gz
            path: logs.tar.gz

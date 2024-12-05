@@ -125,11 +125,11 @@ Once finished, start zram using `sudo systemctl start zram-config.service` or `s
 # swap	alg		mem_limit	disk_size	swap_priority	page-cluster	swappiness
 swap	lzo-rle		250M		750M		75		0		150
 
-# dir	alg		mem_limit	disk_size	target_dir		bind_dir
-#dir	lzo-rle		50M		150M		/home/pi		/opt/zram/pi.bind
+# dir	alg		mem_limit	disk_size	target_dir	bind_dir
+#dir	lzo-rle		50M		150M		/home/pi	/pi.bind
 
-# log	alg		mem_limit	disk_size	target_dir		bind_dir		oldlog_dir
-log	lzo-rle		50M		150M		/var/log		/opt/zram/log.bind	/opt/zram/oldlog
+# log	alg		mem_limit	disk_size	target_dir	bind_dir	oldlog_dir
+log	lzo-rle		50M		150M		/var/log	/log.bind	/opt/zram/oldlog
 ```
 
 ### Is it working?

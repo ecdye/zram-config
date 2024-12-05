@@ -13,7 +13,7 @@ if ! [[ -f /usr/local/sbin/zram-config || -f /usr/sbin/zram-config ]]; then
 fi
 
 zram-config "stop"
-tar -czvf "${BASEDIR}/logs.tar.gz" -C /usr/local/share/zram-config/log .
+tar -czf "${BASEDIR}/logs.tar.gz" -C /usr/local/share/zram-config/log .
 if [[ $OS == "alpine" ]]; then
   rc-service zram-config stop
   rc-update del zram-config boot
