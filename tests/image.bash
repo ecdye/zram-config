@@ -42,7 +42,7 @@ if [[ $1 == "setup" ]]; then
   imageFile "umount" "$3"
 elif [[ $1 == "copy-logs" ]]; then
   imageFile "mount" "$2"
-  cp tests/fs/opt/zram/logs.tar .
+  cp tests/fs/opt/zram/logs.tar.gz .
   imageFile "umount" "$2"
 fi
 
