@@ -41,20 +41,22 @@ expect {
 
 # Run tests
 expect "pi@raspberrypi:~$ "
-send "sudo /opt/zram/install.bash\r"
+send "sudo /opt/zram-config/install.bash\r"
 expect "pi@raspberrypi:~$ "
-send "/opt/zram/tests/test-zram-devices.bash\r"
+send "/opt/zram-config/tests/test-zram-devices.bash\r"
 expect {
   -re "Test failed:.*$" {
     set retval 1
     exp_continue
   }
   "pi@raspberrypi:~$ " {
-    send "sudo /opt/zram/uninstall.bash\r"
+    send "sudo touch /var/log/test.txt\r"
   }
 }
 expect "pi@raspberrypi:~$ "
-send "/opt/zram/tests/test-zram-devices.bash removal\r"
+send "sudo /opt/zram-config/uninstall.bash\r"
+expect "pi@raspberrypi:~$ "
+send "/opt/zram-config/tests/test-zram-devices.bash removal\r"
 expect {
   -re "Test failed:.*$" {
     set retval 1

@@ -29,8 +29,8 @@ if [[ $1 == "setup" ]]; then
   echo ", +" | sfdisk -N 2 "$3"
   imageFile "mount" "$3"
   sed -i -e "s|DATESED|$(date)|" tests/run.exp
-  rsync -avr --exclude="*.img" --exclude="*.sig" --exclude="tests/fs" --exclude="tests/dtb" --exclude="tests/kernel" ./ tests/fs/opt/zram
-  systemd-nspawn --directory="tests/fs" /opt/zram/tests/install-packages.bash
+  rsync -avr --exclude="*.img" --exclude="*.sig" --exclude="tests/fs" --exclude="tests/dtb" --exclude="tests/kernel" ./ tests/fs/opt/zram-config
+  systemd-nspawn --directory="tests/fs" /opt/zram-config/tests/install-packages.bash
   echo "set enable-bracketed-paste off" >> tests/fs/etc/inputrc  # Prevents weird character output
   cp tests/fs/boot/kernel* tests/kernel
   # Compile a customized DTB
@@ -42,7 +42,7 @@ if [[ $1 == "setup" ]]; then
   imageFile "umount" "$3"
 elif [[ $1 == "copy-logs" ]]; then
   imageFile "mount" "$2"
-  cp tests/fs/opt/zram/logs.tar.gz .
+  cp tests/fs/opt/zram-config/logs.tar.gz logs.tar.gz
   imageFile "umount" "$2"
 fi
 
