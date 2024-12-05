@@ -126,9 +126,7 @@ createZdir() {
 mergeOverlay() {
 	echo "mergeOverlay: Beginning merge of ${ZDIR}${BIND_DIR}." >> "$ZLOG"
 	ls -la "$ZDIR" "${ZDIR}${BIND_DIR}" "${ZDIR}${ZRAM_DEV}/upper" >> "$ZLOG"
-	overlay merge -i --lowerdir="${ZDIR}${BIND_DIR}" --upperdir="${ZDIR}${ZRAM_DEV}/upper" &>> "$ZLOG" || return 1
-	bash -x -- *.sh &>> "$ZLOG"
-	rm -fv -- *.sh &>> "$ZLOG" || return 1
+	overlay merge --force-execution --ignore-mounted --lowerdir="${ZDIR}${BIND_DIR}" --upperdir="${ZDIR}${ZRAM_DEV}/upper" &>> "$ZLOG" || return 1
 	echo "mergeOverlay: Merge of ${ZDIR}${BIND_DIR} complete." >> "$ZLOG"
 }
 
@@ -159,7 +157,7 @@ removeZdir() {
 	fi
 	rm -rfv "${ZDIR}${BIND_DIR}" &>> "$ZLOG" || return 1
 
-	if [[ -z $SERVICE ]]; then  # We don't care about device reset when shutting down system
+	if [[ -z $SHUTDOWN ]]; then  # We don't care about device reset when shutting down system
 		until echo "${ZRAM_DEV//[!0-9]/}" > /sys/class/zram-control/hot_remove || [[ count -ge 5 ]]; do
 			count=$(( count + 1 ))
 			sleep 5
@@ -233,7 +231,7 @@ ZDIR="/opt/zram"
 ZLOG="/usr/local/share/zram-config/log/zram-config.log"
 OS="$(grep -o '^ID=.*$' /etc/os-release | cut -d'=' -f2)"
 if [[ -s /run/systemd/shutdown/scheduled ]]; then
-	SERVICE="1"
+	SHUTDOWN="1"
 fi
 
 case "$1" in
@@ -331,7 +329,7 @@ case "$1" in
 							ZRAM_DEV="$2"
 							TARGET_DIR="$3"
 							BIND_DIR="$4"
-							[[ -z $SERVICE ]] && serviceConfiguration "stop"
+							[[ -z $SHUTDOWN ]] && serviceConfiguration "stop"
 							removeZdir
 							;;
 					esac
@@ -369,7 +367,7 @@ case "$1" in
 							ZRAM_DEV="$2"
 							TARGET_DIR="$3"
 							BIND_DIR="$4"
-							[[ -z $SERVICE ]] && serviceConfiguration "stop"
+							[[ -z $SHUTDOWN ]] && serviceConfiguration "stop"
 							syncZdir
 							;;
 					esac
@@ -384,4 +382,4 @@ case "$1" in
 		exit 0
 		;;
 esac
-[[ -z $SERVICE ]] && serviceConfiguration "start"
+[[ -z $SHUTDOWN ]] && serviceConfiguration "start"
