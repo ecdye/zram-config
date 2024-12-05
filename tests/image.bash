@@ -9,6 +9,7 @@ imageFile() {
     mkdir -p tests/{fs,kernel,dtb}
     mount -o rw -t ext4 "/dev/mapper/${loopPrefix}p2" "tests/fs"
     mount -o rw -t vfat "/dev/mapper/${loopPrefix}p1" "tests/fs/boot"
+    sync
   elif [[ $1 == "umount" ]]; then
     sync
     umount tests/fs/boot

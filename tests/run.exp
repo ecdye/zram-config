@@ -63,8 +63,10 @@ expect {
     exp_continue
   }
   "pi@raspberrypi:~$ " {
-    send "sudo shutdown -h now\r"
+    send "sync\r"
   }
 }
+expect "pi@raspberrypi:~$ "
+send "sudo shutdown -h 5s\r"
 
 exit $retval
