@@ -237,7 +237,7 @@ removeZdir() {
 }
 
 removeZswap() {
-	log "Beginning removal of zSwap device."
+	log "INFO" "Beginning removal of zSwap device."
 
 	if ! swapoff "/dev${ZRAM_DEV}" &> /dev/null; then
 		log "ERROR" "Failed to swapoff /dev${ZRAM_DEV}."
