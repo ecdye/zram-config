@@ -15,7 +15,7 @@ log() {
 createZdevice() {
 	local retVal=0
 
-	log "INFO" "Beginning creation of zDevice."
+	log "INFO" "Beginning creation of zram device."
 	if ! [[ -d "/sys/class/zram-control" ]]; then
 		if ! modprobe zram num_devices=0 &> /dev/null; then
 			log "ERROR" "Failed to load zram module."
@@ -59,7 +59,7 @@ createZdevice() {
 }
 
 createZswap() {
-	log "INFO" "Beginning creation of zSwap device."
+	log "INFO" "Beginning creation of swap device."
 	createZdevice || return 1
 	if ! mkswap --label "zram-config${RAM_DEV}" "/dev/zram${RAM_DEV}" &> /dev/null; then
 		log "ERROR" "Failed to create swap on zram${RAM_DEV}."
@@ -95,7 +95,7 @@ createZswap() {
 	fi
 
 	echo "swap		/zram${RAM_DEV}		zram-config${RAM_DEV}" >> "$TMPDIR"/zram-device-list
-	log "INFO" "Completed zSwap device creation."
+	log "INFO" "Completed swap device creation."
 }
 
 createZdir() {
@@ -175,7 +175,7 @@ mergeOverlay() {
 removeZdevice() {
 	local count=0
 
-	log "INFO" "Beginning removal of zDevice /dev${ZRAM_DEV}."
+	log "INFO" "Beginning removal of device /dev${ZRAM_DEV}."
 
 	if [[ -z $ZRAM_DEV ]]; then
 		log "ERROR" "Failed to remove zram device, missing required variables."
@@ -237,14 +237,14 @@ removeZdir() {
 }
 
 removeZswap() {
-	log "INFO" "Beginning removal of zSwap device."
+	log "INFO" "Beginning removal of swap device."
 
 	if ! swapoff "/dev${ZRAM_DEV}" &> /dev/null; then
 		log "ERROR" "Failed to swapoff /dev${ZRAM_DEV}."
 		return 1
 	fi
 
-	log "INFO" "Completed zSwap device removal." >> "$ZLOG"
+	log "INFO" "Completed swap device removal." >> "$ZLOG"
 
 	removeZdevice || return 1
 }
