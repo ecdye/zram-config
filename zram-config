@@ -35,15 +35,15 @@ createZdevice() {
 	fi
 
 	if ! echo "$ALG" > "/sys/block/zram${RAM_DEV}/comp_algorithm"; then
-		log "ERROR" "Failed to set compression algorithm for zram${RAM_DEV}."
+		log "ERROR" "Failed to set compression algorithm for /dev/zram${RAM_DEV}."
 		retVal=1
 	fi
 	if ! echo "$DISK_SIZE" > "/sys/block/zram${RAM_DEV}/disksize"; then
-		log "ERROR" "Failed to set disk size for zram${RAM_DEV}."
+		log "ERROR" "Failed to set disk size for /dev/zram${RAM_DEV}."
 		retVal=1
 	fi
 	if ! echo "$MEM_SIZE" > "/sys/block/zram${RAM_DEV}/mem_limit"; then
-		log "ERROR" "Failed to set memory limit for zram${RAM_DEV}."
+		log "ERROR" "Failed to set memory limit for /dev/zram${RAM_DEV}."
 		retVal=1
 	fi
 	if [[ $retVal -ne 0 ]]; then
@@ -52,7 +52,7 @@ createZdevice() {
 	fi
 
 	if [[ $MEM_SIZE == 0 ]]; then
-		log "INFO" "No memory limit set for zram${RAM_DEV}."
+		log "INFO" "No memory limit set for /dev/zram${RAM_DEV}."
 	fi
 
 	log "INFO" "zram${RAM_DEV} created comp_algorithm=${ALG} mem_limit=${MEM_SIZE} disksize=${DISK_SIZE}."
@@ -62,39 +62,39 @@ createZswap() {
 	log "INFO" "Beginning creation of swap device."
 	createZdevice || return 1
 	if ! mkswap --label "zram-config${RAM_DEV}" "/dev/zram${RAM_DEV}" &> /dev/null; then
-		log "ERROR" "Failed to create swap on zram${RAM_DEV}."
+		log "ERROR" "Failed to create swap on /dev/zram${RAM_DEV}."
 		return 1
 	fi
 
 	if [[ -n $PRIORITY ]]; then
 		if ! swapon -p "$PRIORITY" "/dev/zram${RAM_DEV}" &> /dev/null; then
-			log "ERROR" "Failed to swapon on zram${RAM_DEV}."
+			log "ERROR" "Failed to swapon on /dev/zram${RAM_DEV}."
 			return 1
 		fi
 	else
-		log "ERROR" "No swap priority provided for zram${RAM_DEV}."
+		log "ERROR" "No swap priority provided for /dev/zram${RAM_DEV}."
 		return 1
 	fi
 
 	if [[ -n $PAGE_CLUSTER ]]; then
 		if ! sysctl vm.page-cluster="$PAGE_CLUSTER"; then
-			log "ERROR" "Failed to set page_cluster for zram${RAM_DEV}."
+			log "ERROR" "Failed to set page_cluster for /dev/zram${RAM_DEV}."
 			return 1
 		fi
 	else
-		log "INFO" "No page cluster provided for zram${RAM_DEV}."
+		log "INFO" "No page cluster provided for /dev/zram${RAM_DEV}."
 	fi
 
 	if [[ -n $SWAPPINESS ]]; then
 		if ! sysctl vm.swappiness="$SWAPPINESS"; then
-			log "ERROR" "Failed to set swappiness for zram${RAM_DEV}."
+			log "ERROR" "Failed to set swappiness for /dev/zram${RAM_DEV}."
 			return 1
 		fi
 	else
-		log "INFO" "No swappiness provided for zram${RAM_DEV}."
+		log "INFO" "No swappiness provided for /dev/zram${RAM_DEV}."
 	fi
 
-	echo "swap		/zram${RAM_DEV}		zram-config${RAM_DEV}" >> "$TMPDIR"/zram-device-list
+	echo "swap		zram${RAM_DEV}" >> "$TMPDIR"/zram-device-list
 	log "INFO" "Completed swap device creation."
 }
 
@@ -115,37 +115,37 @@ createZdir() {
 		return 1
 	fi
 
-	mkdir -p "${ZDIR}${BIND_DIR}"
+	mkdir -p "${ZDIR}/${BIND_DIR}"
 
 	dirPerm="$(stat -c "%a" "$TARGET_DIR")"
 	dirUser="$(stat -c "%u" "$TARGET_DIR")"
 	dirGroup="$(stat -c "%g" "$TARGET_DIR")"
 	log "DEBUG" "File permissions for $TARGET_DIR - $dirPerm ${dirUser}:${dirGroup}"
 
-	if ! mount --bind "${TARGET_DIR}/" "${ZDIR}${BIND_DIR}/" &> /dev/null; then
-		log "ERROR" "Failed to bind mount ${TARGET_DIR} to ${ZDIR}${BIND_DIR}."
+	if ! mount --bind "${TARGET_DIR}/" "${ZDIR}/${BIND_DIR}/" &> /dev/null; then
+		log "ERROR" "Failed to bind mount ${TARGET_DIR} to ${ZDIR}/${BIND_DIR}."
 		return 1
 	fi
-	if ! mount --make-private "${ZDIR}${BIND_DIR}/" &> /dev/null; then
-		log "ERROR" "Failed to make ${ZDIR}${BIND_DIR} private."
+	if ! mount --make-private "${ZDIR}/${BIND_DIR}/" &> /dev/null; then
+		log "ERROR" "Failed to make ${ZDIR}/${BIND_DIR} private."
 		return 1
 	fi
 
-	dirMountOpt="$(awk -v a="${ZDIR}${BIND_DIR}" '$2 == a {print $4}' /proc/mounts | head -1)"
-	dirFSType="$(awk -v a="${ZDIR}${BIND_DIR}" '$2 == a {print $3}' /proc/mounts | head -1)"
+	dirMountOpt="$(awk -v a="${ZDIR}/${BIND_DIR}" '$2 == a {print $4}' /proc/mounts | head -1)"
+	dirFSType="$(awk -v a="${ZDIR}/${BIND_DIR}" '$2 == a {print $3}' /proc/mounts | head -1)"
 	log "DEBUG" "Directory settings - ${dirMountOpt} ${dirFSType}."
 
 	createZdevice || return 1
 
 	# shellcheck disable=SC2086
 	if ! ([[ -x $(command -v mkfs.$dirFSType) ]] && mkfs.$dirFSType "/dev/zram${RAM_DEV}" &> /dev/null); then
-		log "ERROR" "Failed to create filesystem on zram${RAM_DEV}."
+		log "ERROR" "Failed to create filesystem on /dev/zram${RAM_DEV}."
 		return 1
 	fi
 	mkdir -p "${ZDIR}/zram${RAM_DEV}"
 	mount --types "$dirFSType" -o "$dirMountOpt" "/dev/zram${RAM_DEV}" "${ZDIR}/zram${RAM_DEV}/" &> /dev/null || retVal=1
 	mkdir -p "${ZDIR}/zram${RAM_DEV}/upper" "${ZDIR}/zram${RAM_DEV}/workdir" "$TARGET_DIR"
-	mount --types overlay -o "redirect_dir=on,metacopy=on,lowerdir=${ZDIR}${BIND_DIR},upperdir=${ZDIR}/zram${RAM_DEV}/upper,workdir=${ZDIR}/zram${RAM_DEV}/workdir" "overlay${RAM_DEV}" "$TARGET_DIR" &> /dev/null || retVal=1
+	mount --types overlay -o "redirect_dir=on,metacopy=on,lowerdir=${ZDIR}/${BIND_DIR},upperdir=${ZDIR}/zram${RAM_DEV}/upper,workdir=${ZDIR}/zram${RAM_DEV}/workdir" "overlay${RAM_DEV}" "$TARGET_DIR" &> /dev/null || retVal=1
 	chown "${dirUser}:${dirGroup}" "${ZDIR}/zram${RAM_DEV}/upper" "${ZDIR}/zram${RAM_DEV}/workdir" "$TARGET_DIR" &> /dev/null || retVal=1
 	chmod "$dirPerm" "${ZDIR}/zram${RAM_DEV}/upper" "${ZDIR}/zram${RAM_DEV}/workdir" "$TARGET_DIR" &> /dev/null || retVal=1
 	if [[ $retVal -ne 0 ]]; then
@@ -153,7 +153,7 @@ createZdir() {
 		return 1
 	fi
 
-	echo "${ZTYPE}		/zram${RAM_DEV}		${TARGET_DIR}		${BIND_DIR}" >> "$TMPDIR"/zram-device-list
+	echo "${ZTYPE}		zram${RAM_DEV}		${TARGET_DIR}" >> "$TMPDIR"/zram-device-list
 
 	if [[ $ZTYPE == "log" ]] && [[ -n $OLDLOG_DIR ]]; then
 		echo -e "olddir ${OLDLOG_DIR}\\ncreateolddir 755 root root\\nrenamecopy" > /etc/logrotate.d/00_oldlog
@@ -164,18 +164,18 @@ createZdir() {
 }
 
 mergeOverlay() {
-	log "INFO" "Beginning merge of ${ZDIR}${BIND_DIR}."
-	if ! overlay merge --force-execution --ignore-mounted --lowerdir="${ZDIR}${BIND_DIR}" --upperdir="${ZDIR}${ZRAM_DEV}/upper" &> /dev/null; then
-		log "ERROR" "Failed to merge ${ZDIR}${BIND_DIR}."
+	log "INFO" "Beginning merge of ${ZDIR}/${BIND_DIR}."
+	if ! overlay merge --force-execution --ignore-mounted --lowerdir="${ZDIR}/${BIND_DIR}" --upperdir="${ZDIR}/${ZRAM_DEV}/upper" &> /dev/null; then
+		log "ERROR" "Failed to merge ${ZDIR}/${BIND_DIR}."
 		return 1
 	fi
-	log "INFO" "Merge of ${ZDIR}${BIND_DIR} complete."
+	log "INFO" "Merge of ${ZDIR}/${BIND_DIR} complete."
 }
 
 removeZdevice() {
 	local count=0
 
-	log "INFO" "Beginning removal of device /dev${ZRAM_DEV}."
+	log "INFO" "Beginning removal of device /dev/${ZRAM_DEV}."
 
 	if [[ -z $ZRAM_DEV ]]; then
 		log "ERROR" "Failed to remove zram device, missing required variables."
@@ -194,7 +194,7 @@ removeZdevice() {
 		done
 	fi
 
-	log "INFO" "Completed removal of device /dev${ZRAM_DEV}."
+	log "INFO" "Completed removal of device /dev/${ZRAM_DEV}."
 }
 
 umountTarget() {
@@ -225,13 +225,13 @@ removeZdir() {
 
 	mergeOverlay || return 1
 
-	umountTarget "${ZDIR}${ZRAM_DEV}" || return 1
-	rm -rf "${ZDIR}${ZRAM_DEV}"
+	umountTarget "${ZDIR}/${ZRAM_DEV}" || return 1
+	rm -rf "${ZDIR:?}/${ZRAM_DEV}"
 
-	umountTarget "${ZDIR}${BIND_DIR}" || return 1
-	rm -rf "${ZDIR}${BIND_DIR}"
+	umountTarget "${ZDIR}/${BIND_DIR}" || return 1
+	rm -rf "${ZDIR:?}/${BIND_DIR}"
 
-	log "INFO" "Completed merge of device /dev${ZRAM_DEV}."
+	log "INFO" "Completed merge of device /dev/${ZRAM_DEV}."
 
 	removeZdevice || return 1
 }
@@ -250,19 +250,19 @@ removeZswap() {
 }
 
 syncZdir() {
-	log "INFO" "Beginning sync of device /dev${ZRAM_DEV}."
+	log "INFO" "Beginning sync of device /dev/${ZRAM_DEV}."
 
 	umountTarget "$TARGET_DIR" || return 1
 
 	mergeOverlay || return 1
 
-	mkdir -p "${ZDIR}${ZRAM_DEV}/upper" "${ZDIR}${ZRAM_DEV}/workdir" "$TARGET_DIR"
-	if ! mount --types overlay -o "redirect_dir=on,lowerdir=${ZDIR}${BIND_DIR},upperdir=${ZDIR}${ZRAM_DEV}/upper,workdir=${ZDIR}${ZRAM_DEV}/workdir" "overlay${ZRAM_DEV//[!0-9]/}" "$TARGET_DIR" &> /dev/null; then
-		log "ERROR" "Failed to remount overlay for ${ZDIR}${BIND_DIR}."
+	mkdir -p "${ZDIR}/${ZRAM_DEV}/upper" "${ZDIR}/${ZRAM_DEV}/workdir" "$TARGET_DIR"
+	if ! mount --types overlay -o "redirect_dir=on,lowerdir=${ZDIR}/${BIND_DIR},upperdir=${ZDIR}/${ZRAM_DEV}/upper,workdir=${ZDIR}/${ZRAM_DEV}/workdir" "overlay${ZRAM_DEV//[!0-9]/}" "$TARGET_DIR" &> /dev/null; then
+		log "ERROR" "Failed to remount overlay for ${ZDIR}/${BIND_DIR}."
 		return 1
 	fi
 
-	log "INFO" "Completed sync of device /dev${ZRAM_DEV}."
+	log "INFO" "Completed sync of device /dev/${ZRAM_DEV}."
 }
 
 serviceConfiguration() {
@@ -373,8 +373,8 @@ case "$1" in
 
 						dir|log)
 							TARGET_DIR="$5"
-							BIND_DIR="$6"
-							OLDLOG_DIR="$7"
+							BIND_DIR="$(basename "$TARGET_DIR").bind"
+							OLDLOG_DIR="$6"
 							serviceConfiguration "stop"
 							createZdir
 							;;
@@ -419,7 +419,7 @@ case "$1" in
 						dir|log)
 							ZRAM_DEV="$2"
 							TARGET_DIR="$3"
-							BIND_DIR="$4"
+							BIND_DIR="$(basename "$TARGET_DIR").bind"
 							serviceConfiguration "stop"
 							removeZdir
 							;;
@@ -456,7 +456,7 @@ case "$1" in
 						dir|log)
 							ZRAM_DEV="$2"
 							TARGET_DIR="$3"
-							BIND_DIR="$4"
+							BIND_DIR="$(basename "$TARGET_DIR").bind"
 							[[ -z $SHUTDOWN ]] && serviceConfiguration "stop"
 							syncZdir
 							;;
