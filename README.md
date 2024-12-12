@@ -92,9 +92,6 @@ It can be raised up to 200 which will improve performance in high memory pressur
 
 `target_dir` is the directory you wish to hold in zram, and the original will be moved to a bind mount `bind_dir` and is synchronized on start, stop, and write commands.
 
-`bind_dir` is the directory where the original directory will be mounted for sync purposes.
-Usually in `/opt` or `/var`, name optional.
-
 `oldlog_dir` will enable log-rotation to an off device directory while retaining only live logs in zram.
 Usually in `/opt` or `/var`, name optional.
 
@@ -108,11 +105,11 @@ Once finished, start zram using `sudo systemctl start zram-config.service` or `s
 # swap	alg		mem_limit	disk_size	swap_priority	page-cluster	swappiness
 swap	lzo-rle		250M		750M		75		0		150
 
-# dir	alg		mem_limit	disk_size	target_dir	bind_dir
-#dir	lzo-rle		50M		150M		/home/pi	/pi.bind
+# dir	alg		mem_limit	disk_size	target_dir
+#dir	lzo-rle		50M		150M		/home/pi
 
-# log	alg		mem_limit	disk_size	target_dir	bind_dir	oldlog_dir
-log	lzo-rle		50M		150M		/var/log	/log.bind	/opt/zram/oldlog
+# log	alg		mem_limit	disk_size	target_dir	oldlog_dir
+log	lzo-rle		50M		150M		/var/log	/opt/zram/oldlog
 ```
 
 ### Is it working?
