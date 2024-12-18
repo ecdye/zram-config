@@ -1,14 +1,21 @@
 [Unit]
 Description=zram-config
 Documentation=https://github.com/ecdye/zram-config/blob/main/README.md
+DefaultDependencies=no
+Before=basic.target rsyslog.service syslog-ng.service syslog.target systemd-journald.service sysinit.target shutdown.target
+Conflicts=shutdown.target reboot.target halt.target
+RequiresMountsFor=/var/log /opt/zram
+IgnoreOnIsolate=yes
+After=local-fs.target
 
 [Service]
-Type=exec
-TimeoutSec=120
+Type=oneshot
+TimeoutStopSec=240
 RemainAfterExit=yes
 WorkingDirectory=/usr/local/lib/zram-config
 ExecStart=/usr/local/sbin/zram-config "start"
+ExecReload=/usr/local/sbin/zram-config "sync"
 ExecStop=/usr/local/sbin/zram-config "stop"
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=sysinit.target

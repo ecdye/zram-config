@@ -39,7 +39,7 @@ expect {
   }
 }
 
-# Run tests
+# Install tests
 expect "pi@raspberrypi:~$ "
 send "sudo /opt/zram-config/install.bash\r"
 expect "pi@raspberrypi:~$ "
@@ -50,9 +50,11 @@ expect {
     exp_continue
   }
   "pi@raspberrypi:~$ " {
-    send "sudo touch /var/log/test.txt\r"
+    send "sudo touch /var/log/test\r"
   }
 }
+
+# Uninstall tests
 expect "pi@raspberrypi:~$ "
 send "sudo /opt/zram-config/uninstall.bash\r"
 expect "pi@raspberrypi:~$ "
@@ -66,7 +68,9 @@ expect {
     send "sync\r"
   }
 }
+
+# Shutdown
 expect "pi@raspberrypi:~$ "
-send "sudo shutdown -h 5s\r"
+send "sudo shutdown -h now\r"
 
 exit $retval
