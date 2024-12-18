@@ -324,7 +324,7 @@ ZDIR="/opt/zram"
 ZLOG="/usr/local/share/zram-config/log/zram-config.log"
 OS="$(grep -o '^ID=.*$' /etc/os-release | cut -d'=' -f2)"
 if systemctl list-jobs | grep -q 'shutdown.target.*start' || systemctl list-jobs | grep -q 'reboot.target.*start'; then
-	SHUTDOWN=1
+	SHUTDOWN="1"
 fi
 
 case "$1" in

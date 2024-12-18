@@ -50,7 +50,7 @@ expect {
     exp_continue
   }
   "pi@raspberrypi:~$ " {
-    send "sudo touch /var/log/test.txt\r"
+    send "sudo touch /var/log/test\r"
   }
 }
 
