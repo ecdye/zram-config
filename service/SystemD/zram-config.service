@@ -10,7 +10,7 @@ After=local-fs.target
 
 [Service]
 Type=oneshot
-TimeoutStopSec=120
+TimeoutStopSec=240
 RemainAfterExit=yes
 WorkingDirectory=/usr/local/lib/zram-config
 ExecStart=/usr/local/sbin/zram-config "start"

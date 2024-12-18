@@ -221,7 +221,7 @@ removeZdir() {
 		return 1
 	fi
 
-	umountTarget "$TARGET_DIR" || return 1
+	umountTarget "$TARGET_DIR"
 
 	mergeOverlay || return 1
 
@@ -239,7 +239,7 @@ removeZdir() {
 removeZswap() {
 	log "INFO" "Beginning removal of swap device."
 
-	if [[ -z $SHUTDOWN ]] && swapoff "/dev${ZRAM_DEV}" &> /dev/null; then
+	if [[ -z $SHUTDOWN ]] && ! swapoff "/dev${ZRAM_DEV}" &> /dev/null; then
 		log "ERROR" "Failed to swapoff /dev${ZRAM_DEV}."
 		return 1
 	fi
@@ -323,8 +323,8 @@ TMPDIR="/usr/local/lib/zram-config"
 ZDIR="/opt/zram"
 ZLOG="/usr/local/share/zram-config/log/zram-config.log"
 OS="$(grep -o '^ID=.*$' /etc/os-release | cut -d'=' -f2)"
-if [[ -s /run/systemd/shutdown/scheduled ]]; then
-	SHUTDOWN="1"
+if systemctl list-jobs | grep -q 'shutdown.target.*start' || systemctl list-jobs | grep -q 'reboot.target.*start'; then
+	SHUTDOWN=1
 fi
 
 case "$1" in
@@ -420,7 +420,7 @@ case "$1" in
 							ZRAM_DEV="$2"
 							TARGET_DIR="$3"
 							BIND_DIR="$4"
-							[[ -z $SHUTDOWN ]] && serviceConfiguration "stop"
+							serviceConfiguration "stop"
 							removeZdir
 							;;
 					esac
