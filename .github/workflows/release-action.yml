@@ -20,8 +20,8 @@ jobs:
         run: |
           export tag="${{ github.ref_name }}"
           sudo apt-get install lzip
-          git archive --format=tar --prefix=zram-config-${tag}/ ${tag} -o zram-config-${tag}.tar
-          lzip -9 --keep --verbose --verbose zram-config-${tag}.tar
+          git ls-files --recurse-submodules | tar -cf zram-config-${tag}.tar --xform s:^:zram-config-${tag}/: --verbatim-files-from -T-
+          lzip --best --keep --verbose --verbose zram-config-${tag}.tar
           gpg --detach-sign --armor zram-config-${tag}.tar.lz
           gpg --verify zram-config-${tag}.tar.lz.asc zram-config-${tag}.tar.lz
           unset tag

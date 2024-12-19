@@ -20,30 +20,13 @@ jobs:
     steps:
        - name: Checkout repository
          uses: actions/checkout@v4
-       - name: Setup environment
-         run: sudo -E bash -c set
        - name: "ShellCheck tests/*.bash"
-         run: |
-           echo "ShellCheck zram-config..."
-           if shellcheck -x -s bash tests/*.bash; then echo "OK"; else echo "FAILED"; exit 1; fi
-         shell: bash
+         run: shellcheck -x -s bash tests/*.bash
        - name: "ShellCheck install.bash"
-         run: |
-           echo "ShellCheck install.bash..."
-           if shellcheck -x -s bash install.bash; then echo "OK"; else echo "FAILED"; exit 1; fi
-         shell: bash
+         run: shellcheck -x -s bash install.bash
        - name: "ShellCheck update.bash"
-         run: |
-           echo "ShellCheck update.bash..."
-           if shellcheck -x -s bash update.bash; then echo "OK"; else echo "FAILED"; exit 1; fi
-         shell: bash
+         run: shellcheck -x -s bash update.bash
        - name: "ShellCheck uninstall.bash"
-         run: |
-           echo "ShellCheck uninstall.bash..."
-           if shellcheck -x -s bash uninstall.bash; then echo "OK"; else echo "FAILED"; exit 1; fi
-         shell: bash
+         run: shellcheck -x -s bash uninstall.bash
        - name: "ShellCheck zram-config"
-         run: |
-           echo "ShellCheck zram-config..."
-           if shellcheck -x -s bash zram-config; then echo "OK"; else echo "FAILED"; exit 1; fi
-         shell: bash
+         run: shellcheck -x -s bash zram-config
