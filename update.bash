@@ -7,7 +7,7 @@ if [[ "$(id -u)" -ne 0 ]]; then
   echo "ERROR: You need to be ROOT (sudo can be used)."
   exit 1
 fi
-if ! [[ -f /usr/local/sbin/zram-config || -f /usr/sbin/zram-config ]]; then
+if ! [[ -s /usr/local/sbin/zram-config || -s /usr/sbin/zram-config ]]; then
   echo -e "ERROR: zram-config is not installed.\\nPlease run \"sudo ${BASEDIR}/install.bash\" to install zram-config instead."
   exit 1
 fi
@@ -29,10 +29,8 @@ fi
 
 if [[ $1 != "custom" ]]; then
   git -C "$BASEDIR" fetch origin
-  git -C "$BASEDIR" fetch --tags --force --prune
   git -C "$BASEDIR" clean --force -x -d
-  git -C "$BASEDIR" checkout main
-  git -C "$BASEDIR" reset --hard origin/main
+  git -C "$BASEDIR" reset --hard --recurse-submodules origin main
   git -C "$BASEDIR" submodule update --init --recursive
 fi
 
