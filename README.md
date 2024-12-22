@@ -42,9 +42,11 @@ Experimental Alpine support has also been added, other distributions may work bu
 
 ### Install
 
+The following assumes that you have the [`gh`](https://cli.github.com) cli tool installed and setup on your system.
+
 ``` shell
-sudo apt-get install git
-git clone --recurse-submodules https://github.com/ecdye/zram-config
+gh release download --repo ecdye/zram-config --pattern '*.tar.lz'
+mkdir -p zram-config && tar -xf zram-config*.tar.lz --strip-components=1 --directory=zram-config
 sudo ./zram-config/install.bash
 ```
 
@@ -209,7 +211,6 @@ Performance may vary, and certain features might not work as expected.
 It is also common for VMs to not have implemented emulation in their kernel for zram.
 If you experience issues, it may be better to not use zram-config in your VM environment.
 It is recommended to thoroughly test zram-config in your specific VM setup to ensure it meets your needs.
-
 
 ### Performance
 
