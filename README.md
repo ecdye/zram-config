@@ -21,25 +21,6 @@ Experimental Alpine support has also been added, other distributions may work bu
 
 ## A Brief Usage Guide
 
-### Table of Contents
-
-1.  [Install](#install)
-    -   [Manually start or stop](#manually-start-or-stop)
-    -   [Sync files to disk](#sync-files-to-disk)
-2.  [Update](#update)
-3.  [Uninstall](#uninstall)
-4.  [Configure](#customize)
-    -   [Example configuration](#example-configuration)
-5.  [Is it working?](#is-it-working)
-6.  [Known issues](#known-issues)
-    -   [Conflicts with services](#conflicts-with-services)
-    -   [Swapiness on older Linux kernel versions](#swapiness-on-older-linux-kernel-versions)
-    -   [Raspberry Pi 4 8GB compatibility](#raspberry-pi-4-8gb-compatibility)
-    -   [Filesystem compatibility](#filesystem-compatibility)
-    -   [Compatibility issues in virtual machines](#compatibility-issues-in-virtual-machines)
-7.  [Performance](#performance)
-8.  [Reference](#reference)
-
 ### Install
 
 The following assumes that you have the [`gh`](https://cli.github.com) cli tool installed and setup on your system.
