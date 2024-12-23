@@ -210,7 +210,7 @@ umountTarget() {
 removeZdir() {
 	local retVal=0
 
-	log "INFO" "Beginning merge of device /dev${ZRAM_DEV}."
+	log "INFO" "Beginning merge of device /dev/${ZRAM_DEV}."
 
 	[[ -n $OLDLOG_DIR ]] && rm -f /etc/logrotate.d/00_oldlog
 	[[ -z $TARGET_DIR ]] && retVal=1
@@ -239,8 +239,8 @@ removeZdir() {
 removeZswap() {
 	log "INFO" "Beginning removal of swap device."
 
-	if [[ -z $SHUTDOWN ]] && ! swapoff "/dev${ZRAM_DEV}" &> /dev/null; then
-		log "ERROR" "Failed to swapoff /dev${ZRAM_DEV}."
+	if [[ -z $SHUTDOWN ]] && ! swapoff "/dev/${ZRAM_DEV}" &> /dev/null; then
+		log "ERROR" "Failed to swapoff /dev/${ZRAM_DEV}."
 		return 1
 	fi
 
