@@ -24,8 +24,7 @@
 # which will improve performance in high memory pressure situations.
 #
 # target_dir is the directory you wish to hold in zram, and the original will be
-# moved to a bind mount 'bind_dir' and is synchronized on start, stop, and write
-# commands.
+# moved to a bind mount and is synchronized on start, stop, and write commands.
 #
 # oldlog_dir will enable log-rotation to an off device directory while retaining
 # only live logs in zram. Usually in '/opt' or '/var', name optional.
