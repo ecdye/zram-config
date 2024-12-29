@@ -90,10 +90,7 @@ Don't make it much higher than the compression algorithm (and the additional zra
 `swappiness` 150 because the improved performance of zram allows more usage without any adverse affects from the default of 60.
 It can be raised up to 200 which will improve performance in high memory pressure situations.
 
-`target_dir` is the directory you wish to hold in zram, and the original will be moved to a bind mount `bind_dir` and is synchronized on start, stop, and write commands.
-
-`bind_dir` is the directory where the original directory will be mounted for sync purposes.
-Usually in `/opt` or `/var`, name optional.
+`target_dir` is the directory you wish to hold in zram, and the original will be moved to a bind mount and is synchronized on start, stop, and write commands.
 
 `oldlog_dir` will enable log-rotation to an off device directory while retaining only live logs in zram.
 Usually in `/opt` or `/var`, name optional.
@@ -108,11 +105,11 @@ Once finished, start zram using `sudo systemctl start zram-config.service` or `s
 # swap	alg		mem_limit	disk_size	swap_priority	page-cluster	swappiness
 swap	lzo-rle		250M		750M		75		0		150
 
-# dir	alg		mem_limit	disk_size	target_dir	bind_dir
-#dir	lzo-rle		50M		150M		/home/pi	/pi.bind
+# dir	alg		mem_limit	disk_size	target_dir
+#dir	lzo-rle		50M		150M		/home/pi
 
-# log	alg		mem_limit	disk_size	target_dir	bind_dir	oldlog_dir
-log	lzo-rle		50M		150M		/var/log	/log.bind	/opt/zram/oldlog
+# log	alg		mem_limit	disk_size	target_dir	oldlog_dir
+log	lzo-rle		50M		150M		/var/log	/opt/zram/oldlog
 ```
 
 ### Is it working?
@@ -192,6 +189,14 @@ Performance may vary, and certain features might not work as expected.
 It is also common for VMs to not have implemented emulation in their kernel for zram.
 If you experience issues, it may be better to not use zram-config in your VM environment.
 It is recommended to thoroughly test zram-config in your specific VM setup to ensure it meets your needs.
+
+#### Removal of `bind_dir` in `ztab`
+
+Older versions of zram-config included the option to manually configure a `bind_dir` in the `ztab`.
+This functionality was removed in favor of automatically creating a bind mount as it is less confusing and more consistent with the rest of the code.
+
+Checks are in place to automatically convert `ztab` to this new format.
+If errors occur, you may need to manually edit `ztab` to fix any issues.
 
 ### Performance
 

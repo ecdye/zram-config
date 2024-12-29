@@ -61,6 +61,7 @@ install -m 755 "$BASEDIR"/uninstall.bash /usr/local/share/zram-config/uninstall.
 if ! [[ -f /etc/ztab ]]; then
   install -m 644 "$BASEDIR"/ztab /etc/ztab
 fi
+sed -i -E 's/(\tbind_dir|\t\/\w*\.bind)//g' /etc/ztab # Remove bind_dir and /path.bind from ztab
 if ! [[ -d /usr/local/share/zram-config/log ]]; then
   mkdir -p /usr/local/share/zram-config/log
 fi
