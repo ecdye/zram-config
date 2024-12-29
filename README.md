@@ -90,7 +90,7 @@ Don't make it much higher than the compression algorithm (and the additional zra
 `swappiness` 150 because the improved performance of zram allows more usage without any adverse affects from the default of 60.
 It can be raised up to 200 which will improve performance in high memory pressure situations.
 
-`target_dir` is the directory you wish to hold in zram, and the original will be moved to a bind mount `bind_dir` and is synchronized on start, stop, and write commands.
+`target_dir` is the directory you wish to hold in zram, and the original will be moved to a bind mount and is synchronized on start, stop, and write commands.
 
 `oldlog_dir` will enable log-rotation to an off device directory while retaining only live logs in zram.
 Usually in `/opt` or `/var`, name optional.
@@ -189,6 +189,14 @@ Performance may vary, and certain features might not work as expected.
 It is also common for VMs to not have implemented emulation in their kernel for zram.
 If you experience issues, it may be better to not use zram-config in your VM environment.
 It is recommended to thoroughly test zram-config in your specific VM setup to ensure it meets your needs.
+
+#### Removal of `bind_dir` in `ztab`
+
+Older versions of zram-config included the option to manually configure a `bind_dir` in the `ztab`.
+This functionality was removed in favor of automatically creating a bind mount as it is less confusing and more consistent with the rest of the code.
+
+Checks are in place to automatically convert `ztab` to this new format.
+If errors occur, you may need to manually edit `ztab` to fix any issues.
 
 ### Performance
 
