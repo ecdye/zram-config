@@ -327,6 +327,10 @@ if systemctl list-jobs | grep -q 'shutdown.target.*start' || systemctl list-jobs
 	SHUTDOWN="1"
 fi
 
+# Remove `bind_dir` and `/path.bind` from ztab for breaking changes
+# See https://github.com/ecdye/zram-config/pull/126 for more information
+sed -i -E 's/(\tbind_dir|\t\/\w*\.bind)//g' /etc/ztab
+
 case "$1" in
 	start)
 		log "INFO" "Starting services."
