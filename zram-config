@@ -461,7 +461,7 @@ case "$1" in
 							ZRAM_DEV="$2"
 							TARGET_DIR="$3"
 							BIND_DIR="$(basename "$TARGET_DIR").bind"
-							[[ -z $SHUTDOWN ]] && serviceConfiguration "stop"
+							! [[ -z $SHUTDOWN ]] && serviceConfiguration "stop"
 							syncZdir
 							;;
 					esac
@@ -476,4 +476,4 @@ case "$1" in
 		exit 0
 		;;
 esac
-[[ -z $SHUTDOWN ]] && serviceConfiguration "start"
+! [[ -z $SHUTDOWN ]] && serviceConfiguration "start"
