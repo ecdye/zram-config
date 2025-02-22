@@ -75,6 +75,12 @@ if ! [[ -d /usr/local/lib/zram-config ]]; then
   mkdir -p /usr/local/lib/zram-config
 fi
 
+if ! [[ -d /usr/local/share/man/man1 ]]; then
+  mkdir -p /usr/local/share/man/man1/
+fi
+install -m 644 "$BASEDIR"/doc/man/zram-config.1 /usr/local/share/man/man1/zram-config.1
+mandb
+
 echo "Starting zram-config service"
 if [[ $OS == "alpine" ]]; then
   rc-update add zram-config boot
