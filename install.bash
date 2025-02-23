@@ -73,7 +73,7 @@ mkdir -p /usr/local/lib/zram-config/
 
 mkdir -p /usr/local/share/man/man1
 install -m 644 "$BASEDIR"/doc/man/zram-config.1 /usr/local/share/man/man1/zram-config.1
-mandb
+mandb --quiet
 
 echo "Starting zram-config service"
 if [[ "$OS" == "alpine" ]]; then

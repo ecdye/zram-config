@@ -39,6 +39,7 @@ rm -rf /usr/local/lib/zram-config
 rm -rf /usr/local/share/zram-config
 rm -f /var/log/zram-config
 rm -f /usr/local/share/man/man1/zram-config.1
+mandb --quiet
 
 echo "#####     zram-config has been uninstalled     #####"
 echo "#####           Reboot is not needed           #####"
