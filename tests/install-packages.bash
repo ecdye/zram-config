@@ -2,6 +2,7 @@
 
 export DEBIAN_FRONTEND="noninteractive"
 
+apt-get --quiet update
 apt-get --quiet install --yes gcc meson libc6-dev
 apt-get --quiet autoremove --yes
 systemctl mask rpi-eeprom-update.service hciuart.service systemd-logind.service
