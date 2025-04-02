@@ -3,320 +3,320 @@
 timestamp() { printf "%(%FT%T%z)T\\n" "-1"; }
 
 log() {
-	local log_level="$1"
-	local log_message="$2"
-	if [[ $2 != "ERROR" ]]; then
-		echo "$(timestamp) | $log_level | ${FUNCNAME[1]}: $log_message" >> "$ZLOG"
-	else
-		echo "$(timestamp) | $log_level | ${FUNCNAME[1]}: $log_message Exiting!" | tee -a "$ZLOG"
-	fi
+    local log_level="$1"
+    local log_message="$2"
+    if [[ $2 != "ERROR" ]]; then
+        echo "$(timestamp) | $log_level | ${FUNCNAME[1]}: $log_message" >> "$ZLOG"
+    else
+        echo "$(timestamp) | $log_level | ${FUNCNAME[1]}: $log_message Exiting!" | tee -a "$ZLOG"
+    fi
 }
 
 createZdevice() {
-	local retVal=0
+    local retVal=0
 
-	log "INFO" "Beginning creation of zram device."
-	if ! [[ -d "/sys/class/zram-control" ]]; then
-		if ! modprobe zram num_devices=0 &> /dev/null; then
-			log "ERROR" "Failed to load zram module."
-			return 1
-		fi
-	fi
+    log "INFO" "Beginning creation of zram device."
+    if ! [[ -d "/sys/class/zram-control" ]]; then
+        if ! modprobe zram num_devices=0 &> /dev/null; then
+            log "ERROR" "Failed to load zram module."
+            return 1
+        fi
+    fi
 
-	RAM_DEV="$(cat /sys/class/zram-control/hot_add)"
+    RAM_DEV="$(cat /sys/class/zram-control/hot_add)"
 
-	if [[ -z $RAM_DEV ]]; then
-		log "WARN" "Failed to find an open zram device, trying one more time."
-		RAM_DEV="$(cat /sys/class/zram-control/hot_add)"
-		if [[ -z $RAM_DEV ]]; then
-			log "ERROR" "Failed to find an open zram device."
-			return 1
-		fi
-	fi
+    if [[ -z $RAM_DEV ]]; then
+        log "WARN" "Failed to find an open zram device, trying one more time."
+        RAM_DEV="$(cat /sys/class/zram-control/hot_add)"
+        if [[ -z $RAM_DEV ]]; then
+            log "ERROR" "Failed to find an open zram device."
+            return 1
+        fi
+    fi
 
-	if ! echo "$ALG" > "/sys/block/zram${RAM_DEV}/comp_algorithm"; then
-		log "ERROR" "Failed to set compression algorithm for /dev/zram${RAM_DEV}."
-		retVal=1
-	fi
-	if ! echo "$DISK_SIZE" > "/sys/block/zram${RAM_DEV}/disksize"; then
-		log "ERROR" "Failed to set disk size for /dev/zram${RAM_DEV}."
-		retVal=1
-	fi
-	if ! echo "$MEM_SIZE" > "/sys/block/zram${RAM_DEV}/mem_limit"; then
-		log "ERROR" "Failed to set memory limit for /dev/zram${RAM_DEV}."
-		retVal=1
-	fi
-	if [[ $retVal -ne 0 ]]; then
-		echo "$RAM_DEV" > /sys/class/zram-control/hot_remove
-		return 1
-	fi
+    if ! echo "$ALG" > "/sys/block/zram${RAM_DEV}/comp_algorithm"; then
+        log "ERROR" "Failed to set compression algorithm for /dev/zram${RAM_DEV}."
+        retVal=1
+    fi
+    if ! echo "$DISK_SIZE" > "/sys/block/zram${RAM_DEV}/disksize"; then
+        log "ERROR" "Failed to set disk size for /dev/zram${RAM_DEV}."
+        retVal=1
+    fi
+    if ! echo "$MEM_SIZE" > "/sys/block/zram${RAM_DEV}/mem_limit"; then
+        log "ERROR" "Failed to set memory limit for /dev/zram${RAM_DEV}."
+        retVal=1
+    fi
+    if [[ $retVal -ne 0 ]]; then
+        echo "$RAM_DEV" > /sys/class/zram-control/hot_remove
+        return 1
+    fi
 
-	if [[ $MEM_SIZE == 0 ]]; then
-		log "INFO" "No memory limit set for /dev/zram${RAM_DEV}."
-	fi
+    if [[ $MEM_SIZE == 0 ]]; then
+        log "INFO" "No memory limit set for /dev/zram${RAM_DEV}."
+    fi
 
-	log "INFO" "zram${RAM_DEV} created comp_algorithm=${ALG} mem_limit=${MEM_SIZE} disksize=${DISK_SIZE}."
+    log "INFO" "zram${RAM_DEV} created comp_algorithm=${ALG} mem_limit=${MEM_SIZE} disksize=${DISK_SIZE}."
 }
 
 createZswap() {
-	log "INFO" "Beginning creation of swap device."
-	createZdevice || return 1
-	if ! mkswap --label "zram-config${RAM_DEV}" "/dev/zram${RAM_DEV}" &> /dev/null; then
-		log "ERROR" "Failed to create swap on /dev/zram${RAM_DEV}."
-		return 1
-	fi
+    log "INFO" "Beginning creation of swap device."
+    createZdevice || return 1
+    if ! mkswap --label "zram-config${RAM_DEV}" "/dev/zram${RAM_DEV}" &> /dev/null; then
+        log "ERROR" "Failed to create swap on /dev/zram${RAM_DEV}."
+        return 1
+    fi
 
-	if [[ -n $PRIORITY ]]; then
-		if ! swapon -p "$PRIORITY" "/dev/zram${RAM_DEV}" &> /dev/null; then
-			log "ERROR" "Failed to swapon on /dev/zram${RAM_DEV}."
-			return 1
-		fi
-	else
-		log "ERROR" "No swap priority provided for /dev/zram${RAM_DEV}."
-		return 1
-	fi
+    if [[ -n $PRIORITY ]]; then
+        if ! swapon -p "$PRIORITY" "/dev/zram${RAM_DEV}" &> /dev/null; then
+            log "ERROR" "Failed to swapon on /dev/zram${RAM_DEV}."
+            return 1
+        fi
+    else
+        log "ERROR" "No swap priority provided for /dev/zram${RAM_DEV}."
+        return 1
+    fi
 
-	if [[ -n $PAGE_CLUSTER ]]; then
-		if ! sysctl vm.page-cluster="$PAGE_CLUSTER"; then
-			log "ERROR" "Failed to set page_cluster for /dev/zram${RAM_DEV}."
-			return 1
-		fi
-	else
-		log "INFO" "No page cluster provided for /dev/zram${RAM_DEV}."
-	fi
+    if [[ -n $PAGE_CLUSTER ]]; then
+        if ! sysctl vm.page-cluster="$PAGE_CLUSTER"; then
+            log "ERROR" "Failed to set page_cluster for /dev/zram${RAM_DEV}."
+            return 1
+        fi
+    else
+        log "INFO" "No page cluster provided for /dev/zram${RAM_DEV}."
+    fi
 
-	if [[ -n $SWAPPINESS ]]; then
-		if ! sysctl vm.swappiness="$SWAPPINESS"; then
-			log "ERROR" "Failed to set swappiness for /dev/zram${RAM_DEV}."
-			return 1
-		fi
-	else
-		log "INFO" "No swappiness provided for /dev/zram${RAM_DEV}."
-	fi
+    if [[ -n $SWAPPINESS ]]; then
+        if ! sysctl vm.swappiness="$SWAPPINESS"; then
+            log "ERROR" "Failed to set swappiness for /dev/zram${RAM_DEV}."
+            return 1
+        fi
+    else
+        log "INFO" "No swappiness provided for /dev/zram${RAM_DEV}."
+    fi
 
-	echo "swap		zram${RAM_DEV}" >> "$TMPDIR"/zram-device-list
-	log "INFO" "Completed swap device creation."
+    echo "swap      zram${RAM_DEV}" >> "$TMPDIR"/zram-device-list
+    log "INFO" "Completed swap device creation."
 }
 
 createZdir() {
-	local dirPerm
-	local dirUser
-	local dirGroup
-	local dirMountOpt
-	local dirFSType
-	local retVal=0
+    local dirPerm
+    local dirUser
+    local dirGroup
+    local dirMountOpt
+    local dirFSType
+    local retVal=0
 
-	log "INFO" "Beginning creation of ${ZDIR}/zram${RAM_DEV}." >> "$ZLOG"
-	if [[ -z $BIND_DIR ]]; then
-		log "ERROR" "No bind directory provided in '/etc/ztab'."
-		return 1
-	elif [[ -z $TARGET_DIR ]]; then
-		log "ERROR" "No mount directory provided in '/etc/ztab'."
-		return 1
-	fi
+    log "INFO" "Beginning creation of ${ZDIR}/zram${RAM_DEV}." >> "$ZLOG"
+    if [[ -z $BIND_DIR ]]; then
+        log "ERROR" "No bind directory provided in '/etc/ztab'."
+        return 1
+    elif [[ -z $TARGET_DIR ]]; then
+        log "ERROR" "No mount directory provided in '/etc/ztab'."
+        return 1
+    fi
 
-	mkdir -p "${ZDIR}/${BIND_DIR}"
+    mkdir -p "${ZDIR}/${BIND_DIR}"
 
-	dirPerm="$(stat -c "%a" "$TARGET_DIR")"
-	dirUser="$(stat -c "%u" "$TARGET_DIR")"
-	dirGroup="$(stat -c "%g" "$TARGET_DIR")"
-	log "DEBUG" "File permissions for $TARGET_DIR - $dirPerm ${dirUser}:${dirGroup}"
+    dirPerm="$(stat -c "%a" "$TARGET_DIR")"
+    dirUser="$(stat -c "%u" "$TARGET_DIR")"
+    dirGroup="$(stat -c "%g" "$TARGET_DIR")"
+    log "DEBUG" "File permissions for $TARGET_DIR - $dirPerm ${dirUser}:${dirGroup}"
 
-	if ! mount --bind "${TARGET_DIR}/" "${ZDIR}/${BIND_DIR}/" &> /dev/null; then
-		log "ERROR" "Failed to bind mount ${TARGET_DIR} to ${ZDIR}/${BIND_DIR}."
-		return 1
-	fi
-	if ! mount --make-private "${ZDIR}/${BIND_DIR}/" &> /dev/null; then
-		log "ERROR" "Failed to make ${ZDIR}/${BIND_DIR} private."
-		return 1
-	fi
+    if ! mount --bind "${TARGET_DIR}/" "${ZDIR}/${BIND_DIR}/" &> /dev/null; then
+        log "ERROR" "Failed to bind mount ${TARGET_DIR} to ${ZDIR}/${BIND_DIR}."
+        return 1
+    fi
+    if ! mount --make-private "${ZDIR}/${BIND_DIR}/" &> /dev/null; then
+        log "ERROR" "Failed to make ${ZDIR}/${BIND_DIR} private."
+        return 1
+    fi
 
-	dirMountOpt="$(awk -v a="${ZDIR}/${BIND_DIR}" '$2 == a {print $4}' /proc/mounts | head -1)"
-	dirFSType="$(awk -v a="${ZDIR}/${BIND_DIR}" '$2 == a {print $3}' /proc/mounts | head -1)"
-	log "DEBUG" "Directory settings - ${dirMountOpt} ${dirFSType}."
+    dirMountOpt="$(awk -v a="${ZDIR}/${BIND_DIR}" '$2 == a {print $4}' /proc/mounts | head -1)"
+    dirFSType="$(awk -v a="${ZDIR}/${BIND_DIR}" '$2 == a {print $3}' /proc/mounts | head -1)"
+    log "DEBUG" "Directory settings - ${dirMountOpt} ${dirFSType}."
 
-	createZdevice || return 1
+    createZdevice || return 1
 
-	# shellcheck disable=SC2086
-	if ! ([[ -x $(command -v mkfs.$dirFSType) ]] && mkfs.$dirFSType "/dev/zram${RAM_DEV}" &> /dev/null); then
-		log "ERROR" "Failed to create filesystem on /dev/zram${RAM_DEV}."
-		return 1
-	fi
-	mkdir -p "${ZDIR}/zram${RAM_DEV}"
-	mount --types "$dirFSType" -o "$dirMountOpt" "/dev/zram${RAM_DEV}" "${ZDIR}/zram${RAM_DEV}/" &> /dev/null || retVal=1
-	mkdir -p "${ZDIR}/zram${RAM_DEV}/upper" "${ZDIR}/zram${RAM_DEV}/workdir" "$TARGET_DIR"
-	mount --types overlay -o "redirect_dir=on,metacopy=on,lowerdir=${ZDIR}/${BIND_DIR},upperdir=${ZDIR}/zram${RAM_DEV}/upper,workdir=${ZDIR}/zram${RAM_DEV}/workdir" "overlay${RAM_DEV}" "$TARGET_DIR" &> /dev/null || retVal=1
-	chown "${dirUser}:${dirGroup}" "${ZDIR}/zram${RAM_DEV}/upper" "${ZDIR}/zram${RAM_DEV}/workdir" "$TARGET_DIR" &> /dev/null || retVal=1
-	chmod "$dirPerm" "${ZDIR}/zram${RAM_DEV}/upper" "${ZDIR}/zram${RAM_DEV}/workdir" "$TARGET_DIR" &> /dev/null || retVal=1
-	if [[ $retVal -ne 0 ]]; then
-		log "ERROR" "Failed to setup and mount ${ZDIR}/zram${RAM_DEV}."
-		return 1
-	fi
+    # shellcheck disable=SC2086
+    if ! ([[ -x $(command -v mkfs.$dirFSType) ]] && mkfs.$dirFSType "/dev/zram${RAM_DEV}" &> /dev/null); then
+        log "ERROR" "Failed to create filesystem on /dev/zram${RAM_DEV}."
+        return 1
+    fi
+    mkdir -p "${ZDIR}/zram${RAM_DEV}"
+    mount --types "$dirFSType" -o "$dirMountOpt" "/dev/zram${RAM_DEV}" "${ZDIR}/zram${RAM_DEV}/" &> /dev/null || retVal=1
+    mkdir -p "${ZDIR}/zram${RAM_DEV}/upper" "${ZDIR}/zram${RAM_DEV}/workdir" "$TARGET_DIR"
+    mount --types overlay -o "redirect_dir=on,metacopy=on,lowerdir=${ZDIR}/${BIND_DIR},upperdir=${ZDIR}/zram${RAM_DEV}/upper,workdir=${ZDIR}/zram${RAM_DEV}/workdir" "overlay${RAM_DEV}" "$TARGET_DIR" &> /dev/null || retVal=1
+    chown "${dirUser}:${dirGroup}" "${ZDIR}/zram${RAM_DEV}/upper" "${ZDIR}/zram${RAM_DEV}/workdir" "$TARGET_DIR" &> /dev/null || retVal=1
+    chmod "$dirPerm" "${ZDIR}/zram${RAM_DEV}/upper" "${ZDIR}/zram${RAM_DEV}/workdir" "$TARGET_DIR" &> /dev/null || retVal=1
+    if [[ $retVal -ne 0 ]]; then
+        log "ERROR" "Failed to setup and mount ${ZDIR}/zram${RAM_DEV}."
+        return 1
+    fi
 
-	echo "${ZTYPE}		zram${RAM_DEV}		${TARGET_DIR}" >> "$TMPDIR"/zram-device-list
+    echo "${ZTYPE}      zram${RAM_DEV}      ${TARGET_DIR}" >> "$TMPDIR"/zram-device-list
 
-	if [[ $ZTYPE == "log" ]] && [[ -n $OLDLOG_DIR ]]; then
-		echo -e "olddir ${OLDLOG_DIR}\\ncreateolddir 755 root root\\nrenamecopy" > /etc/logrotate.d/00_oldlog
-	elif [[ $ZTYPE == "log" ]]; then
-		log "INFO" "No oldlog directory provided, skipping oldlog configuration."
-	fi
-	log "INFO" "Creation of ${ZDIR}/zram${RAM_DEV} complete."
+    if [[ $ZTYPE == "log" ]] && [[ -n $OLDLOG_DIR ]]; then
+        echo -e "olddir ${OLDLOG_DIR}\\ncreateolddir 755 root root\\nrenamecopy" > /etc/logrotate.d/00_oldlog
+    elif [[ $ZTYPE == "log" ]]; then
+        log "INFO" "No oldlog directory provided, skipping oldlog configuration."
+    fi
+    log "INFO" "Creation of ${ZDIR}/zram${RAM_DEV} complete."
 }
 
 mergeOverlay() {
-	log "INFO" "Beginning merge of ${ZDIR}/${BIND_DIR}."
-	if ! overlay merge --force-execution --ignore-mounted --lowerdir="${ZDIR}/${BIND_DIR}" --upperdir="${ZDIR}/${ZRAM_DEV}/upper" &> /dev/null; then
-		log "ERROR" "Failed to merge ${ZDIR}/${BIND_DIR}."
-		return 1
-	fi
-	log "INFO" "Merge of ${ZDIR}/${BIND_DIR} complete."
+    log "INFO" "Beginning merge of ${ZDIR}/${BIND_DIR}."
+    if ! overlay merge --force-execution --ignore-mounted --lowerdir="${ZDIR}/${BIND_DIR}" --upperdir="${ZDIR}/${ZRAM_DEV}/upper" &> /dev/null; then
+        log "ERROR" "Failed to merge ${ZDIR}/${BIND_DIR}."
+        return 1
+    fi
+    log "INFO" "Merge of ${ZDIR}/${BIND_DIR} complete."
 }
 
 removeZdevice() {
-	local count=0
+    local count=0
 
-	log "INFO" "Beginning removal of device /dev/${ZRAM_DEV}."
+    log "INFO" "Beginning removal of device /dev/${ZRAM_DEV}."
 
-	if [[ -z $ZRAM_DEV ]]; then
-		log "ERROR" "Failed to remove zram device, missing required variables."
-		return 1
-	fi
+    if [[ -z $ZRAM_DEV ]]; then
+        log "ERROR" "Failed to remove zram device, missing required variables."
+        return 1
+    fi
 
-	if [[ -z $SHUTDOWN ]]; then  # We don't care about device reset when shutting down system
-		until echo "${ZRAM_DEV//[!0-9]/}" > /sys/class/zram-control/hot_remove; do
-			if [[ $count -ge 5 ]]; then
-				log "WARN" "Failed to remove zram device, consider rebooting to reset zram devices."
-				break
-			fi
-			log "WARN" "Failed to remove zram device, trying again in 5 seconds."
-			count=$(( count + 1 ))
-			sleep 5
-		done
-	fi
+    if [[ -z $SHUTDOWN ]]; then  # We don't care about device reset when shutting down system
+        until echo "${ZRAM_DEV//[!0-9]/}" > /sys/class/zram-control/hot_remove; do
+            if [[ $count -ge 5 ]]; then
+                log "WARN" "Failed to remove zram device, consider rebooting to reset zram devices."
+                break
+            fi
+            log "WARN" "Failed to remove zram device, trying again in 5 seconds."
+            count=$(( count + 1 ))
+            sleep 5
+        done
+    fi
 
-	log "INFO" "Completed removal of device /dev/${ZRAM_DEV}."
+    log "INFO" "Completed removal of device /dev/${ZRAM_DEV}."
 }
 
 umountTarget() {
-	if ! umount "$1/" &> /dev/null; then
-		log "WARN" "Failed to umount $1, trying one more time lazily."
-		if ! umount --lazy "$1/" &> /dev/null; then
-			log "ERROR" "Failed to umount $1."
-			return 1
-		fi
-	fi
+    if ! umount "$1/" &> /dev/null; then
+        log "WARN" "Failed to umount $1, trying one more time lazily."
+        if ! umount --lazy "$1/" &> /dev/null; then
+            log "ERROR" "Failed to umount $1."
+            return 1
+        fi
+    fi
 }
 
 removeZdir() {
-	local retVal=0
+    local retVal=0
 
-	log "INFO" "Beginning merge of device /dev/${ZRAM_DEV}."
+    log "INFO" "Beginning merge of device /dev/${ZRAM_DEV}."
 
-	[[ -n $OLDLOG_DIR ]] && rm -f /etc/logrotate.d/00_oldlog
-	[[ -z $TARGET_DIR ]] && retVal=1
-	[[ -z $ZRAM_DEV ]] && retVal=1
-	[[ -z $BIND_DIR ]] && retVal=1
-	if [[ $retVal -ne 0 ]]; then
-		log "ERROR" "Failed to remove zram device, missing required variables."
-		return 1
-	fi
+    [[ -n $OLDLOG_DIR ]] && rm -f /etc/logrotate.d/00_oldlog
+    [[ -z $TARGET_DIR ]] && retVal=1
+    [[ -z $ZRAM_DEV ]] && retVal=1
+    [[ -z $BIND_DIR ]] && retVal=1
+    if [[ $retVal -ne 0 ]]; then
+        log "ERROR" "Failed to remove zram device, missing required variables."
+        return 1
+    fi
 
-	umountTarget "$TARGET_DIR"
+    umountTarget "$TARGET_DIR"
 
-	mergeOverlay || return 1
+    mergeOverlay || return 1
 
-	umountTarget "${ZDIR}/${ZRAM_DEV}" || return 1
-	rm -rf "${ZDIR:?}/${ZRAM_DEV}"
+    umountTarget "${ZDIR}/${ZRAM_DEV}" || return 1
+    rm -rf "${ZDIR:?}/${ZRAM_DEV}"
 
-	umountTarget "${ZDIR}/${BIND_DIR}" || return 1
-	rm -rf "${ZDIR:?}/${BIND_DIR}"
+    umountTarget "${ZDIR}/${BIND_DIR}" || return 1
+    rm -rf "${ZDIR:?}/${BIND_DIR}"
 
-	log "INFO" "Completed merge of device /dev/${ZRAM_DEV}."
+    log "INFO" "Completed merge of device /dev/${ZRAM_DEV}."
 
-	removeZdevice || return 1
+    removeZdevice || return 1
 }
 
 removeZswap() {
-	log "INFO" "Beginning removal of swap device."
+    log "INFO" "Beginning removal of swap device."
 
-	if [[ -z $SHUTDOWN ]] && ! swapoff "/dev/${ZRAM_DEV}" &> /dev/null; then
-		log "ERROR" "Failed to swapoff /dev/${ZRAM_DEV}."
-		return 1
-	fi
+    if [[ -z $SHUTDOWN ]] && ! swapoff "/dev/${ZRAM_DEV}" &> /dev/null; then
+        log "ERROR" "Failed to swapoff /dev/${ZRAM_DEV}."
+        return 1
+    fi
 
-	log "INFO" "Completed swap device removal." >> "$ZLOG"
+    log "INFO" "Completed swap device removal." >> "$ZLOG"
 
-	removeZdevice || return 1
+    removeZdevice || return 1
 }
 
 syncZdir() {
-	log "INFO" "Beginning sync of device /dev/${ZRAM_DEV}."
+    log "INFO" "Beginning sync of device /dev/${ZRAM_DEV}."
 
-	umountTarget "$TARGET_DIR" || return 1
+    umountTarget "$TARGET_DIR" || return 1
 
-	mergeOverlay || return 1
+    mergeOverlay || return 1
 
-	mkdir -p "${ZDIR}/${ZRAM_DEV}/upper" "${ZDIR}/${ZRAM_DEV}/workdir" "$TARGET_DIR"
-	if ! mount --types overlay -o "redirect_dir=on,lowerdir=${ZDIR}/${BIND_DIR},upperdir=${ZDIR}/${ZRAM_DEV}/upper,workdir=${ZDIR}/${ZRAM_DEV}/workdir" "overlay${ZRAM_DEV//[!0-9]/}" "$TARGET_DIR" &> /dev/null; then
-		log "ERROR" "Failed to remount overlay for ${ZDIR}/${BIND_DIR}."
-		return 1
-	fi
+    mkdir -p "${ZDIR}/${ZRAM_DEV}/upper" "${ZDIR}/${ZRAM_DEV}/workdir" "$TARGET_DIR"
+    if ! mount --types overlay -o "redirect_dir=on,lowerdir=${ZDIR}/${BIND_DIR},upperdir=${ZDIR}/${ZRAM_DEV}/upper,workdir=${ZDIR}/${ZRAM_DEV}/workdir" "overlay${ZRAM_DEV//[!0-9]/}" "$TARGET_DIR" &> /dev/null; then
+        log "ERROR" "Failed to remount overlay for ${ZDIR}/${BIND_DIR}."
+        return 1
+    fi
 
-	log "INFO" "Completed sync of device /dev/${ZRAM_DEV}."
+    log "INFO" "Completed sync of device /dev/${ZRAM_DEV}."
 }
 
 serviceConfiguration() {
-	if [[ $1 == "stop" ]]; then
-		log "INFO" "Stopping services that interfere with zram device configuration."
-		if [[ $OS == "alpine" ]]; then
-			if rc-service syslog status &> /dev/null; then
-				export syslogActiveAlpine="true"
-				if ! rc-service syslog stop; then
-					log "ERROR" "Failed to stop syslog service."
-					return 1
-				fi
-			fi
-		else
-			if [[ $(systemctl is-active rsyslog.service) == "active" ]]; then
-				export rsyslogActive="true"
-				if ! systemctl --no-block stop syslog.socket; then
-					log "ERROR" "Failed to stop syslog service."
-					return 1
-				fi
-			fi
-			if [[ $(systemctl is-active systemd-journald.service) == "active" ]]; then
-				export journaldActive="true"
-				if ! journalctl --flush; then
-					log "ERROR" "Failed to flush journal."
-					return 1
-				fi
-				if ! systemctl --no-block stop systemd-journald.socket systemd-journald-audit.socket systemd-journald-dev-log.socket; then
-					log "ERROR" "Failed to stop journald service."
-					return 1
-				fi
-			fi
-		fi
-	elif [[ $1 == "start" ]]; then
-		log "INFO" "Restarting services that interfere with zram device configuration."
-		if [[ -n $journaldActive ]]; then
-			if ! systemctl --no-block restart systemd-journald.socket systemd-journald-audit.socket systemd-journald-dev-log.socket; then
-				log "ERROR" "Failed to restart journald service."
-				return 1
-			fi
-		fi
-		if [[ -n $rsyslogActive ]]; then
-			if ! systemctl --no-block restart syslog.socket; then
-				log "ERROR" "Failed to restart syslog service."
-				return 1
-			fi
-		fi
-		if [[ -n $syslogActiveAlpine ]]; then
-			if ! rc-service syslog start; then
-				log "ERROR" "Failed to start syslog service."
-				return 1
-			fi
-		fi
-	fi
+    if [[ $1 == "stop" ]]; then
+        log "INFO" "Stopping services that interfere with zram device configuration."
+        if [[ $OS == "alpine" ]]; then
+            if rc-service syslog status &> /dev/null; then
+                export syslogActiveAlpine="true"
+                if ! rc-service syslog stop; then
+                    log "ERROR" "Failed to stop syslog service."
+                    return 1
+                fi
+            fi
+        else
+            if [[ $(systemctl is-active rsyslog.service) == "active" ]]; then
+                export rsyslogActive="true"
+                if ! systemctl --no-block stop syslog.socket; then
+                    log "ERROR" "Failed to stop syslog service."
+                    return 1
+                fi
+            fi
+            if [[ $(systemctl is-active systemd-journald.service) == "active" ]]; then
+                export journaldActive="true"
+                if ! journalctl --flush; then
+                    log "ERROR" "Failed to flush journal."
+                    return 1
+                fi
+                if ! systemctl --no-block stop systemd-journald.socket systemd-journald-audit.socket systemd-journald-dev-log.socket; then
+                    log "ERROR" "Failed to stop journald service."
+                    return 1
+                fi
+            fi
+        fi
+    elif [[ $1 == "start" ]]; then
+        log "INFO" "Restarting services that interfere with zram device configuration."
+        if [[ -n $journaldActive ]]; then
+            if ! systemctl --no-block restart systemd-journald.socket systemd-journald-audit.socket systemd-journald-dev-log.socket; then
+                log "ERROR" "Failed to restart journald service."
+                return 1
+            fi
+        fi
+        if [[ -n $rsyslogActive ]]; then
+            if ! systemctl --no-block restart syslog.socket; then
+                log "ERROR" "Failed to restart syslog service."
+                return 1
+            fi
+        fi
+        if [[ -n $syslogActiveAlpine ]]; then
+            if ! rc-service syslog start; then
+                log "ERROR" "Failed to start syslog service."
+                return 1
+            fi
+        fi
+    fi
 }
 
 TMPDIR="/usr/local/lib/zram-config"
@@ -324,7 +324,7 @@ ZDIR="/opt/zram"
 ZLOG="/usr/local/share/zram-config/log/zram-config.log"
 OS="$(grep -o '^ID=.*$' /etc/os-release | cut -d'=' -f2)"
 if systemctl list-jobs | grep -q 'shutdown.target.*start' || systemctl list-jobs | grep -q 'reboot.target.*start'; then
-	SHUTDOWN="1"
+    SHUTDOWN="1"
 fi
 
 # Remove `bind_dir` and `/path.bind` from ztab for breaking changes
@@ -332,148 +332,150 @@ fi
 sed -i -E 's/(\tbind_dir|\t\/\w*\.bind)//g' /etc/ztab
 
 case "$1" in
-	start)
-		log "INFO" "Starting services."
-		ZTAB_EMPTY="true"
-		while read -r line; do
-			case "$line" in
-				"#"*)
-					# Skip comment line
-					continue
-					;;
+    start)
+        log "INFO" "Starting services."
+        ZTAB_EMPTY="true"
+        while read -r line; do
+            case "$line" in
+                "#"*)
+                    # Skip comment line
+                    continue
+                    ;;
 
-				"")
-					# Skip empty line
-					continue
-					;;
+                "")
+                    # Skip empty line
+                    continue
+                    ;;
 
-				*)
-					# shellcheck disable=SC2086
-					set -- $line
-					ZTAB_EMPTY="false"
-					ZTYPE="$1"
-					ALG="$2"
-					MEM_SIZE="$3"
-					DISK_SIZE="$4"
-					if [[ -s "$TMPDIR"/zram-device-list ]]; then
-						if [[ $1 == "swap" ]]; then
-							entry="$(grep "^swap" "$TMPDIR"/zram-device-list)"
-						else
-							entry="$(grep "${1}.*${5}" "$TMPDIR"/zram-device-list)"
-						fi
-						if [[ -n $entry ]]; then
-							log "WARN" "Entry ${entry} already exists as a zram device, skipping recreation of device."
-							continue
-						fi
-					fi
+                *)
+                    # shellcheck disable=SC2086
+                    set -- $line
+                    ZTAB_EMPTY="false"
+                    ZTYPE="$1"
+                    ALG="$2"
+                    MEM_SIZE="$3"
+                    DISK_SIZE="$4"
+                    if [[ -s "$TMPDIR"/zram-device-list ]]; then
+                        if [[ $1 == "swap" ]]; then
+                            entry="$(grep "^swap" "$TMPDIR"/zram-device-list)"
+                        else
+                            entry="$(grep "${1}.*${5}" "$TMPDIR"/zram-device-list)"
+                        fi
+                        if [[ -n $entry ]]; then
+                            log "WARN" "Entry ${entry} already exists as a zram device, skipping recreation of device."
+                            continue
+                        fi
+                    fi
 
-					case "$1" in
-						swap)
-							PRIORITY="$5"
-							PAGE_CLUSTER="$6"
-							SWAPPINESS="$7"
-							createZswap
-							;;
+                    case "$1" in
+                        swap)
+                            PRIORITY="$5"
+                            PAGE_CLUSTER="$6"
+                            SWAPPINESS="$7"
+                            createZswap
+                            ;;
 
-						dir|log)
-							TARGET_DIR="$5"
-							BIND_DIR="$(basename "$TARGET_DIR").bind"
-							OLDLOG_DIR="$6"
-							serviceConfiguration "stop"
-							createZdir
-							;;
-					esac
-					;;
-			esac
-		done < /etc/ztab
-		if [[ $ZTAB_EMPTY == "true" ]]; then
-			log "ERROR" "Cannot begin start, '/etc/ztab' is empty and needs to be configured."
-			exit 1
-		fi
-		;;
+                        dir|log)
+                            TARGET_DIR="$5"
+                            BIND_DIR="$(basename "$TARGET_DIR").bind"
+                            OLDLOG_DIR="$6"
+                            serviceConfiguration "stop"
+                            createZdir
+                            ;;
+                    esac
+                    ;;
+            esac
+        done < /etc/ztab
+        if [[ $ZTAB_EMPTY == "true" ]]; then
+            log "ERROR" "Cannot begin start, '/etc/ztab' is empty and needs to be configured."
+            exit 1
+        fi
+        ;;
 
-	stop)
-		log "INFO" "Stopping services."
-		if ! [[ -s "$TMPDIR"/zram-device-list ]]; then
-			log "WARN" "Skipping stop, zram-config not running."
-			exit 0
-		fi
-		tac "$TMPDIR"/zram-device-list > "$TMPDIR"/zram-device-list.rev
-		while read -r line; do
-			case "$line" in
-				"#"*)
-					# Skip comment line
-					continue
-					;;
+    stop)
+        log "INFO" "Stopping services."
+        if ! [[ -s "$TMPDIR"/zram-device-list ]]; then
+            log "WARN" "Skipping stop, zram-config not running."
+            exit 0
+        fi
+        tac "$TMPDIR"/zram-device-list > "$TMPDIR"/zram-device-list.rev
+        while read -r line; do
+            case "$line" in
+                "#"*)
+                    # Skip comment line
+                    continue
+                    ;;
 
-				"")
-					# Skip empty line
-					continue
-					;;
+                "")
+                    # Skip empty line
+                    continue
+                    ;;
 
-				*)
-					# shellcheck disable=SC2086
-					set -- $line
-					case "$1" in
-						swap)
-							ZRAM_DEV="$2"
-							removeZswap
-							;;
+                *)
+                    # shellcheck disable=SC2086
+                    set -- $line
+                    case "$1" in
+                        swap)
+                            ZRAM_DEV="$2"
+                            removeZswap
+                            ;;
 
-						dir|log)
-							ZRAM_DEV="$2"
-							TARGET_DIR="$3"
-							BIND_DIR="$(basename "$TARGET_DIR").bind"
-							serviceConfiguration "stop"
-							removeZdir
-							;;
-					esac
-					;;
-			esac
-		done < "$TMPDIR"/zram-device-list.rev
-		rm -f "$TMPDIR"/zram-device-list.rev "$TMPDIR"/zram-device-list
-		;;
+                        dir|log)
+                            ZRAM_DEV="$2"
+                            TARGET_DIR="$3"
+                            BIND_DIR="$(basename "$TARGET_DIR").bind"
+                            serviceConfiguration "stop"
+                            removeZdir
+                            ;;
+                    esac
+                    ;;
+            esac
+        done < "$TMPDIR"/zram-device-list.rev
+        rm -f "$TMPDIR"/zram-device-list.rev "$TMPDIR"/zram-device-list
+        ;;
 
-	sync)
-		log "INFO" "Syncing files."
-		if ! [[ -s "$TMPDIR"/zram-device-list ]]; then
-			log "WARN" "Skipping sync, zram-config not running."
-			exit 0
-		fi
-		tac "$TMPDIR"/zram-device-list > "$TMPDIR"/zram-device-list.rev
-		while read -r line; do
-			case "$line" in
-				"#"*)
-					# Skip comment line
-					continue
-					;;
+    sync)
+        log "INFO" "Syncing files."
+        if ! [[ -s "$TMPDIR"/zram-device-list ]]; then
+            log "WARN" "Skipping sync, zram-config not running."
+            exit 0
+        fi
+        tac "$TMPDIR"/zram-device-list > "$TMPDIR"/zram-device-list.rev
+        while read -r line; do
+            case "$line" in
+                "#"*)
+                    # Skip comment line
+                    continue
+                    ;;
 
-				"")
-					# Skip empty line
-					continue
-					;;
+                "")
+                    # Skip empty line
+                    continue
+                    ;;
 
-				*)
-					# shellcheck disable=SC2086
-					set -- $line
-					case "$1" in
-						dir|log)
-							ZRAM_DEV="$2"
-							TARGET_DIR="$3"
-							BIND_DIR="$(basename "$TARGET_DIR").bind"
-							[[ -z $SHUTDOWN ]] && serviceConfiguration "stop"
-							syncZdir
-							;;
-					esac
-					;;
-			esac
-		done < "$TMPDIR"/zram-device-list.rev
-		rm -f "$TMPDIR"/zram-device-list.rev
-		;;
+                *)
+                    # shellcheck disable=SC2086
+                    set -- $line
+                    case "$1" in
+                        dir|log)
+                            ZRAM_DEV="$2"
+                            TARGET_DIR="$3"
+                            BIND_DIR="$(basename "$TARGET_DIR").bind"
+                            [[ -z $SHUTDOWN ]] && serviceConfiguration "stop"
+                            syncZdir
+                            ;;
+                    esac
+                    ;;
+            esac
+        done < "$TMPDIR"/zram-device-list.rev
+        rm -f "$TMPDIR"/zram-device-list.rev
+        ;;
 
-	*)
-		echo "Usage: zram-config {start|stop|sync}"
-		exit 0
-		;;
+    *)
+        echo "Usage: zram-config {start|stop|sync}"
+        exit 0
+        ;;
 esac
 [[ -z $SHUTDOWN ]] && serviceConfiguration "start"
+
+# vim: ts=4 sts=4 sw=4 et
