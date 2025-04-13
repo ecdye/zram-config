@@ -183,6 +183,16 @@ removeZdevice() {
     fi
 
     if [[ -z $SHUTDOWN ]]; then  # We don't care about device reset when shutting down system
+        until echo 1 > "/sys/block/${ZRAM_DEV}/reset"; do
+            if [[ $count -ge 5 ]]; then
+                log "WARN" "Failed to reset zram device, attempting to remove it anyways."
+                break
+            fi
+            log "WARN" "Failed to reset zram device, trying again in 5 seconds."
+            count=$(( count + 1 ))
+            sleep 5
+        done
+        count=0
         until echo "${ZRAM_DEV//[!0-9]/}" > /sys/class/zram-control/hot_remove; do
             if [[ $count -ge 5 ]]; then
                 log "WARN" "Failed to remove zram device, consider rebooting to reset zram devices."
