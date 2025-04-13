@@ -47,6 +47,7 @@ createZdevice() {
         retVal=1
     fi
     if [[ $retVal -ne 0 ]]; then
+        echo 1 > "/sys/block/zram${RAM_DEV}/reset"
         echo "$RAM_DEV" > /sys/class/zram-control/hot_remove
         return 1
     fi
