@@ -4,7 +4,8 @@ const linux = std.os.linux;
 const SYS = linux.SYS;
 
 fn load_zram_mod(alloc: std.mem.Allocator) !void {
-    if (std.fs.openDirAbsolute("/sys/module/zram", .{})) |dir_const| {
+    const maybe_dir = try std.fs.openDirAbsolute("/sys/module/zram", .{}) catch null;
+    if (maybe_dir) |dir_const| {
         var dir = dir_const;
         dir.close();
         std.debug.print("zram already loaded\n", .{});
