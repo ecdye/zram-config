@@ -3,3 +3,4 @@
 *.img
 *.sig
 .vscode
+*.o
