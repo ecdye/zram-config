@@ -1,11 +1,10 @@
 const std = @import("std");
-const os = std.os;
-const linux = os.linux;
+const zstd = std.compress.zstd;
+const linux = std.os.linux;
 const SYS = linux.SYS;
 
 fn load_zram_mod(alloc: std.mem.Allocator) !void {
-    const maybe_dir = std.fs.openDirAbsolute("/sys/module/zram", .{}) catch null;
-    if (maybe_dir) |dir_const| {
+    if (std.fs.openDirAbsolute("/sys/module/zram", .{})) |dir_const| {
         var dir = dir_const;
         dir.close();
         std.debug.print("zram already loaded\n", .{});
@@ -44,7 +43,7 @@ fn load_zram_mod(alloc: std.mem.Allocator) !void {
     defer alloc.free(raw_data);
 
     const decomp_data = try alloc.alloc(u8, 10 * 1024 * 1024);
-    const decomp_size = try std.compress.zstd.decompress.decode(decomp_data, raw_data, false);
+    const decomp_size = try zstd.decompress.decode(decomp_data, raw_data, false);
 
     const sys_result = linux.E.init(linux.syscall3(
         SYS.init_module,
