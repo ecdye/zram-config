@@ -44,6 +44,7 @@ fn load_zram_mod(alloc: std.mem.Allocator) !void {
     defer alloc.free(raw_data);
 
     const decomp_data = try alloc.alloc(u8, 10 * 1024 * 1024);
+    defer alloc.free(decomp_data);
     const decomp_size = try zstd.decompress.decode(decomp_data, raw_data, false);
 
     const sys_result = linux.E.init(linux.syscall3(
