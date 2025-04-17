@@ -3,13 +3,14 @@ const zstd = std.compress.zstd;
 const linux = std.os.linux;
 const SYS = linux.SYS;
 const Allocator = std.mem.Allocator;
+const log = std.log;
 
 fn load_zram_mod(alloc: Allocator) !bool {
     const maybe_dir = std.fs.openDirAbsolute("/sys/module/zram", .{}) catch null;
     if (maybe_dir) |dir_const| {
         var dir = dir_const;
         dir.close();
-        std.debug.print("zram already loaded\n", .{});
+        log.debug("zram already loaded", .{});
         return true;
     }
 
@@ -26,7 +27,7 @@ fn load_zram_mod(alloc: Allocator) !bool {
 
     const res = linux.E.init(linux.syscall1(SYS.uname, @intFromPtr(&uts)));
     if (res != .SUCCESS) {
-        std.debug.print("failed to get uname: {s}\n", .{@tagName(res)});
+        log.err("failed to get uname: {s}", .{@tagName(res)});
         return false;
     }
 
@@ -55,11 +56,11 @@ fn load_zram_mod(alloc: Allocator) !bool {
         @intFromPtr("".ptr),
     ));
     if (sys_result != .SUCCESS) {
-        std.debug.print("init_module failed: {s}\n", .{@tagName(sys_result)});
+        log.err("init_module failed: {s}", .{@tagName(sys_result)});
         return false;
     }
 
-    std.debug.print("zram loaded successfully!\n", .{});
+    log.debug("zram loaded successfully!", .{});
     return true;
 }
 
@@ -70,26 +71,26 @@ fn init_zram_dev(
     mem_l: []const u8,
 ) i8 {
     const dev_num = add_z_dev(alloc) catch |err| {
-        std.debug.print("failed to get new zram device: {!}\n", .{err});
+        log.err("failed to get new zram device: {!}", .{err});
         return -1;
     };
     const dev_config_path = std.fmt.allocPrint(alloc, "/sys/block/zram{d}", .{dev_num}) catch |err| {
-        std.debug.print("failed to alloc dev config path: {!}\n", .{err});
+        log.err("failed to alloc dev config path: {!}", .{err});
         return -1;
     };
 
     set_config_val(alloc, dev_config_path, "comp_algorithm", alg) catch |err| {
-        std.debug.print("failed to set compression alg: {!}\n", .{err});
+        log.err("failed to set compression alg: {!}", .{err});
         return -1;
     };
 
     set_config_val(alloc, dev_config_path, "disksize", disk_s) catch |err| {
-        std.debug.print("failed to set disk size: {!}\n", .{err});
+        log.err("failed to set disk size: {!}", .{err});
         return -1;
     };
 
     set_config_val(alloc, dev_config_path, "mem_limit", mem_l) catch |err| {
-        std.debug.print("failed to set mem limit: {!}\n", .{err});
+        log.err("failed to set mem limit: {!}", .{err});
         return -1;
     };
 
@@ -127,5 +128,5 @@ pub fn main() !void {
 
     const dev_num = init_zram_dev(alloc, "zstd", "2048", "1024");
     if (dev_num == -1) return;
-    std.debug.print("configured dev num: {d}\n", .{dev_num});
+    log.info("configured dev num: {d}", .{dev_num});
 }
