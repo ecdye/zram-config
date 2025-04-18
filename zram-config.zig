@@ -37,6 +37,7 @@ fn load_zram_mod(alloc: Allocator) !?i8 {
         "/lib/modules/{s}/kernel/drivers/block/zram/zram.ko.zst",
         .{release},
     );
+    defer alloc.free(zram_module_path);
 
     const file = try std.fs.openFileAbsolute(zram_module_path, .{});
     defer file.close();
@@ -113,6 +114,7 @@ fn set_config_val(
     val: []const u8,
 ) !void {
     const config_path = try std.fmt.allocPrint(alloc, "/sys/block/zram{d}/{s}", .{ dev_n, setting });
+    defer alloc.free(config_path);
     const config_f = try std.fs.openFileAbsolute(config_path, .{ .mode = .write_only });
     defer config_f.close();
     _ = try config_f.write(val);
@@ -135,16 +137,13 @@ fn rem_z_dev(alloc: Allocator, dev_n: i8) void {
         log.debug("failed to alloc string of dev_n: {d}, error: {!}", .{ dev_n, err });
         return;
     };
+    defer alloc.free(dev_ns);
     _ = file.write(dev_ns) catch |err| {
         log.err("failed to write to hot remove: {!}", .{err});
     };
 }
 
-pub fn main() void {
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    const alloc = gpa.allocator();
-    defer _ = gpa.deinit();
-
+fn start_zram_config(alloc: Allocator) void {
     const init_num = load_zram_mod(alloc) catch |err| {
         log.err("failed to load zram module: {!}", .{err});
         return;
@@ -152,4 +151,38 @@ pub fn main() void {
 
     const dev_num = init_zram_dev(alloc, "zstd", "2048", "1024", init_num) catch return;
     log.info("configured dev num: {d}", .{dev_num});
+}
+
+pub fn main() void {
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    defer _ = gpa.deinit();
+    const alloc = gpa.allocator();
+
+    const help =
+        \\usage: zram-config <command>
+        \\
+        \\commands:
+        \\    start     Start zram-config with configuration at `/etc/ztab`
+        \\    stop      Stop running zram-config instance
+    ;
+
+    const args = std.process.argsAlloc(alloc) catch |err| {
+        log.err("failed to parse arguments: {!}", .{err});
+        return;
+    };
+    defer std.process.argsFree(alloc, args);
+
+    if (args.len <= 1) {
+        std.debug.print("{s}\n", .{help});
+    }
+
+    for (args[1..]) |arg| {
+        if (std.mem.eql(u8, arg, "start")) {
+            start_zram_config(alloc);
+        } else if (std.mem.eql(u8, arg, "stop")) {
+            // stop_zram_config(alloc);
+        } else {
+            std.debug.print("{s}\n", .{help});
+        }
+    }
 }
