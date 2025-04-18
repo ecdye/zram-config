@@ -143,6 +143,7 @@ fn rem_z_dev(alloc: Allocator, dev_n: i8) void {
 pub fn main() void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     const alloc = gpa.allocator();
+    defer _ = gpa.deinit();
 
     const init_num = load_zram_mod(alloc) catch |err| {
         log.err("failed to load zram module: {!}", .{err});
