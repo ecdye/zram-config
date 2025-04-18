@@ -140,12 +140,12 @@ fn rem_z_dev(alloc: Allocator, dev_n: i8) void {
     };
 }
 
-pub fn main() !void {
+pub fn main() void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     const alloc = gpa.allocator();
 
-    const init_num = try load_zram_mod(alloc) catch |err| {
-        std.err("failed to load zram module: {!}", .{err});
+    const init_num = load_zram_mod(alloc) catch |err| {
+        log.err("failed to load zram module: {!}", .{err});
         return;
     };
 
