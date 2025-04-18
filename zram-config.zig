@@ -5,6 +5,9 @@ const SYS = linux.SYS;
 const Allocator = std.mem.Allocator;
 const log = std.log;
 
+const zDevList = @import("zDevList.zig");
+const zDevEntry = @import("zDevEntry.zig");
+
 fn load_zram_mod(alloc: Allocator) !?i8 {
     const maybe_dir = std.fs.openDirAbsolute("/sys/module/zram", .{}) catch null;
     if (maybe_dir) |dir_const| {
@@ -150,7 +153,64 @@ fn start_zram_config(alloc: Allocator) void {
     };
 
     const dev_num = init_zram_dev(alloc, "zstd", "2048", "1024", init_num) catch return;
+    var list = std.ArrayList(zDevEntry).init(alloc);
+    defer list.deinit();
+    list.append(
+        zDevEntry{
+            .z_dev = dev_num,
+            .t_dir = null,
+            .b_dir = null,
+        },
+    ) catch |err| {
+        log.err("failed to add item to list: {!}", .{err});
+        return;
+    };
+    const entry = zDevList{
+        .entries = list.items,
+    };
+    const entry_j = std.json.stringifyAlloc(alloc, entry, .{}) catch |err| {
+        log.err("failed to jsonify device list: {!}", .{err});
+        return;
+    };
+    defer alloc.free(entry_j);
+
+    const file = std.fs.cwd().openFile("z-dev-list.json", .{ .mode = .write_only }) catch |err| {
+        log.err("failed to create `z-dev-list.json`: {!}", .{err});
+        return;
+    };
+    defer file.close();
+    _ = file.write(entry_j) catch |err| {
+        log.err("failed to write device list: {!}", .{err});
+        return;
+    };
+
     log.info("configured dev num: {d}", .{dev_num});
+}
+
+fn stop_zram_config(alloc: Allocator) void {
+    const entry_j = std.fs.cwd().readFileAlloc(
+        alloc,
+        "z-dev-list.json",
+        10 * 1024 * 1024,
+    ) catch |err| {
+        log.err("failed to open `z-dev-list.json`: {!}", .{err});
+        return;
+    };
+    defer alloc.free(entry_j);
+    const list = std.json.parseFromSlice(zDevList, alloc, entry_j, .{}) catch |err| {
+        log.err("failed to parse device list: {!}", .{err});
+        return;
+    };
+    defer list.deinit();
+
+    for (list.value.entries) |entry| {
+        rem_z_dev(alloc, entry.z_dev);
+        log.info("removed zram device {d}", .{entry.z_dev});
+    }
+
+    std.fs.cwd().deleteFile("z-dev-list.json") catch |err| {
+        log.err("failed to remove `z-dev-list.json`: {!}", .{err});
+    };
 }
 
 pub fn main() void {
@@ -201,7 +261,7 @@ pub fn main() void {
             start_zram_config(alloc);
             break;
         } else if (std.mem.eql(u8, arg, "stop")) {
-            // stop_zram_config(alloc);
+            stop_zram_config(alloc);
             break;
         } else if (std.mem.eql(u8, arg, "--help") or std.mem.eql(u8, arg, "-h")) {
             std.debug.print("{s}\n", .{help});
