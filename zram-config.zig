@@ -144,7 +144,10 @@ pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     const alloc = gpa.allocator();
 
-    const init_num = try load_zram_mod(alloc);
+    const init_num = try load_zram_mod(alloc) catch |err| {
+        std.err("failed to load zram module: {!}", .{err});
+        return;
+    };
 
     const dev_num = init_zram_dev(alloc, "zstd", "2048", "1024", init_num) catch return;
     log.info("configured dev num: {d}", .{dev_num});
