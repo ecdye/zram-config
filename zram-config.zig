@@ -159,11 +159,18 @@ pub fn main() void {
     const alloc = gpa.allocator();
 
     const help =
-        \\usage: zram-config <command>
+        \\usage: zram-config [-h | --help] <command> [<args>]
         \\
         \\commands:
-        \\    start     Start zram-config with configuration at `/etc/ztab`
-        \\    stop      Stop running zram-config instance
+        \\    start     start zram-config with configuration at `/etc/ztab`
+        \\    stop      stop the currently running zram-config instance
+    ;
+    const help_start =
+        \\usage: zram-config start [-h | --help] [--config-path <path>]
+        \\
+        \\    -h, --help     display this help message and quit
+        \\    --config-path <path>
+        \\                   pass a custom configuration file path instead of `/etc/ztab`
     ;
 
     const args = std.process.argsAlloc(alloc) catch |err| {
@@ -174,15 +181,34 @@ pub fn main() void {
 
     if (args.len <= 1) {
         std.debug.print("{s}\n", .{help});
+        return;
     }
 
-    for (args[1..]) |arg| {
+    arg_p: for (args[1..]) |arg| {
         if (std.mem.eql(u8, arg, "start")) {
+            for (args[2..]) |arg2| {
+                if (std.mem.eql(u8, arg2, "--help") or std.mem.eql(u8, arg2, "-h")) {
+                    std.debug.print("{s}\n", .{help_start});
+                    break :arg_p;
+                } else if (std.mem.eql(u8, arg2, "--config-path")) {
+                    std.debug.print("coming soon\n", .{});
+                    break :arg_p;
+                } else {
+                    std.debug.print("invalid arguments\n{s}\n", .{help_start});
+                    break :arg_p;
+                }
+            }
             start_zram_config(alloc);
+            break;
         } else if (std.mem.eql(u8, arg, "stop")) {
             // stop_zram_config(alloc);
-        } else {
+            break;
+        } else if (std.mem.eql(u8, arg, "--help") or std.mem.eql(u8, arg, "-h")) {
             std.debug.print("{s}\n", .{help});
+            break;
+        } else {
+            std.debug.print("invalid arguments\n{s}\n", .{help});
+            break;
         }
     }
 }
