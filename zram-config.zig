@@ -7,6 +7,9 @@ const log = std.log;
 
 const zDevList = @import("zDevList.zig");
 const zDevEntry = @import("zDevEntry.zig");
+const zConfig = @import("zConfig.zig");
+const zConfigEntry = @import("zConfigEntry.zig");
+const zSwapEntry = @import("zSwapEntry.zig");
 
 fn load_zram_mod(alloc: Allocator) !?i8 {
     const maybe_dir = std.fs.openDirAbsolute("/sys/module/zram", .{}) catch null;
@@ -72,9 +75,8 @@ fn init_zram_dev(
     alg: []const u8,
     disk_s: []const u8,
     mem_l: []const u8,
-    dev: ?i8,
 ) !i8 {
-    const dev_n = dev orelse add_z_dev(alloc) catch |err| {
+    const dev_n = add_z_dev(alloc) catch |err| {
         log.err("failed to get new zram device: {!}", .{err});
         return err;
     };
@@ -100,6 +102,12 @@ fn init_zram_dev(
 }
 
 fn add_z_dev(alloc: Allocator) !i8 {
+    const maybe_dev = load_zram_mod(alloc) catch |err| {
+        log.err("failed to load zram module: {!}", .{err});
+        return err;
+    };
+    if (maybe_dev) |dev| return dev;
+
     const file = try std.fs.openFileAbsolute("/sys/class/zram-control/hot_add", .{});
     defer file.close();
 
@@ -147,24 +155,74 @@ fn rem_z_dev(alloc: Allocator, dev_n: i8) void {
 }
 
 fn start_zram_config(alloc: Allocator) void {
-    const init_num = load_zram_mod(alloc) catch |err| {
-        log.err("failed to load zram module: {!}", .{err});
+    const config_j = std.fs.cwd().readFileAlloc(
+        alloc,
+        "zram-config.json",
+        10 * 1024 * 1024,
+    ) catch |err| {
+        log.err("failed to open `zram-config.json`: {!}", .{err});
         return;
     };
+    defer alloc.free(config_j);
+    const config = std.json.parseFromSlice(zConfig, alloc, config_j, .{}) catch |err| {
+        log.err("failed to parse config json: {!}", .{err});
+        return;
+    };
+    defer config.deinit();
 
-    const dev_num = init_zram_dev(alloc, "zstd", "2048", "1024", init_num) catch return;
+    if (config.value.version != 2) {
+        log.warn("unsupported config file version, errors may occur", .{});
+    }
     var list = std.ArrayList(zDevEntry).init(alloc);
     defer list.deinit();
-    list.append(
-        zDevEntry{
-            .z_dev = dev_num,
-            .t_dir = null,
-            .b_dir = null,
-        },
-    ) catch |err| {
-        log.err("failed to add item to list: {!}", .{err});
-        return;
-    };
+
+    if (config.value.swaps) |swaps| {
+        for (swaps) |swap| {
+            const dev_n = init_zram_dev(alloc, swap.alg, swap.disk_s, swap.mem_l) catch |err| {
+                log.err("failed to init zram device: {!}", .{err});
+                return;
+            };
+            list.append(
+                zDevEntry{
+                    .z_dev = dev_n,
+                    .t_dir = null,
+                    .b_dir = null,
+                    .ol_dir = null,
+                },
+            ) catch |err| {
+                log.err("failed to add item to list: {!}", .{err});
+                return;
+            };
+            log.info("add zram device number: {d}", .{dev_n});
+        }
+    }
+    if (config.value.dirs) |dirs| {
+        for (dirs) |dir| {
+            const dev_n = init_zram_dev(alloc, dir.alg, dir.disk_s, dir.mem_l) catch |err| {
+                log.err("failed to init zram device: {!}", .{err});
+                return;
+            };
+            const b_name = std.fs.path.basename(dir.target_d);
+            const bind = std.fmt.allocPrint(alloc, "/opt/zram/{s}.bind", .{b_name}) catch |err| {
+                log.err("failed to generate path for bind: {!}", .{err});
+                return;
+            };
+            defer alloc.free(bind);
+            list.append(
+                zDevEntry{
+                    .z_dev = dev_n,
+                    .t_dir = dir.target_d,
+                    .b_dir = bind,
+                    .ol_dir = dir.oldlog_d,
+                },
+            ) catch |err| {
+                log.err("failed to add item to list: {!}", .{err});
+                return;
+            };
+            log.info("add zram device number: {d}", .{dev_n});
+        }
+    }
+
     const entry = zDevList{
         .entries = list.items,
     };
@@ -174,7 +232,7 @@ fn start_zram_config(alloc: Allocator) void {
     };
     defer alloc.free(entry_j);
 
-    const file = std.fs.cwd().openFile("z-dev-list.json", .{ .mode = .write_only }) catch |err| {
+    const file = std.fs.cwd().createFile("z-dev-list.json", .{}) catch |err| {
         log.err("failed to create `z-dev-list.json`: {!}", .{err});
         return;
     };
@@ -183,8 +241,6 @@ fn start_zram_config(alloc: Allocator) void {
         log.err("failed to write device list: {!}", .{err});
         return;
     };
-
-    log.info("configured dev num: {d}", .{dev_num});
 }
 
 fn stop_zram_config(alloc: Allocator) void {
@@ -213,6 +269,63 @@ fn stop_zram_config(alloc: Allocator) void {
     };
 }
 
+fn create_config(alloc: Allocator) void {
+    var swaps = std.ArrayList(zSwapEntry).init(alloc);
+    defer swaps.deinit();
+    swaps.append(zSwapEntry{
+        .alg = "lzo-rle",
+        .mem_l = "250M",
+        .disk_s = "750M",
+        .swap_p = 75,
+        .swap_n = 150,
+        .page_c = 0,
+    }) catch |err| {
+        log.err("failed to append to swaps: {!}", .{err});
+    };
+
+    var dirs = std.ArrayList(zConfigEntry).init(alloc);
+    defer dirs.deinit();
+    dirs.append(zConfigEntry{
+        .alg = "lzo-rle",
+        .mem_l = "50M",
+        .disk_s = "150M",
+        .target_d = "/home/pi",
+        .oldlog_d = undefined,
+    }) catch |err| {
+        log.err("failed to append to dirs: {!}", .{err});
+    };
+    dirs.append(zConfigEntry{
+        .alg = "lzo-rle",
+        .mem_l = "50M",
+        .disk_s = "150M",
+        .target_d = "/var/log",
+        .oldlog_d = "/opt/zram/oldlog",
+    }) catch |err| {
+        log.err("failed to append to dirs: {!}", .{err});
+    };
+
+    const config = zConfig{
+        .version = 2,
+        .swaps = swaps.items,
+        .dirs = dirs.items,
+    };
+    const config_j = std.json.stringifyAlloc(alloc, config, .{}) catch |err| {
+        log.err("failed to jsonify config: {!}", .{err});
+        return;
+    };
+    defer alloc.free(config_j);
+
+    const file = std.fs.cwd().createFile("zram-config.json", .{}) catch |err| {
+        log.err("failed to create `zram-config.json`: {!}", .{err});
+        return;
+    };
+    defer file.close();
+    _ = file.write(config_j) catch |err| {
+        log.err("failed to write config: {!}", .{err});
+        return;
+    };
+}
+
 pub fn main() void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer _ = gpa.deinit();
@@ -222,8 +335,9 @@ pub fn main() void {
         \\usage: zram-config [-h | --help] <command> [<args>]
         \\
         \\commands:
-        \\    start     start zram-config with configuration at `/etc/ztab`
+        \\    start     start zram-config with configuration at `/etc/zram-config.json`
         \\    stop      stop the currently running zram-config instance
+        \\    config    create a default config file in the current directory
     ;
     const help_start =
         \\usage: zram-config start [-h | --help] [--config-path <path>]
@@ -262,6 +376,9 @@ pub fn main() void {
             break;
         } else if (std.mem.eql(u8, arg, "stop")) {
             stop_zram_config(alloc);
+            break;
+        } else if (std.mem.eql(u8, arg, "config")) {
+            create_config(alloc);
             break;
         } else if (std.mem.eql(u8, arg, "--help") or std.mem.eql(u8, arg, "-h")) {
             std.debug.print("{s}\n", .{help});
