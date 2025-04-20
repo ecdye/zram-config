@@ -309,7 +309,7 @@ fn create_config(alloc: Allocator) void {
         .swaps = swaps.items,
         .dirs = dirs.items,
     };
-    const config_j = std.json.stringifyAlloc(alloc, config, .{}) catch |err| {
+    const config_j = std.json.stringifyAlloc(alloc, config, .{ .whitespace = .indent_tab }) catch |err| {
         log.err("failed to jsonify config: {!}", .{err});
         return;
     };
@@ -337,7 +337,7 @@ pub fn main() void {
         \\commands:
         \\    start     start zram-config with configuration at `/etc/zram-config.json`
         \\    stop      stop the currently running zram-config instance
-        \\    config    create a default config file in the current directory
+        \\    create    create a default `/etc/zram-config.json` config file
     ;
     const help_start =
         \\usage: zram-config start [-h | --help] [--config-path <path>]
