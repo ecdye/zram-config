@@ -154,7 +154,7 @@ fn rem_z_dev(alloc: Allocator, dev_n: i8) void {
     };
 }
 
-fn config_swap(alloc: Allocator, entry: zSwapEntry) !i8 {
+fn create_swap(alloc: Allocator, entry: zSwapEntry) !i8 {
     const dev_n = init_zram_dev(alloc, entry.alg, entry.disk_s, entry.mem_l) catch |err| {
         log.err("failed to init zram device: {!}", .{err});
         return err;
@@ -166,6 +166,9 @@ fn config_swap(alloc: Allocator, entry: zSwapEntry) !i8 {
     defer alloc.free(label);
     const mkswap = [_][]const u8{ "mkswap", "--label", label, dev_p };
     var proc = std.process.Child.init(&mkswap, alloc);
+    proc.stdin_behavior = .Ignore;
+    proc.stderr_behavior = .Ignore;
+    proc.stdout_behavior = .Ignore;
     try proc.spawn();
     _ = try proc.wait();
 
@@ -215,13 +218,14 @@ fn start_zram_config(alloc: Allocator) void {
 
     if (config.value.swaps) |swaps| {
         for (swaps) |swap| {
-            const dev_n = config_swap(alloc, swap) catch |err| {
+            const dev_n = create_swap(alloc, swap) catch |err| {
                 log.err("failed to setup swap: {!}", .{err});
                 break;
             };
             list.append(
                 zDevEntry{
                     .z_dev = dev_n,
+                    .swap = true,
                     .t_dir = null,
                     .b_dir = null,
                     .ol_dir = null,
@@ -297,6 +301,11 @@ fn stop_zram_config(alloc: Allocator) void {
     defer list.deinit();
 
     for (list.value.entries) |entry| {
+        if (entry.swap) {
+            remove_swap(alloc, entry.z_dev) catch |err| {
+                log.err("failed to remove swap: {!}", .{err});
+            };
+        }
         rem_z_dev(alloc, entry.z_dev);
         log.info("removed zram device {d}", .{entry.z_dev});
     }
