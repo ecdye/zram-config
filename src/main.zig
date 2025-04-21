@@ -194,6 +194,16 @@ fn create_swap(alloc: Allocator, entry: zSwapEntry) !i8 {
     return dev_n;
 }
 
+fn remove_swap(alloc: Allocator, dev_n: i8) !void {
+    const dev_p = try std.fmt.allocPrint(alloc, "/dev/zram{d}", .{dev_n});
+    defer alloc.free(dev_p);
+
+    const res = linux.E.init(linux.syscall1(SYS.swapoff, @intFromPtr(dev_p.ptr)));
+    if (res != .SUCCESS) {
+        log.err("failed to swapoff: {!}", .{res});
+    }
+}
+
 fn start_zram_config(alloc: Allocator) void {
     const config_j = std.fs.cwd().readFileAlloc(
         alloc,
