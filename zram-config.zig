@@ -154,6 +154,43 @@ fn rem_z_dev(alloc: Allocator, dev_n: i8) void {
     };
 }
 
+fn config_swap(alloc: Allocator, entry: zSwapEntry) !i8 {
+    const dev_n = init_zram_dev(alloc, entry.alg, entry.disk_s, entry.mem_l) catch |err| {
+        log.err("failed to init zram device: {!}", .{err});
+        return err;
+    };
+    const dev_p = try std.fmt.allocPrint(alloc, "/dev/zram{d}", .{dev_n});
+    defer alloc.free(dev_p);
+
+    const label = try std.fmt.allocPrint(alloc, "zram-config{d}", .{dev_n});
+    defer alloc.free(label);
+    const mkswap = [_][]const u8{ "mkswap", "--label", label, dev_p };
+    var proc = std.process.Child.init(&mkswap, alloc);
+    try proc.spawn();
+    _ = try proc.wait();
+
+    const SWAP_FLAG_PREFER = 0x8000;
+    const flags = SWAP_FLAG_PREFER | @as(usize, entry.swap_p);
+    const res = linux.E.init(linux.syscall2(SYS.swapon, @intFromPtr(dev_p.ptr), flags));
+    if (res != .SUCCESS) {
+        log.err("failed to swapon: {!}", .{res});
+    }
+
+    const page_c = try std.fs.openFileAbsolute("/proc/sys/vm/page-cluster", .{ .mode = .write_only });
+    defer page_c.close();
+    const page_c_val = try std.fmt.allocPrint(alloc, "{d}", .{entry.page_c});
+    defer alloc.free(page_c_val);
+    try page_c.writeAll(page_c_val);
+
+    const swap_n = try std.fs.openFileAbsolute("/proc/sys/vm/swappiness", .{ .mode = .write_only });
+    defer swap_n.close();
+    const swap_n_val = try std.fmt.allocPrint(alloc, "{d}", .{entry.swap_n});
+    defer alloc.free(swap_n_val);
+    try swap_n.writeAll(swap_n_val);
+
+    return dev_n;
+}
+
 fn start_zram_config(alloc: Allocator) void {
     const config_j = std.fs.cwd().readFileAlloc(
         alloc,
@@ -178,9 +215,9 @@ fn start_zram_config(alloc: Allocator) void {
 
     if (config.value.swaps) |swaps| {
         for (swaps) |swap| {
-            const dev_n = init_zram_dev(alloc, swap.alg, swap.disk_s, swap.mem_l) catch |err| {
-                log.err("failed to init zram device: {!}", .{err});
-                return;
+            const dev_n = config_swap(alloc, swap) catch |err| {
+                log.err("failed to setup swap: {!}", .{err});
+                break;
             };
             list.append(
                 zDevEntry{
@@ -319,6 +356,7 @@ fn create_config(alloc: Allocator) void {
         log.err("failed to create `zram-config.json`: {!}", .{err});
         return;
     };
+
     defer file.close();
     _ = file.write(config_j) catch |err| {
         log.err("failed to write config: {!}", .{err});
