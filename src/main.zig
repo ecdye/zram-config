@@ -11,7 +11,7 @@ const zram_config_lib = @import("zram-config");
 const zram = zram_config_lib.zram;
 const config = zram_config_lib.config;
 
-fn start_zram_config(alloc: Allocator, zz: *zram, zc: *config) void {
+fn start_zram_config(alloc: Allocator, zz: *zram) void {
     const config_j = std.fs.cwd().readFileAlloc(
         alloc,
         "zram-config.json",
@@ -43,7 +43,7 @@ fn start_zram_config(alloc: Allocator, zz: *zram, zc: *config) void {
                 log.err("failed to configure zram device: {!}", .{err});
                 return;
             };
-            zc.*.zswap(dev, swap.swap_p, swap.page_c, swap.swap_n) catch |err| {
+            config.zswap(dev, swap.swap_p, swap.page_c, swap.swap_n) catch |err| {
                 log.err("failed to setup swap: {!}", .{err});
                 break;
             };
@@ -113,7 +113,7 @@ fn start_zram_config(alloc: Allocator, zz: *zram, zc: *config) void {
     };
 }
 
-fn stop_zram_config(alloc: Allocator, zz: *zram, zc: *config) void {
+fn stop_zram_config(alloc: Allocator, zz: *zram) void {
     const entry_j = std.fs.cwd().readFileAlloc(
         alloc,
         "z-dev-list.json",
@@ -131,7 +131,7 @@ fn stop_zram_config(alloc: Allocator, zz: *zram, zc: *config) void {
 
     for (list.value.entries) |entry| {
         if (entry.swap) {
-            zc.*.rm_zswap(entry.z_dev) catch |err| {
+            config.rm_zswap(entry.z_dev) catch |err| {
                 log.err("failed to swapoff zram device: {!}", .{err});
                 return;
             };
@@ -206,14 +206,12 @@ fn create_config(alloc: Allocator) void {
     };
 }
 
-fn init_zram_config_lib(alloc: Allocator, zz: *zram, zc: *config) !void {
+fn init_zram_config_lib(alloc: Allocator, zz: *zram) !void {
     zz.* = try zram.init(alloc);
-    zc.* = try config.init(alloc);
 }
 
-fn deinit_zram_config_lib(zz: *zram, zc: *config) void {
+fn deinit_zram_config_lib(zz: *zram) void {
     zz.*.deinit();
-    zc.*.deinit();
 }
 
 pub fn main() void {
@@ -221,7 +219,6 @@ pub fn main() void {
     defer _ = gpa.deinit();
     const alloc = gpa.allocator();
     var zz: zram = undefined;
-    var zc: config = undefined;
 
     const help =
         \\usage: zram-config [-h | --help] <command> [<args>]
@@ -264,20 +261,20 @@ pub fn main() void {
                     break :arg_p;
                 }
             }
-            init_zram_config_lib(alloc, &zz, &zc) catch |err| {
+            init_zram_config_lib(alloc, &zz) catch |err| {
                 log.err("failed to initialize zram config library: {!}", .{err});
                 break;
             };
-            defer deinit_zram_config_lib(&zz, &zc);
-            start_zram_config(alloc, &zz, &zc);
+            defer deinit_zram_config_lib(&zz);
+            start_zram_config(alloc, &zz);
             break;
         } else if (std.mem.eql(u8, arg, "stop")) {
-            init_zram_config_lib(alloc, &zz, &zc) catch |err| {
+            init_zram_config_lib(alloc, &zz) catch |err| {
                 log.err("failed to initialize zram config library: {!}", .{err});
                 break;
             };
-            defer deinit_zram_config_lib(&zz, &zc);
-            stop_zram_config(alloc, &zz, &zc);
+            defer deinit_zram_config_lib(&zz);
+            stop_zram_config(alloc, &zz);
             break;
         } else if (std.mem.eql(u8, arg, "config")) {
             create_config(alloc);

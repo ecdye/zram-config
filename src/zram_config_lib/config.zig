@@ -10,9 +10,6 @@ const helpers = @import("helpers.zig");
 const SWAP_FLAG_PREFER = 0x8000;
 const BLKGETSIZE64 = 0x80081272;
 
-allocator: Allocator,
-arena: *ArenaAllocator,
-
 const SwapHeader = struct {
     version: u32 = 1,
     last_page: i32,
@@ -28,32 +25,14 @@ const SwapHeader = struct {
     }
 };
 
-pub fn init(allocator: Allocator) !config {
-    const arena = try allocator.create(ArenaAllocator);
-    arena.* = ArenaAllocator.init(allocator);
-    const alloc = arena.allocator();
-
-    const self = try alloc.create(config);
-    self.* = config{ .allocator = allocator, .arena = arena };
-
-    return self.*;
-}
-
-pub fn deinit(self: *config) void {
-    self.arena.deinit();
-    self.allocator.destroy(self.arena);
-}
-
 pub fn zswap(
-    self: *config,
     dev: i8,
     priority: u8,
     page_cluster: ?[]const u8,
     swappiness: ?[]const u8,
 ) !void {
-    const alloc = self.arena.allocator();
-    const dev_p = try std.fmt.allocPrintZ(alloc, "/dev/zram{d}", .{dev});
-    defer alloc.free(dev_p);
+    var buf: [16]u8 = undefined;
+    const dev_p = try std.fmt.bufPrintZ(&buf, "/dev/zram{d}", .{dev});
 
     var label: [16]u8 = [_]u8{0} ** 16;
     _ = try std.fmt.bufPrint(&label, "zram-config{d}", .{dev});
@@ -94,10 +73,9 @@ pub fn zswap(
     }
 }
 
-pub fn rm_zswap(self: *config, dev: i8) !void {
-    const alloc = self.arena.allocator();
-    const dev_p = try std.fmt.allocPrintZ(alloc, "/dev/zram{d}", .{dev});
-    defer alloc.free(dev_p);
+pub fn rm_zswap(dev: i8) !void {
+    var buf: [16]u8 = undefined;
+    const dev_p = try std.fmt.bufPrintZ(&buf, "/dev/zram{d}", .{dev});
 
     const r1 = linux.E.init(linux.syscall1(.swapoff, @intFromPtr(dev_p.ptr)));
     if (r1 != .SUCCESS) {
