@@ -14,3 +14,16 @@ pub fn zblock_config_write(
     defer config_f.close();
     _ = try config_f.write(val);
 }
+
+pub fn make_uuid_v4() [16]u8 {
+    var uuid: [16]u8 = undefined;
+    std.crypto.random.bytes(&uuid);
+
+    // Set version (UUID v4): xxxx -> 0100xxxx
+    uuid[6] = (uuid[6] & 0x0f) | 0x40;
+
+    // Set variant (RFC4122 variant): xxxxxxxx -> 10xxxxxx
+    uuid[8] = (uuid[8] & 0x3f) | 0x80;
+
+    return uuid;
+}
