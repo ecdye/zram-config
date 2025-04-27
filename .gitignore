@@ -3,3 +3,6 @@
 *.img
 *.sig
 .vscode
+*.o
+zig-out
+.zig-cache
