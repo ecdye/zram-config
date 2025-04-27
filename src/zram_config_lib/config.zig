@@ -5,10 +5,28 @@ const ArenaAllocator = std.heap.ArenaAllocator;
 const Allocator = std.mem.Allocator;
 const linux = std.os.linux;
 const log = std.log;
+const helpers = @import("helpers.zig");
+
 const SWAP_FLAG_PREFER = 0x8000;
+const BLKGETSIZE64 = 0x80081272;
 
 allocator: Allocator,
 arena: *ArenaAllocator,
+
+const SwapHeader = struct {
+    version: u32 = 1,
+    last_page: i32,
+    nr_badpages: u32 = 0,
+    uuid: [16]u8,
+    volume_name: [16]u8,
+    _padding: [4098 - 1080]u8 = [_]u8{0} ** (4098 - 1080),
+    magic: [10]u8 = [_]u8{ 'S', 'W', 'A', 'P', 'S', 'P', 'A', 'C', 'E', '2' },
+
+    pub fn write(self: *const SwapHeader, file: std.fs.File) !void {
+        const bytes = std.mem.asBytes(self);
+        _ = try file.pwriteAll(bytes, 0x400);
+    }
+};
 
 pub fn init(allocator: Allocator) !config {
     const arena = try allocator.create(ArenaAllocator);
@@ -37,20 +55,18 @@ pub fn zswap(
     const dev_p = try std.fmt.allocPrintZ(alloc, "/dev/zram{d}", .{dev});
     defer alloc.free(dev_p);
 
-    const label = try std.fmt.allocPrint(alloc, "zram-config{d}", .{dev});
-    defer alloc.free(label);
+    var label: [16]u8 = [_]u8{0} ** 16;
+    _ = try std.fmt.bufPrint(&label, "zram-config{d}", .{dev});
 
-    // TODO: Do this manually without calling mkswap
-    const mkswap = [_][]const u8{ "mkswap", "--label", label, dev_p };
-    var proc = std.process.Child.init(&mkswap, alloc);
-    proc.stdin_behavior = .Ignore;
-    proc.stdout_behavior = .Ignore;
-    proc.stderr_behavior = .Ignore;
-    const r1 = try proc.spawnAndWait();
-    if (r1 != .Exited) {
-        log.err("failed to mkswap: {s}", .{@tagName(r1)});
-        return error.MkSwap;
-    }
+    const dev_f = try std.fs.openFileAbsolute(dev_p, .{ .mode = .read_write });
+    var size: u64 = 0;
+    _ = linux.ioctl(dev_f.handle, BLKGETSIZE64, @intFromPtr(&size));
+    const header = SwapHeader{
+        .last_page = @intCast((size / 4096) - 1),
+        .uuid = helpers.make_uuid_v4(),
+        .volume_name = label,
+    };
+    try header.write(dev_f);
 
     const flags = SWAP_FLAG_PREFER | @as(usize, priority);
     const r2 = linux.E.init(linux.syscall2(.swapon, @intFromPtr(dev_p.ptr), flags));
