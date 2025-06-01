@@ -125,6 +125,22 @@ pub fn config_device(
     if (std.mem.eql(u8, mem_l, "0")) log.info("no memory limit set for /dev/zram{d}", .{dev});
 }
 
+/// Abstracts `add_device()` and `config_device()` into a single function that
+/// performs both adding a new zram device and configuring its options in a
+/// single function.
+///
+/// On success, returns device number of the added and configured zram device.
+pub fn add_config_device(
+    self: *zram,
+    alg: []const u8,
+    disk_s: []const u8,
+    mem_l: []const u8,
+) !i8 {
+    const dev = try self.add_device();
+    try self.config_device(dev, alg, disk_s, mem_l);
+    return dev;
+}
+
 pub fn remove_device(self: *zram, dev: i8) !void {
     const alloc = self.arena.allocator();
     try helpers.zblock_config_write(alloc, dev, "reset", "1");

@@ -51,11 +51,7 @@ fn start_zram_config(alloc: Allocator, zz: *zram) void {
 
     if (configS.value.swaps) |swaps| {
         for (swaps) |swap| {
-            const dev = zz.*.add_device() catch |err| {
-                log.err("failed to init zram device: {!}", .{err});
-                return;
-            };
-            zz.*.config_device(dev, swap.alg, swap.disk_s, swap.mem_l) catch |err| {
+            const dev = zz.*.add_config_device(swap.alg, swap.disk_s, swap.mem_l) catch |err| {
                 log.err("failed to configure zram device: {!}", .{err});
                 return;
             };
@@ -80,11 +76,7 @@ fn start_zram_config(alloc: Allocator, zz: *zram) void {
     }
     if (configS.value.dirs) |dirs| {
         for (dirs) |dir| {
-            const dev = zz.*.add_device() catch |err| {
-                log.err("failed to init zram device: {!}", .{err});
-                return;
-            };
-            zz.*.config_device(dev, dir.alg, dir.disk_s, dir.mem_l) catch |err| {
+            const dev = zz.*.add_config_device(dir.alg, dir.disk_s, dir.mem_l) catch |err| {
                 log.err("failed to configure zram device: {!}", .{err});
                 return;
             };
