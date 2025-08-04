@@ -472,7 +472,7 @@ case "$1" in
                             ZRAM_DEV="$2"
                             TARGET_DIR="$3"
                             BIND_DIR="$(basename "$TARGET_DIR").bind"
-                            [[ -z $SHUTDOWN ]] && serviceConfiguration "stop"
+                            [[ -z $SHUTDOWN ]] && ! [[ "${@,,}" =~ (^| )--noservicerestart($| ) ]] && serviceConfiguration "stop"
                             syncZdir
                             ;;
                     esac
@@ -483,10 +483,10 @@ case "$1" in
         ;;
 
     *)
-        echo "Usage: zram-config {start|stop|sync}"
+        echo "Usage: zram-config {start|stop|sync} [--noservicerestart]"
         exit 0
         ;;
 esac
-[[ -z $SHUTDOWN ]] && serviceConfiguration "start"
+[[ -z $SHUTDOWN ]] && ! [[ "${@,,}" =~ (^| )--noservicerestart($| ) ]] && serviceConfiguration "start"
 
 # vim: ts=4 sts=4 sw=4 et
