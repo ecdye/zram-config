@@ -472,7 +472,7 @@ case "$1" in
                     set -- $line
                     case "$1" in
                         dir|log)
-                            if [[ -z "$ONLY_TARGET" ]] || [[ $ONLY_TARGET == $3 ]]; then
+                            if [[ -z "$ONLY_TARGET" ]] || [[ $ONLY_TARGET == "$3" ]]; then
                                 ZRAM_DEV="$2"
                                 TARGET_DIR="$3"
                                 BIND_DIR="$(basename "$TARGET_DIR").bind"
