@@ -42,7 +42,7 @@ This will ensure that any changes are properly synced to the persistent storage 
 Run `sudo zram-config sync` to sync any changes in the zram filesystems managed by zram-config to persistent storage.
 If you have concerns about losing data due to sudden power loss you could use this to ensure that changes are synced to disk periodically.
 
-If you sync only one single target instead of all targets as specified in the /etc/ztab, you can add an additional option to the sync parameter like `sudo zram-config sync "/example/targetfolder`
+If you sync only one single target instead of all targets as specified in the /etc/ztab, you can add an additional option to the sync parameter like `sudo zram-config sync `/example/targetfolder`
 
 A default sync service that will sync files to disk every night can be installed by running the following.
 
