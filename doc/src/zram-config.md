@@ -2,7 +2,7 @@
 title: zram-config
 section: 1
 header: zram-config
-date: February 2025
+date: August 2025
 ---
 
 # NAME
@@ -11,7 +11,7 @@ zram-config - A complete utility for swap, directories, and logs to reduce SD, N
 
 # SYNOPSIS
 
-**zram-config** {start|stop|sync}
+**zram-config** {start|stop|sync [target]}
 
 # DESCRIPTION
 
@@ -41,6 +41,9 @@ Stops any running devices configured by zram-config and syncs the changes back t
 ## *sync*
 
 Syncs any changes back to persistent storage. This ensures no data will be lost in the case of sudden power loss.
+
+If you sync only one single target instead of all targets as specified in the /etc/ztab, you can add an additional
+option [target] to the sync parameter.
 
 # OPTIONS
 
