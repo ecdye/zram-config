@@ -451,6 +451,9 @@ case "$1" in
             log "WRN" "Skipping sync, zram-config not running."
             exit 0
         fi
+        if [[ $# -gt 1 ]]; then
+            ONLY_TARGET="$2"
+        fi
         tac "$TMPDIR"/zram-device-list > "$TMPDIR"/zram-device-list.rev
         while read -r line; do
             case "$line" in
@@ -469,11 +472,13 @@ case "$1" in
                     set -- $line
                     case "$1" in
                         dir|log)
-                            ZRAM_DEV="$2"
-                            TARGET_DIR="$3"
-                            BIND_DIR="$(basename "$TARGET_DIR").bind"
-                            [[ -z $SHUTDOWN ]] && serviceConfiguration "stop"
-                            syncZdir
+                            if [[ -z "$ONLY_TARGET" ]] || [[ $ONLY_TARGET == "$3" ]]; then
+                                ZRAM_DEV="$2"
+                                TARGET_DIR="$3"
+                                BIND_DIR="$(basename "$TARGET_DIR").bind"
+                                [[ -z $SHUTDOWN ]] && serviceConfiguration "stop"
+                                syncZdir
+                            fi
                             ;;
                     esac
                     ;;
@@ -483,7 +488,7 @@ case "$1" in
         ;;
 
     *)
-        echo "Usage: zram-config {start|stop|sync}"
+        echo "Usage: zram-config {start|stop|sync} [target]"
         exit 0
         ;;
 esac
