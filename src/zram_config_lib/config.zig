@@ -9,6 +9,7 @@ const helpers = @import("helpers.zig");
 
 const SWAP_FLAG_PREFER = 0x8000;
 const BLKGETSIZE64 = 0x80081272;
+const ZRAM_DIR = "/opt/zram";
 
 const SwapHeader = struct {
     version: u32 = 1,
