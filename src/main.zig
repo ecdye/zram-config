@@ -52,7 +52,7 @@ fn start_zram_config(alloc: Allocator, zz: *zram) void {
     if (configS.value.swaps) |swaps| {
         for (swaps) |swap| {
             const dev = zz.*.add_config_device(swap.alg, swap.disk_s, swap.mem_l) catch |err| {
-                log.err("failed to configure zram device: {!}", .{err});
+                log.err("failed to configure zram swap device: {!}", .{err});
                 return;
             };
             config.zswap(dev, swap.swap_p, swap.page_c, swap.swap_n) catch |err| {
@@ -86,6 +86,10 @@ fn start_zram_config(alloc: Allocator, zz: *zram) void {
                 return;
             };
             defer alloc.free(bind);
+            config.zdir(dev, dir.target_d, bind) catch |err| {
+                log.err("failed to configure dir: {!}", .{err});
+            };
+
             list.append(
                 zDevEntry{
                     .z_dev = dev,
@@ -157,7 +161,7 @@ fn create_config(alloc: Allocator) void {
     var swaps = std.ArrayList(zSwapEntry).init(alloc);
     defer swaps.deinit();
     swaps.append(zSwapEntry{
-        .alg = "lzo-rle",
+        .alg = "zstd",
         .mem_l = "250M",
         .disk_s = "750M",
         .swap_p = 75,
@@ -170,7 +174,7 @@ fn create_config(alloc: Allocator) void {
     var dirs = std.ArrayList(zConfigEntry).init(alloc);
     defer dirs.deinit();
     dirs.append(zConfigEntry{
-        .alg = "lzo-rle",
+        .alg = "zstd",
         .mem_l = "50M",
         .disk_s = "150M",
         .target_d = "/home/pi",
@@ -179,7 +183,7 @@ fn create_config(alloc: Allocator) void {
         log.err("failed to append to dirs: {!}", .{err});
     };
     dirs.append(zConfigEntry{
-        .alg = "lzo-rle",
+        .alg = "zstd",
         .mem_l = "50M",
         .disk_s = "150M",
         .target_d = "/var/log",
@@ -281,7 +285,7 @@ pub fn main() void {
             defer deinit_zram_config_lib(&zz);
             stop_zram_config(alloc, &zz);
             break;
-        } else if (std.mem.eql(u8, arg, "config")) {
+        } else if (std.mem.eql(u8, arg, "create")) {
             create_config(alloc);
             break;
         } else if (std.mem.eql(u8, arg, "--help") or std.mem.eql(u8, arg, "-h")) {

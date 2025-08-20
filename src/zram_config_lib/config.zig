@@ -84,3 +84,23 @@ pub fn rm_zswap(dev: i8) !void {
         return error.SysSwapoff;
     }
 }
+
+pub fn zdir(dev: i8, target_dir: []const u8, bind_dir: []const u8) !void {
+    var zdir_p = std.fs.openDirAbsolute(ZRAM_DIR, .{}) catch blk: {
+        try std.fs.makeDirAbsolute(ZRAM_DIR);
+        break :blk try std.fs.openDirAbsolute(ZRAM_DIR, .{});
+    };
+    defer zdir_p.close();
+
+    var buf: [6]u8 = undefined;
+    const target_d_p = try std.fmt.bufPrint(&buf, "zram{d}", .{dev});
+    try zdir_p.makePath(target_d_p);
+
+    var target_d = try std.fs.openDirAbsolute(target_dir, .{});
+    defer target_d.close();
+    const dir_stat = try target_d.stat();
+    const dir_perm = dir_stat.mode & 0o777;
+
+    log.debug("target directory permissions: {o:03}, bind: {s}", .{ dir_perm, bind_dir });
+}
+
