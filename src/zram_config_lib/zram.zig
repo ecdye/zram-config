@@ -1,11 +1,11 @@
 pub const zram = @This();
 
 const std = @import("std");
+const mem = std.mem;
 const ArenaAllocator = std.heap.ArenaAllocator;
-const Allocator = std.mem.Allocator;
+const Allocator = mem.Allocator;
 const log = std.log;
 const linux = std.os.linux;
-const zstd = std.compress.zstd;
 const helpers = @import("helpers.zig");
 
 allocator: Allocator,
@@ -28,17 +28,8 @@ pub fn deinit(self: *zram) void {
     self.allocator.destroy(self.arena);
 }
 
-pub fn load_module(self: *zram) !?i8 {
+pub fn get_modules(self: *zram) !void {
     const alloc = self.arena.allocator();
-
-    const maybe_z = std.fs.openDirAbsolute("/sys/module/zram", .{}) catch null;
-    if (maybe_z) |const_z| {
-        var z = const_z;
-        z.close();
-        self.loaded = true;
-        log.debug("zram already loaded", .{});
-        return null;
-    }
 
     const Utsname = extern struct {
         sysname: [65]u8,
@@ -57,47 +48,78 @@ pub fn load_module(self: *zram) !?i8 {
     }
     const release = std.mem.sliceTo(&uts.release, 0);
 
-    const module_path = try std.fmt.allocPrint(
-        alloc,
-        "/lib/modules/{s}/kernel/drivers/block/zram/zram.ko.zst",
-        .{release},
-    );
-    defer alloc.free(module_path);
+    const deps_p = try std.fmt.allocPrint(alloc, "/lib/modules/{s}/modules.dep", .{release});
+    defer alloc.free(deps_p);
+    const deps_f = try std.fs.openFileAbsolute(deps_p, .{});
+    defer deps_f.close();
 
-    const module = try std.fs.openFileAbsolute(module_path, .{});
-    defer module.close();
-    const bufc_size = try module.getEndPos();
-    const bufc = try module.readToEndAlloc(alloc, bufc_size);
-    defer alloc.free(bufc);
+    const deps_r = deps_f.reader();
+    var buf: [1024]u8 = undefined;
 
-    var stream = std.io.fixedBufferStream(bufc);
-    const header = try zstd.decompress.decodeFrameHeader(stream.reader());
-    const bufd_s = header.zstandard.content_size orelse return error.HeaderContentSize;
+    while (try deps_r.readUntilDelimiterOrEof(&buf, '\n')) |line| {
+        if (mem.containsAtLeast(u8, line, 1, "zram")) {
+            if (mem.indexOfScalar(u8, line, ':')) |colon| {
+                const zram_p = try std.fmt.allocPrint(alloc, "/lib/modules/{s}/{s}", .{ release, line[0..colon] });
+                defer alloc.free(zram_p);
+                const deps = line[colon + 1 ..];
 
-    const bufd = try alloc.alloc(u8, @intCast(bufd_s));
-    _ = try zstd.decompress.decode(bufd, bufc, false);
-    defer alloc.free(bufd);
-
-    const r2 = linux.E.init(linux.syscall3(
-        .init_module,
-        @intFromPtr(bufd.ptr),
-        bufd.len,
-        @intFromPtr("".ptr),
-    ));
-    if (r2 != .SUCCESS) {
-        log.err("failed to init_module: {s}", .{@tagName(r2)});
-        return error.InitModule;
+                var it = mem.splitScalar(u8, deps, ' ');
+                while (it.next()) |dep| {
+                    if (dep.len > 0) {
+                        const entry = try std.fmt.allocPrint(alloc, "/lib/modules/{s}/{s}", .{ release, dep });
+                        defer alloc.free(entry);
+                        log.debug("loading dep: {s}", .{entry});
+                        try load_module(entry);
+                    }
+                }
+                log.debug("loading zram: {s}", .{zram_p});
+                try load_module(zram_p);
+                return;
+            }
+        }
     }
+    return error.NoModule;
+}
+
+pub fn load_zram_module(self: *zram) !?i8 {
+    const maybe_z = std.fs.openDirAbsolute("/sys/module/zram", .{}) catch null;
+    if (maybe_z) |const_z| {
+        var z = const_z;
+        z.close();
+        self.loaded = true;
+        log.debug("zram already loaded", .{});
+        return null;
+    }
+
+    try self.get_modules();
 
     log.debug("loaded zram module successfully", .{});
     self.loaded = true;
     return 0;
 }
 
+pub fn load_module(module_p: []u8) !void {
+    const module = try std.fs.openFileAbsolute(module_p, .{ .mode = .read_only });
+    defer module.close();
+
+    const MODULE_INIT_COMPRESSED_FILE: u32 = 4;
+
+    const r2 = linux.E.init(linux.syscall3(
+        .finit_module,
+        @intCast(module.handle),
+        @intFromPtr("".ptr),
+        MODULE_INIT_COMPRESSED_FILE,
+    ));
+    if (r2 != .SUCCESS and r2 != .EXIST) {
+        log.err("failed to init_module: {s}", .{@tagName(r2)});
+        return error.InitModule;
+    }
+}
+
 pub fn add_device(self: *zram) !i8 {
     const alloc = self.arena.allocator();
     while (!self.loaded) {
-        const dev_n = try self.load_module() orelse break;
+        const dev_n = try self.load_zram_module() orelse break;
         return dev_n;
     }
 
