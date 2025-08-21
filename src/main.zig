@@ -71,7 +71,7 @@ fn start_zram_config(alloc: Allocator, zz: *zram) void {
                 log.err("failed to add item to list: {!}", .{err});
                 return;
             };
-            log.info("add zram device number: {d}", .{dev});
+            log.info("add zram device number: {d}, swap", .{dev});
         }
     }
     if (configS.value.dirs) |dirs| {
@@ -101,7 +101,7 @@ fn start_zram_config(alloc: Allocator, zz: *zram) void {
                 log.err("failed to add item to list: {!}", .{err});
                 return;
             };
-            log.info("add zram device number: {d}", .{dev});
+            log.info("add zram device number: {d}, dir", .{dev});
         }
     }
 
