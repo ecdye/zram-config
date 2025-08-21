@@ -90,7 +90,14 @@ fn start_zram_config(alloc: Allocator, zz: *zram) void {
                 return;
             };
             log.debug("bind: {s}", .{bind});
-            config.zdir(dev, dir.target_d, bind) catch |err| {
+            var target_d_buf = a_alloc.alloc(u8, dir.target_d.len + 1) catch |err| {
+                log.err("failed to allocate memory for null term: {!}", .{err});
+                return;
+            };
+            std.mem.copyForwards(u8, target_d_buf[0..dir.target_d.len], dir.target_d);
+            target_d_buf[target_d_buf.len - 1] = 0;
+
+            config.zdir(a_alloc, dev, target_d_buf[0..dir.target_d.len :0], bind) catch |err| {
                 log.err("failed to configure dir: {!}", .{err});
             };
 
@@ -150,7 +157,8 @@ fn stop_zram_config(alloc: Allocator, zz: *zram) void {
             };
         }
         if (entry.b_dir) |b_dir| {
-            config.rm_zdir(entry.z_dev, b_dir) catch |err| {
+            const t_dir = entry.t_dir.?;
+            config.rm_zdir(alloc, entry.z_dev, b_dir, t_dir) catch |err| {
                 log.err("failed to remove zram device: {!}", .{err});
                 return;
             };

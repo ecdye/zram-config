@@ -85,7 +85,7 @@ pub fn rm_zswap(dev: i8) !void {
     }
 }
 
-pub fn zdir(dev: i8, target_dir: []const u8, bind_dir: []const u8) !void {
+pub fn zdir(alloc: Allocator, dev: i8, target_dir: [:0]const u8, bind_dir: []const u8) !void {
     var zdir_p = std.fs.openDirAbsolute(ZRAM_DIR, .{}) catch blk: {
         try std.fs.makeDirAbsolute(ZRAM_DIR);
         break :blk try std.fs.openDirAbsolute(ZRAM_DIR, .{});
@@ -93,19 +93,45 @@ pub fn zdir(dev: i8, target_dir: []const u8, bind_dir: []const u8) !void {
     defer zdir_p.close();
 
     var buf: [6]u8 = undefined;
-    const target_d_p = try std.fmt.bufPrint(&buf, "zram{d}", .{dev});
+    const target_d_p = try std.fmt.bufPrintZ(&buf, "zram{d}", .{dev});
     try zdir_p.makePath(target_d_p);
     try zdir_p.makePath(bind_dir);
 
-    var target_d = try std.fs.openDirAbsolute(target_dir, .{});
+    var target_d = try std.fs.openDirAbsoluteZ(target_dir, .{});
     defer target_d.close();
-    const dir_stat = try target_d.stat();
-    const dir_perm = dir_stat.mode & 0o777;
 
-    log.debug("target directory permissions: {o:03}, bind: {s}", .{ dir_perm, bind_dir });
+    var stat_buf: linux.Statx = undefined;
+    _ = linux.statx(target_d.fd, target_dir, linux.AT.SYMLINK_NOFOLLOW, linux.STATX_BASIC_STATS, &stat_buf);
+
+    const dir_perm = stat_buf.mode & stat_buf.mask;
+    const dir_user = stat_buf.uid;
+    const dir_group = stat_buf.gid;
+
+    log.debug("target directory permissions: {o:03} {d}:{d}, bind: {s}", .{
+        dir_perm,
+        dir_user,
+        dir_group,
+        bind_dir,
+    });
+    const bind_d = try std.fmt.allocPrintZ(alloc, "{s}/{s}", .{ ZRAM_DIR, bind_dir });
+    defer alloc.free(bind_d);
+    log.info("mounting: {s}, {s}", .{ target_dir, bind_d });
+
+    const res = linux.E.init(linux.mount(target_dir.ptr, bind_d.ptr, null, linux.MS.BIND, @intFromPtr("".ptr)));
+    if (res != .SUCCESS) {
+        log.err("failed to mount bind: {s}", .{@tagName(res)});
+    }
 }
 
-pub fn rm_zdir(dev: i8, bind_dir: []const u8) !void {
+pub fn rm_zdir(alloc: Allocator, dev: i8, bind_dir: []const u8, target_dir: []const u8) !void {
+    log.info("removing target: {s}", .{target_dir});
+    const bind_d = try std.fmt.allocPrintZ(alloc, "{s}/{s}", .{ ZRAM_DIR, bind_dir });
+    defer alloc.free(bind_d);
+    const res = linux.E.init(linux.umount2(bind_d, linux.MNT.DETACH));
+    if (res != .SUCCESS) {
+        log.err("failed to umount bind: {s}", .{@tagName(res)});
+    }
+
     var zdir_p = std.fs.openDirAbsolute(ZRAM_DIR, .{}) catch blk: {
         try std.fs.makeDirAbsolute(ZRAM_DIR);
         break :blk try std.fs.openDirAbsolute(ZRAM_DIR, .{});
