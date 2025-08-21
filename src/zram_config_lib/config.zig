@@ -95,6 +95,7 @@ pub fn zdir(dev: i8, target_dir: []const u8, bind_dir: []const u8) !void {
     var buf: [6]u8 = undefined;
     const target_d_p = try std.fmt.bufPrint(&buf, "zram{d}", .{dev});
     try zdir_p.makePath(target_d_p);
+    try zdir_p.makePath(bind_dir);
 
     var target_d = try std.fs.openDirAbsolute(target_dir, .{});
     defer target_d.close();
@@ -104,3 +105,15 @@ pub fn zdir(dev: i8, target_dir: []const u8, bind_dir: []const u8) !void {
     log.debug("target directory permissions: {o:03}, bind: {s}", .{ dir_perm, bind_dir });
 }
 
+pub fn rm_zdir(dev: i8, bind_dir: []const u8) !void {
+    var zdir_p = std.fs.openDirAbsolute(ZRAM_DIR, .{}) catch blk: {
+        try std.fs.makeDirAbsolute(ZRAM_DIR);
+        break :blk try std.fs.openDirAbsolute(ZRAM_DIR, .{});
+    };
+    defer zdir_p.close();
+
+    var buf: [6]u8 = undefined;
+    const target_d_p = try std.fmt.bufPrint(&buf, "zram{d}", .{dev});
+    try zdir_p.deleteDir(target_d_p);
+    try zdir_p.deleteDir(bind_dir);
+}
