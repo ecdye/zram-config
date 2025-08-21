@@ -22,16 +22,20 @@ fn load_active_config(alloc: Allocator) !zDevList {
 }
 
 fn start_zram_config(alloc: Allocator, zz: *zram) void {
+    var arena = std.heap.ArenaAllocator.init(alloc);
+    defer arena.deinit();
+    const a_alloc = arena.allocator();
+
     const config_j = std.fs.cwd().readFileAlloc(
-        alloc,
+        a_alloc,
         "zram-config.json",
         10 * 1024 * 1024,
     ) catch |err| {
         log.err("failed to open `zram-config.json`: {!}", .{err});
         return;
     };
-    defer alloc.free(config_j);
-    const configS = std.json.parseFromSlice(zConfig, alloc, config_j, .{}) catch |err| {
+    defer a_alloc.free(config_j);
+    const configS = std.json.parseFromSlice(zConfig, a_alloc, config_j, .{}) catch |err| {
         log.err("failed to parse config json: {!}", .{err});
         return;
     };
@@ -40,8 +44,8 @@ fn start_zram_config(alloc: Allocator, zz: *zram) void {
     if (configS.value.version != 2) {
         log.warn("unsupported config file version, errors may occur", .{});
     }
-    var list: zDevList = load_active_config(alloc) catch blk: {
-        const default = zDevList.init(alloc) catch |err| {
+    var list: zDevList = load_active_config(a_alloc) catch blk: {
+        const default = zDevList.init(a_alloc) catch |err| {
             log.err("failed to create zram device list in memory: {!}", .{err});
             return;
         };
@@ -81,11 +85,11 @@ fn start_zram_config(alloc: Allocator, zz: *zram) void {
                 return;
             };
             const b_name = std.fs.path.basename(dir.target_d);
-            const bind = std.fmt.allocPrint(alloc, "/opt/zram/{s}.bind", .{b_name}) catch |err| {
+            const bind = std.fmt.allocPrint(a_alloc, "{s}.bind", .{b_name}) catch |err| {
                 log.err("failed to generate path for bind: {!}", .{err});
                 return;
             };
-            defer alloc.free(bind);
+            log.debug("bind: {s}", .{bind});
             config.zdir(dev, dir.target_d, bind) catch |err| {
                 log.err("failed to configure dir: {!}", .{err});
             };
@@ -105,11 +109,11 @@ fn start_zram_config(alloc: Allocator, zz: *zram) void {
         }
     }
 
-    const list_j = list.to_json(alloc) catch |err| {
+    const list_j = list.to_json(a_alloc) catch |err| {
         log.err("failed to jsonify zDevList: {!}", .{err});
         return;
     };
-    defer alloc.free(list_j);
+    defer a_alloc.free(list_j);
 
     const file = std.fs.cwd().createFile("z-dev-list.json", .{}) catch |err| {
         log.err("failed to create `z-dev-list.json`: {!}", .{err});
@@ -142,6 +146,12 @@ fn stop_zram_config(alloc: Allocator, zz: *zram) void {
         if (entry.swap) {
             config.rm_zswap(entry.z_dev) catch |err| {
                 log.err("failed to swapoff zram device: {!}", .{err});
+                return;
+            };
+        }
+        if (entry.b_dir) |b_dir| {
+            config.rm_zdir(entry.z_dev, b_dir) catch |err| {
+                log.err("failed to remove zram device: {!}", .{err});
                 return;
             };
         }
