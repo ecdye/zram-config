@@ -117,9 +117,17 @@ pub fn zdir(alloc: Allocator, dev: i8, target_dir: [:0]const u8, bind_dir: []con
     defer alloc.free(bind_d);
     log.info("mounting: {s}, {s}", .{ target_dir, bind_d });
 
-    const res = linux.E.init(linux.mount(target_dir.ptr, bind_d.ptr, null, linux.MS.BIND, @intFromPtr("".ptr)));
-    if (res != .SUCCESS) {
-        log.err("failed to mount bind: {s}", .{@tagName(res)});
+    const r1 = linux.E.init(
+        linux.mount(target_dir.ptr, bind_d.ptr, null, linux.MS.BIND, @intFromPtr("".ptr)),
+    );
+    if (r1 != .SUCCESS) {
+        log.err("failed to mount bind: {s}", .{@tagName(r1)});
+    }
+    const r2 = linux.E.init(
+        linux.mount("".ptr, bind_d.ptr, null, linux.MS.PRIVATE, @intFromPtr("".ptr)),
+    );
+    if (r2 != .SUCCESS) {
+        log.err("failed to make bind private: {s}", .{@tagName(r2)});
     }
 }
 
