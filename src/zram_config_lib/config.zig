@@ -129,6 +129,41 @@ pub fn zdir(alloc: Allocator, dev: i8, target_dir: [:0]const u8, bind_dir: []con
     if (r2 != .SUCCESS) {
         log.err("failed to make bind private: {s}", .{@tagName(r2)});
     }
+    const dir_settings = try dir_opts(bind_d);
+    const mkfs = try std.fmt.allocPrint(alloc, "mkfs.{s}", .{dir_settings.?.fstype});
+    defer alloc.free(mkfs);
+
+    var dev_p_buf: [16]u8 = undefined;
+    const dev_p = try std.fmt.bufPrintZ(&dev_p_buf, "/dev/zram{d}", .{dev});
+    var child = std.process.Child.init(&[_][]const u8{ mkfs, dev_p }, alloc);
+    child.stdout_behavior = .Ignore;
+    child.stderr_behavior = .Ignore;
+    const r3 = try child.spawnAndWait();
+    if (r3.Exited != 0) {
+        log.err("failed to mkfs on {s}: {d}", .{ dev_p, r3.Exited });
+    }
+}
+
+fn dir_opts(bind_dir: [:0]const u8) !?struct { options: []const u8, fstype: []const u8 } {
+    var mounts = try std.fs.openFileAbsoluteZ("/proc/mounts", .{});
+    defer mounts.close();
+
+    var mounts_r = mounts.reader();
+    var line_buf: [4096]u8 = undefined;
+    while (try mounts_r.readUntilDelimiterOrEof(&line_buf, '\n')) |line| {
+        var tokens = std.mem.tokenizeAny(u8, line, " \t");
+
+        const device = tokens.next() orelse continue;
+        const mountpoint = tokens.next() orelse continue;
+        const fstype = tokens.next() orelse continue;
+        const options = tokens.next() orelse continue;
+
+        if (std.mem.eql(u8, mountpoint, bind_dir)) {
+            log.info("dev: {s}, fstype: {s}, options: {s}", .{ device, fstype, options });
+            return .{ .options = options, .fstype = fstype };
+        }
+    }
+    return null;
 }
 
 pub fn rm_zdir(alloc: Allocator, dev: i8, bind_dir: []const u8, target_dir: []const u8) !void {
