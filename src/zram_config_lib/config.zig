@@ -154,6 +154,27 @@ pub fn zdir(alloc: Allocator, dev: i8, target_dir: [:0]const u8, bind_dir: []con
     if (r4 != .SUCCESS) {
         log.err("failed to mount zram device: {s}", .{@tagName(r4)});
     }
+
+    const upper = try std.fmt.allocPrintZ(alloc, "{s}/upper", .{target_d_p_f});
+    defer alloc.free(upper);
+    const workdir = try std.fmt.allocPrintZ(alloc, "{s}/workdir", .{target_d_p_f});
+    defer alloc.free(workdir);
+    try std.fs.makeDirAbsoluteZ(upper);
+    try std.fs.makeDirAbsoluteZ(workdir);
+
+    const overlay = try std.fmt.allocPrintZ(alloc, "overlay{d}", .{dev});
+    defer alloc.free(overlay);
+    const options_overlay = try std.fmt.allocPrintZ(
+        alloc,
+        "redirect_dir=on,metacopy=on,lowerdir={s},upperdir={s},workdir={s}",
+        .{ bind_d, upper, workdir },
+    );
+    const r5 = linux.E.init(
+        linux.mount(overlay.ptr, target_dir.ptr, "overlay", 0, @intFromPtr(options_overlay.ptr)),
+    );
+    if (r5 != .SUCCESS) {
+        log.err("failed to mount overlay: {s}", .{@tagName(r5)});
+    }
 }
 
 fn parse_mnt_opts(alloc: Allocator, opts: []const u8) !struct { flags: u32, data: [:0]const u8 } {
@@ -226,6 +247,14 @@ pub fn rm_zdir(alloc: Allocator, dev: i8, bind_dir: []const u8, target_dir: []co
     if (r2 != .SUCCESS) {
         log.err("failed to umount zram target mount: {s}", .{@tagName(r2)});
     }
+
+    const target_d = try std.fmt.allocPrintZ(alloc, "{s}", .{target_dir});
+    defer alloc.free(target_d);
+    const r3 = linux.E.init(linux.umount2(target_d.ptr, linux.MNT.DETACH));
+    if (r3 != .SUCCESS) {
+        log.err("failed to umount overlay: {s}", .{@tagName(r3)});
+    }
+
     var zdir_p = std.fs.openDirAbsolute(ZRAM_DIR, .{}) catch blk: {
         try std.fs.makeDirAbsolute(ZRAM_DIR);
         break :blk try std.fs.openDirAbsolute(ZRAM_DIR, .{});
