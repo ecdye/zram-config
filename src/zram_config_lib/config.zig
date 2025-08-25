@@ -125,6 +125,7 @@ pub fn zdir(alloc: Allocator, dev: i8, target_dir: [:0]const u8, bind_dir: []con
         @intFromPtr("".ptr),
     ) catch |err| {
         log.err("failed to mount bind: {t}", .{err});
+        return err;
     };
     errdefer helpers.umount_or_error(target_dir.ptr, linux.MNT.FORCE) catch |err| {
         log.err("failed to cleanup bind mount: {t}", .{err});
@@ -137,6 +138,7 @@ pub fn zdir(alloc: Allocator, dev: i8, target_dir: [:0]const u8, bind_dir: []con
         @intFromPtr("".ptr),
     ) catch |err| {
         log.err("failed to make bind private: {t}", .{err});
+        return err;
     };
     var dir_settings = try dir_opts(alloc, bind_d);
     defer dir_settings.deinit(alloc);
@@ -165,6 +167,7 @@ pub fn zdir(alloc: Allocator, dev: i8, target_dir: [:0]const u8, bind_dir: []con
         @intFromPtr(options.data.ptr),
     ) catch |err| {
         log.err("failed to mount zram device: {t}", .{err});
+        return err;
     };
     errdefer helpers.umount_or_error(dev_p.ptr, linux.MNT.FORCE) catch |err| {
         log.err("failed to cleanup zram device mount: {t}", .{err});
@@ -194,6 +197,7 @@ pub fn zdir(alloc: Allocator, dev: i8, target_dir: [:0]const u8, bind_dir: []con
         @intFromPtr(options_overlay.ptr),
     ) catch |err| {
         log.err("failed to mount overlay: {t}", .{err});
+        return err;
     };
     errdefer helpers.umount_or_error(overlay.ptr, linux.MNT.FORCE) catch |err| {
         log.err("failed to clean up overlay mount: {t}", .{err});
