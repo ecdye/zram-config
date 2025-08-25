@@ -307,6 +307,7 @@ fn merge_overlay(alloc: Allocator, lower: []const u8, upper: []const u8) !void {
     defer alloc.free(lower_opt);
     const upper_opt = try std.fmt.allocPrintSentinel(alloc, "--upperdir={s}/upper", .{upper}, 0);
     defer alloc.free(upper_opt);
+
     var child = std.process.Child.init(&[_][]const u8{
         "overlay",
         "merge",

@@ -4,6 +4,26 @@ pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
+    const overlay_mod = b.createModule(.{
+        .target = target,
+        .optimize = optimize,
+        .link_libc = true,
+    });
+    overlay_mod.addCSourceFiles(.{
+        .files = &.{
+            "overlayfs-tools/main.c",
+            "overlayfs-tools/logic.c",
+            "overlayfs-tools/sh.c",
+            "overlayfs-tools/common.c",
+        },
+        .flags = &.{"-DOVERLAYFS_TOOLS_VERSION=\"zram-config\""},
+    });
+    const overlay_exe = b.addExecutable(.{
+        .name = "overlay",
+        .root_module = overlay_mod,
+    });
+    b.installArtifact(overlay_exe);
+
     const lib_mod = b.createModule(.{
         .root_source_file = b.path("src/root.zig"),
         .target = target,
@@ -26,14 +46,14 @@ pub fn build(b: *std.Build) void {
 
     b.installArtifact(lib);
 
-    const exe = b.addExecutable(.{
+    const zram_exe = b.addExecutable(.{
         .name = "zram-config",
         .root_module = exe_mod,
     });
 
-    b.installArtifact(exe);
+    b.installArtifact(zram_exe);
 
-    const run_cmd = b.addRunArtifact(exe);
+    const run_cmd = b.addRunArtifact(zram_exe);
     run_cmd.step.dependOn(b.getInstallStep());
     if (b.args) |args| {
         run_cmd.addArgs(args);
