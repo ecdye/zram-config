@@ -85,7 +85,13 @@ pub fn rm_zswap(dev: i8) !void {
     }
 }
 
-pub fn zdir(alloc: Allocator, dev: i8, target_dir: [:0]const u8, bind_dir: []const u8) !void {
+pub fn zdir(
+    alloc: Allocator,
+    dev: i8,
+    target_dir: [:0]const u8,
+    bind_dir: []const u8,
+    oldlog_dir: ?[]const u8,
+) !void {
     var zdir_p = std.fs.openDirAbsolute(ZRAM_DIR, .{}) catch blk: {
         try std.fs.makeDirAbsolute(ZRAM_DIR);
         break :blk try std.fs.openDirAbsolute(ZRAM_DIR, .{});
@@ -213,6 +219,17 @@ pub fn zdir(alloc: Allocator, dev: i8, target_dir: [:0]const u8, bind_dir: []con
     defer workdir_d.close();
     try workdir_d.chown(dir_user, dir_group);
     try workdir_d.chmod(dir_perm);
+
+    if (oldlog_dir) |oldlog| {
+        var ol_f = try std.fs.createFileAbsolute("/etc/logrotate.d/00_oldlog", .{});
+        const setup = try std.fmt.allocPrint(alloc,
+            \\ oldlog {s}
+            \\ createolddir 755 root root
+            \\ renamecopy
+        , .{oldlog});
+        defer alloc.free(setup);
+        try ol_f.writeAll(setup);
+    }
 }
 
 fn parse_mnt_opts(alloc: Allocator, opts: []const u8) !struct { flags: u32, data: [:0]const u8 } {
@@ -318,4 +335,10 @@ pub fn rm_zdir(alloc: Allocator, dev: i8, bind_dir: []const u8, target_dir: []co
 
     try zdir_p.deleteTree(target_d_p);
     try zdir_p.deleteTree(bind_dir);
+    std.fs.deleteFileAbsolute("/etc/logrotate.d/00_oldlog") catch |err| {
+        switch (err) {
+            error.FileNotFound => return,
+            else => return err,
+        }
+    };
 }
