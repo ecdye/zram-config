@@ -28,7 +28,7 @@ pub fn deinit(self: *zram) void {
     self.allocator.destroy(self.arena);
 }
 
-pub fn get_modules(self: *zram) !void {
+pub fn get_modules(self: *zram, primary: []const u8) !void {
     const alloc = self.arena.allocator();
 
     const Utsname = extern struct {
@@ -53,14 +53,14 @@ pub fn get_modules(self: *zram) !void {
     const deps_f = try std.fs.openFileAbsolute(deps_p, .{});
     defer deps_f.close();
 
-    const deps_r = deps_f.reader();
     var buf: [1024]u8 = undefined;
+    var deps_r = deps_f.reader(&buf);
 
-    while (try deps_r.readUntilDelimiterOrEof(&buf, '\n')) |line| {
-        if (mem.containsAtLeast(u8, line, 1, "zram")) {
+    while (deps_r.interface.takeDelimiterExclusive('\n')) |line| {
+        if (mem.containsAtLeast(u8, line, 1, primary)) {
             if (mem.indexOfScalar(u8, line, ':')) |colon| {
-                const zram_p = try std.fmt.allocPrint(alloc, "/lib/modules/{s}/{s}", .{ release, line[0..colon] });
-                defer alloc.free(zram_p);
+                const mod_p = try std.fmt.allocPrint(alloc, "/lib/modules/{s}/{s}", .{ release, line[0..colon] });
+                defer alloc.free(mod_p);
                 const deps = line[colon + 1 ..];
 
                 var it = mem.splitScalar(u8, deps, ' ');
@@ -72,11 +72,16 @@ pub fn get_modules(self: *zram) !void {
                         try load_module(entry);
                     }
                 }
-                log.debug("loading zram: {s}", .{zram_p});
-                try load_module(zram_p);
+                log.debug("loading {s}: {s}", .{ primary, mod_p });
+                try load_module(mod_p);
                 return;
             }
         }
+    } else |err| switch (err) {
+        error.EndOfStream, // stream ended not on a line break
+        error.StreamTooLong, // line could not fit in buffer
+        error.ReadFailed, // caller can check reader implementation for diagnostics
+        => |e| return e,
     }
     return error.NoModule;
 }
@@ -91,7 +96,8 @@ pub fn load_zram_module(self: *zram) !?i8 {
         return null;
     }
 
-    try self.get_modules();
+    try self.get_modules("zram");
+    try self.get_modules("overlay");
 
     log.debug("loaded zram module successfully", .{});
     self.loaded = true;
