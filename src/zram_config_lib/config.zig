@@ -302,30 +302,50 @@ fn dir_opts(alloc: Allocator, bind_dir: [:0]const u8) !DirOpts {
     }
 }
 
+fn merge_overlay(alloc: Allocator, lower: []const u8, upper: []const u8) !void {
+    const lower_opt = try std.fmt.allocPrintSentinel(alloc, "--lowerdir={s}", .{lower}, 0);
+    defer alloc.free(lower_opt);
+    const upper_opt = try std.fmt.allocPrintSentinel(alloc, "--upperdir={s}/upper", .{upper}, 0);
+    defer alloc.free(upper_opt);
+    var child = std.process.Child.init(&[_][]const u8{
+        "overlay",
+        "merge",
+        "--force-execution",
+        "--ignore-mounted",
+        lower_opt,
+        upper_opt,
+    }, alloc);
+    child.stdout_behavior = .Ignore;
+    child.stderr_behavior = .Ignore;
+    const res = try child.spawnAndWait();
+    if (res.Exited != 0) {
+        log.err("failed to merge overly {s}: {d}", .{ lower, res.Exited });
+    }
+}
+
 pub fn rm_zdir(alloc: Allocator, dev: i8, bind_dir: []const u8, target_dir: []const u8) !void {
     log.info("removing target: {s}", .{target_dir});
+    const target_d = try std.fmt.allocPrintSentinel(alloc, "{s}", .{target_dir}, 0);
+    defer alloc.free(target_d);
+    helpers.umount_or_error(target_d.ptr, linux.MNT.DETACH) catch |err| {
+        log.err("failed to umount overlay, attempting to continue: {t}", .{err});
+    };
+
     const bind_d = try std.fmt.allocPrintSentinel(alloc, "{s}/{s}", .{ ZRAM_DIR, bind_dir }, 0);
     defer alloc.free(bind_d);
-    const r1 = linux.E.init(linux.umount2(bind_d.ptr, linux.MNT.DETACH));
-    if (r1 != .SUCCESS) {
-        log.err("failed to umount bind: {s}", .{@tagName(r1)});
-    }
-
     var buf: [6]u8 = undefined;
     const target_d_p = try std.fmt.bufPrint(&buf, "zram{d}", .{dev});
     const target_d_p_f = try std.fmt.allocPrintSentinel(alloc, "{s}/{s}", .{ ZRAM_DIR, target_d_p }, 0);
     defer alloc.free(target_d_p_f);
-    const r2 = linux.E.init(linux.umount2(target_d_p_f.ptr, linux.MNT.DETACH));
-    if (r2 != .SUCCESS) {
-        log.err("failed to umount zram target mount: {s}", .{@tagName(r2)});
-    }
 
-    const target_d = try std.fmt.allocPrintSentinel(alloc, "{s}", .{target_dir}, 0);
-    defer alloc.free(target_d);
-    const r3 = linux.E.init(linux.umount2(target_d.ptr, linux.MNT.DETACH));
-    if (r3 != .SUCCESS) {
-        log.err("failed to umount overlay: {s}", .{@tagName(r3)});
-    }
+    try merge_overlay(alloc, bind_d, target_d_p_f);
+
+    helpers.umount_or_error(target_d_p_f.ptr, linux.MNT.DETACH) catch |err| {
+        log.err("failed to umount zram target mount: {t}", .{err});
+    };
+    helpers.umount_or_error(bind_d.ptr, linux.MNT.DETACH) catch |err| {
+        log.err("failed to umount bind: {t}", .{err});
+    };
 
     var zdir_p = std.fs.openDirAbsolute(ZRAM_DIR, .{}) catch blk: {
         try std.fs.makeDirAbsolute(ZRAM_DIR);
