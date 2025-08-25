@@ -117,18 +117,27 @@ pub fn zdir(alloc: Allocator, dev: i8, target_dir: [:0]const u8, bind_dir: []con
     defer alloc.free(bind_d);
     log.info("mounting: {s}, {s}", .{ target_dir, bind_d });
 
-    const r1 = linux.E.init(
-        linux.mount(target_dir.ptr, bind_d.ptr, null, linux.MS.BIND, @intFromPtr("".ptr)),
-    );
-    if (r1 != .SUCCESS) {
-        log.err("failed to mount bind: {s}", .{@tagName(r1)});
-    }
-    const r2 = linux.E.init(
-        linux.mount("".ptr, bind_d.ptr, null, linux.MS.PRIVATE, @intFromPtr("".ptr)),
-    );
-    if (r2 != .SUCCESS) {
-        log.err("failed to make bind private: {s}", .{@tagName(r2)});
-    }
+    helpers.mount_or_error(
+        target_dir.ptr,
+        bind_d.ptr,
+        null,
+        linux.MS.BIND,
+        @intFromPtr("".ptr),
+    ) catch |err| {
+        log.err("failed to mount bind: {t}", .{err});
+    };
+    errdefer helpers.umount_or_error(target_dir.ptr, linux.MNT.FORCE) catch |err| {
+        log.err("failed to cleanup bind mount: {t}", .{err});
+    };
+    helpers.mount_or_error(
+        "".ptr,
+        bind_d.ptr,
+        null,
+        linux.MS.PRIVATE,
+        @intFromPtr("".ptr),
+    ) catch |err| {
+        log.err("failed to make bind private: {t}", .{err});
+    };
     var dir_settings = try dir_opts(alloc, bind_d);
     defer dir_settings.deinit(alloc);
 
@@ -140,21 +149,26 @@ pub fn zdir(alloc: Allocator, dev: i8, target_dir: [:0]const u8, bind_dir: []con
     var child = std.process.Child.init(&[_][]const u8{ mkfs, dev_p }, alloc);
     child.stdout_behavior = .Ignore;
     child.stderr_behavior = .Ignore;
-    const r3 = try child.spawnAndWait();
-    if (r3.Exited != 0) {
-        log.err("failed to mkfs on {s}: {d}", .{ dev_p, r3.Exited });
+    const res = try child.spawnAndWait();
+    if (res.Exited != 0) {
+        log.err("failed to mkfs on {s}: {d}", .{ dev_p, res.Exited });
     }
 
     const target_d_p_f = try std.fmt.allocPrintSentinel(alloc, "{s}/{s}", .{ ZRAM_DIR, target_d_p }, 0);
     defer alloc.free(target_d_p_f);
-    log.debug("target_d_p_f: {s}", .{target_d_p_f});
     const options = try parse_mnt_opts(alloc, dir_settings.options);
-    const r4 = linux.E.init(
-        linux.mount(dev_p.ptr, target_d_p_f.ptr, dir_settings.fstype.ptr, options.flags, @intFromPtr(options.data.ptr)),
-    );
-    if (r4 != .SUCCESS) {
-        log.err("failed to mount zram device: {s}", .{@tagName(r4)});
-    }
+    helpers.mount_or_error(
+        dev_p.ptr,
+        target_d_p_f.ptr,
+        dir_settings.fstype.ptr,
+        options.flags,
+        @intFromPtr(options.data.ptr),
+    ) catch |err| {
+        log.err("failed to mount zram device: {t}", .{err});
+    };
+    errdefer helpers.umount_or_error(dev_p.ptr, linux.MNT.FORCE) catch |err| {
+        log.err("failed to cleanup zram device mount: {t}", .{err});
+    };
 
     const upper = try std.fmt.allocPrintSentinel(alloc, "{s}/upper", .{target_d_p_f}, 0);
     defer alloc.free(upper);
@@ -171,12 +185,30 @@ pub fn zdir(alloc: Allocator, dev: i8, target_dir: [:0]const u8, bind_dir: []con
         .{ bind_d, upper, workdir },
         0,
     );
-    const r5 = linux.E.init(
-        linux.mount(overlay.ptr, target_dir.ptr, "overlay", 0, @intFromPtr(options_overlay.ptr)),
-    );
-    if (r5 != .SUCCESS) {
-        log.err("failed to mount overlay: {s}", .{@tagName(r5)});
-    }
+
+    helpers.mount_or_error(
+        overlay.ptr,
+        target_dir.ptr,
+        "overlay",
+        0,
+        @intFromPtr(options_overlay.ptr),
+    ) catch |err| {
+        log.err("failed to mount overlay: {t}", .{err});
+    };
+    errdefer helpers.umount_or_error(overlay.ptr, linux.MNT.FORCE) catch |err| {
+        log.err("failed to clean up overlay mount: {t}", .{err});
+    };
+
+    var o_dir = try std.fs.openDirAbsoluteZ(target_d_p_f, .{ .iterate = true });
+    defer o_dir.close();
+    var upper_d = try o_dir.openDir("upper", .{ .iterate = true });
+    defer upper_d.close();
+    try upper_d.chown(dir_user, dir_group);
+    try upper_d.chmod(dir_perm);
+    var workdir_d = try o_dir.openDir("workdir", .{ .iterate = true });
+    defer workdir_d.close();
+    try workdir_d.chown(dir_user, dir_group);
+    try workdir_d.chmod(dir_perm);
 }
 
 fn parse_mnt_opts(alloc: Allocator, opts: []const u8) !struct { flags: u32, data: [:0]const u8 } {
