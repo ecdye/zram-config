@@ -113,7 +113,7 @@ pub fn zdir(alloc: Allocator, dev: i8, target_dir: [:0]const u8, bind_dir: []con
         dir_group,
         bind_dir,
     });
-    const bind_d = try std.fmt.allocPrintZ(alloc, "{s}/{s}", .{ ZRAM_DIR, bind_dir });
+    const bind_d = try std.fmt.allocPrintSentinel(alloc, "{s}/{s}", .{ ZRAM_DIR, bind_dir }, 0);
     defer alloc.free(bind_d);
     log.info("mounting: {s}, {s}", .{ target_dir, bind_d });
 
@@ -129,8 +129,10 @@ pub fn zdir(alloc: Allocator, dev: i8, target_dir: [:0]const u8, bind_dir: []con
     if (r2 != .SUCCESS) {
         log.err("failed to make bind private: {s}", .{@tagName(r2)});
     }
-    const dir_settings = try dir_opts(bind_d);
-    const mkfs = try std.fmt.allocPrint(alloc, "mkfs.{s}", .{dir_settings.?.fstype});
+    var dir_settings = try dir_opts(alloc, bind_d);
+    defer dir_settings.deinit(alloc);
+
+    const mkfs = try std.fmt.allocPrint(alloc, "mkfs.{s}", .{dir_settings.fstype});
     defer alloc.free(mkfs);
 
     var dev_p_buf: [16]u8 = undefined;
@@ -143,31 +145,31 @@ pub fn zdir(alloc: Allocator, dev: i8, target_dir: [:0]const u8, bind_dir: []con
         log.err("failed to mkfs on {s}: {d}", .{ dev_p, r3.Exited });
     }
 
-    const target_d_p_f = try std.fmt.allocPrintZ(alloc, "{s}/{s}", .{ ZRAM_DIR, target_d_p });
+    const target_d_p_f = try std.fmt.allocPrintSentinel(alloc, "{s}/{s}", .{ ZRAM_DIR, target_d_p }, 0);
     defer alloc.free(target_d_p_f);
-    const fstype = try std.fmt.allocPrintZ(alloc, "{s}", .{dir_settings.?.fstype});
-    defer alloc.free(fstype);
-    const options = try parse_mnt_opts(alloc, dir_settings.?.options);
+    log.debug("target_d_p_f: {s}", .{target_d_p_f});
+    const options = try parse_mnt_opts(alloc, dir_settings.options);
     const r4 = linux.E.init(
-        linux.mount(dev_p.ptr, target_d_p_f.ptr, fstype.ptr, options.flags, @intFromPtr(options.data.ptr)),
+        linux.mount(dev_p.ptr, target_d_p_f.ptr, dir_settings.fstype.ptr, options.flags, @intFromPtr(options.data.ptr)),
     );
     if (r4 != .SUCCESS) {
         log.err("failed to mount zram device: {s}", .{@tagName(r4)});
     }
 
-    const upper = try std.fmt.allocPrintZ(alloc, "{s}/upper", .{target_d_p_f});
+    const upper = try std.fmt.allocPrintSentinel(alloc, "{s}/upper", .{target_d_p_f}, 0);
     defer alloc.free(upper);
-    const workdir = try std.fmt.allocPrintZ(alloc, "{s}/workdir", .{target_d_p_f});
+    const workdir = try std.fmt.allocPrintSentinel(alloc, "{s}/workdir", .{target_d_p_f}, 0);
     defer alloc.free(workdir);
     try std.fs.makeDirAbsoluteZ(upper);
     try std.fs.makeDirAbsoluteZ(workdir);
 
-    const overlay = try std.fmt.allocPrintZ(alloc, "overlay{d}", .{dev});
+    const overlay = try std.fmt.allocPrintSentinel(alloc, "overlay{d}", .{dev}, 0);
     defer alloc.free(overlay);
-    const options_overlay = try std.fmt.allocPrintZ(
+    const options_overlay = try std.fmt.allocPrintSentinel(
         alloc,
         "redirect_dir=on,metacopy=on,lowerdir={s},upperdir={s},workdir={s}",
         .{ bind_d, upper, workdir },
+        0,
     );
     const r5 = linux.E.init(
         linux.mount(overlay.ptr, target_dir.ptr, "overlay", 0, @intFromPtr(options_overlay.ptr)),
@@ -179,8 +181,8 @@ pub fn zdir(alloc: Allocator, dev: i8, target_dir: [:0]const u8, bind_dir: []con
 
 fn parse_mnt_opts(alloc: Allocator, opts: []const u8) !struct { flags: u32, data: [:0]const u8 } {
     var flags: u32 = 0;
-    var extra = std.ArrayList(u8).init(alloc);
-    defer extra.deinit();
+    var extra = std.ArrayList(u8){};
+    defer extra.deinit(alloc);
 
     var it = std.mem.splitScalar(u8, opts, ',');
     while (it.next()) |opt| {
@@ -197,24 +199,34 @@ fn parse_mnt_opts(alloc: Allocator, opts: []const u8) !struct { flags: u32, data
         } else if (std.mem.eql(u8, o, "nosuid")) {
             flags |= linux.MS.NOSUID;
         } else {
-            if (extra.items.len > 0) try extra.append(',');
-            try extra.appendSlice(o);
+            if (extra.items.len > 0) try extra.append(alloc, ',');
+            try extra.appendSlice(alloc, o);
         }
     }
 
     return .{
         .flags = flags,
-        .data = try extra.toOwnedSliceSentinel(0),
+        .data = try extra.toOwnedSliceSentinel(alloc, 0),
     };
 }
 
-fn dir_opts(bind_dir: [:0]const u8) !?struct { options: []const u8, fstype: []const u8 } {
+const DirOpts = struct {
+    options: []u8,
+    fstype: [:0]u8,
+
+    pub fn deinit(self: *DirOpts, alloc: Allocator) void {
+        alloc.free(self.options);
+        alloc.free(self.fstype);
+    }
+};
+
+fn dir_opts(alloc: Allocator, bind_dir: [:0]const u8) !DirOpts {
     var mounts = try std.fs.openFileAbsoluteZ("/proc/mounts", .{});
     defer mounts.close();
 
-    var mounts_r = mounts.reader();
     var line_buf: [4096]u8 = undefined;
-    while (try mounts_r.readUntilDelimiterOrEof(&line_buf, '\n')) |line| {
+    var mounts_r = mounts.reader(&line_buf);
+    while (mounts_r.interface.takeDelimiterExclusive('\n')) |line| {
         var tokens = std.mem.tokenizeAny(u8, line, " \t");
 
         const device = tokens.next() orelse continue;
@@ -224,15 +236,22 @@ fn dir_opts(bind_dir: [:0]const u8) !?struct { options: []const u8, fstype: []co
 
         if (std.mem.eql(u8, mountpoint, bind_dir)) {
             log.info("dev: {s}, fstype: {s}, options: {s}", .{ device, fstype, options });
-            return .{ .options = options, .fstype = fstype };
+            return DirOpts{
+                .options = try alloc.dupe(u8, options),
+                .fstype = try alloc.dupeZ(u8, fstype),
+            };
         }
+    } else |err| switch (err) {
+        error.EndOfStream, // stream ended not on a line break
+        error.StreamTooLong, // line could not fit in buffer
+        error.ReadFailed, // caller can check reader implementation for diagnostics
+        => |e| return e,
     }
-    return null;
 }
 
 pub fn rm_zdir(alloc: Allocator, dev: i8, bind_dir: []const u8, target_dir: []const u8) !void {
     log.info("removing target: {s}", .{target_dir});
-    const bind_d = try std.fmt.allocPrintZ(alloc, "{s}/{s}", .{ ZRAM_DIR, bind_dir });
+    const bind_d = try std.fmt.allocPrintSentinel(alloc, "{s}/{s}", .{ ZRAM_DIR, bind_dir }, 0);
     defer alloc.free(bind_d);
     const r1 = linux.E.init(linux.umount2(bind_d.ptr, linux.MNT.DETACH));
     if (r1 != .SUCCESS) {
@@ -241,14 +260,14 @@ pub fn rm_zdir(alloc: Allocator, dev: i8, bind_dir: []const u8, target_dir: []co
 
     var buf: [6]u8 = undefined;
     const target_d_p = try std.fmt.bufPrint(&buf, "zram{d}", .{dev});
-    const target_d_p_f = try std.fmt.allocPrintZ(alloc, "{s}/{s}", .{ ZRAM_DIR, target_d_p });
+    const target_d_p_f = try std.fmt.allocPrintSentinel(alloc, "{s}/{s}", .{ ZRAM_DIR, target_d_p }, 0);
     defer alloc.free(target_d_p_f);
     const r2 = linux.E.init(linux.umount2(target_d_p_f.ptr, linux.MNT.DETACH));
     if (r2 != .SUCCESS) {
         log.err("failed to umount zram target mount: {s}", .{@tagName(r2)});
     }
 
-    const target_d = try std.fmt.allocPrintZ(alloc, "{s}", .{target_dir});
+    const target_d = try std.fmt.allocPrintSentinel(alloc, "{s}", .{target_dir}, 0);
     defer alloc.free(target_d);
     const r3 = linux.E.init(linux.umount2(target_d.ptr, linux.MNT.DETACH));
     if (r3 != .SUCCESS) {
@@ -261,6 +280,6 @@ pub fn rm_zdir(alloc: Allocator, dev: i8, bind_dir: []const u8, target_dir: []co
     };
     defer zdir_p.close();
 
-    try zdir_p.deleteDir(target_d_p);
-    try zdir_p.deleteDir(bind_dir);
+    try zdir_p.deleteTree(target_d_p);
+    try zdir_p.deleteTree(bind_dir);
 }
