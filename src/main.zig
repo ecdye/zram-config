@@ -97,7 +97,13 @@ fn start_zram_config(alloc: Allocator, zz: *zram) void {
             std.mem.copyForwards(u8, target_d_buf[0..dir.target_d.len], dir.target_d);
             target_d_buf[target_d_buf.len - 1] = 0;
 
-            config.zdir(a_alloc, dev, target_d_buf[0..dir.target_d.len :0], bind) catch |err| {
+            config.zdir(
+                a_alloc,
+                dev,
+                target_d_buf[0..dir.target_d.len :0],
+                bind,
+                dir.oldlog_d,
+            ) catch |err| {
                 log.err("failed to configure dir: {t}", .{err});
             };
 
