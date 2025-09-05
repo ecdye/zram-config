@@ -8,24 +8,24 @@ const log = std.log;
 const linux = std.os.linux;
 const helpers = @import("helpers.zig");
 
-allocator: Allocator,
 arena: *ArenaAllocator,
 loaded: bool = false,
 
 pub fn init(allocator: Allocator) !zram {
-    const arena = try allocator.create(ArenaAllocator);
-    arena.* = ArenaAllocator.init(allocator);
-    const alloc = arena.allocator();
+    var self = zram{
+        .arena = try allocator.create(ArenaAllocator),
+    };
+    errdefer allocator.destroy(self.arena);
+    self.arena.* = ArenaAllocator.init(allocator);
+    errdefer self.arena.deinit();
 
-    const self = try alloc.create(zram);
-    self.* = zram{ .allocator = allocator, .arena = arena };
-
-    return self.*;
+    return self;
 }
 
 pub fn deinit(self: *zram) void {
+    const allocator = self.arena.child_allocator;
     self.arena.deinit();
-    self.allocator.destroy(self.arena);
+    allocator.destroy(self.arena);
 }
 
 pub fn get_modules(self: *zram, primary: []const u8) !void {
