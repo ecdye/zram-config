@@ -146,11 +146,7 @@ fn start_zram_config(gpa: Allocator, zz: *zram) void {
     };
 }
 
-fn stop_zram_config(gpa: Allocator, zz: *zram) void {
-    var arena = std.heap.ArenaAllocator.init(gpa);
-    defer arena.deinit();
-    const alloc = arena.allocator();
-
+fn stop_zram_config(alloc: Allocator, zz: *zram) void {
     var ac = load_ac_json(alloc) catch |err| {
         log.err("failed to load `{s}`: {t}", .{ ac_json, err });
         return;
@@ -184,7 +180,10 @@ fn stop_zram_config(gpa: Allocator, zz: *zram) void {
 }
 
 fn create_config(alloc: Allocator) void {
-    var zc = zConfig.init(alloc);
+    var zc = zConfig.init(alloc) catch |err| {
+        log.err("failed to init zConfig: {t}", .{err});
+        return;
+    };
     defer zc.deinit();
 
     zc.append_swap(zSwapEntry{
