@@ -1,7 +1,6 @@
 pub const config = @This();
 
 const std = @import("std");
-const ArenaAllocator = std.heap.ArenaAllocator;
 const Allocator = std.mem.Allocator;
 const linux = std.os.linux;
 const log = std.log;
@@ -234,7 +233,7 @@ pub fn zdir(
 
 fn parse_mnt_opts(alloc: Allocator, opts: []const u8) !struct { flags: u32, data: [:0]const u8 } {
     var flags: u32 = 0;
-    var extra = std.ArrayList(u8){};
+    var extra = std.ArrayList(u8).empty;
     defer extra.deinit(alloc);
 
     var it = std.mem.splitScalar(u8, opts, ',');
