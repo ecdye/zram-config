@@ -1,5 +1,6 @@
 const std = @import("std");
 const ArrayList = std.ArrayList;
+const ArenaAllocator = std.heap.ArenaAllocator;
 const Allocator = std.mem.Allocator;
 const zDirEntry = @import("zDirEntry.zig");
 const zSwapEntry = @import("zSwapEntry.zig");
@@ -10,28 +11,36 @@ pub const zConfig = @This();
 version: u8,
 dirs: ArrayList(zDirEntry),
 swaps: ArrayList(zSwapEntry),
-alloc: Allocator,
+arena: *ArenaAllocator,
 
-pub fn init(alloc: Allocator) zConfig {
-    return .{
-        .version = 2,
+pub fn init(allocator: Allocator) !zConfig {
+    var self = zConfig{
+        .arena = try allocator.create(ArenaAllocator),
         .dirs = .empty,
         .swaps = .empty,
-        .alloc = alloc,
+        .version = 2,
     };
+    errdefer allocator.destroy(self.arena);
+    self.arena.* = ArenaAllocator.init(allocator);
+    errdefer self.arena.deinit();
+
+    return self;
 }
 
 pub fn deinit(self: *zConfig) void {
-    self.dirs.deinit(self.alloc);
-    self.swaps.deinit(self.alloc);
+    const allocator = self.arena.child_allocator;
+    self.arena.deinit();
+    allocator.destroy(self.arena);
 }
 
 pub fn append_swap(self: *zConfig, swap: zSwapEntry) !void {
-    try self.swaps.append(self.alloc, swap);
+    const alloc = self.arena.allocator();
+    try self.swaps.append(alloc, swap);
 }
 
 pub fn append_dir(self: *zConfig, dir: zDirEntry) !void {
-    try self.dirs.append(self.alloc, dir);
+    const alloc = self.arena.allocator();
+    try self.dirs.append(alloc, dir);
 }
 
 const JsonRepr = struct {
@@ -52,18 +61,19 @@ pub fn to_json(self: *zConfig, alloc: Allocator) ![]const u8 {
 
 /// Converts valid JSON into zConfig. You must call `deinit()` to clean up
 /// allocated resources.
-pub fn from_json(alloc: Allocator, json: []const u8) !zConfig {
-    const parsed: std.json.Parsed(JsonRepr) = try std.json.parseFromSlice(
+pub fn from_json(allocator: Allocator, json: []const u8) !zConfig {
+    var self = try zConfig.init(allocator);
+    const alloc = self.arena.allocator();
+
+    const parsed: JsonRepr = try std.json.parseFromSliceLeaky(
         JsonRepr,
         alloc,
         json,
         .{ .allocate = .alloc_always },
     );
-    defer parsed.deinit();
 
-    var self = zConfig.init(alloc);
-    self.version = parsed.value.version;
-    try self.dirs.appendSlice(alloc, parsed.value.dirs);
-    try self.swaps.appendSlice(alloc, parsed.value.swaps);
+    self.version = parsed.version;
+    try self.dirs.appendSlice(alloc, parsed.dirs);
+    try self.swaps.appendSlice(alloc, parsed.swaps);
     return self;
 }
