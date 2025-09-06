@@ -249,7 +249,7 @@ pub fn main() void {
         \\
         \\    -h, --help     display this help message and quit
         \\    --config-path <path>
-        \\                   pass a custom configuration file path instead of `/etc/ztab`
+        \\                   pass a custom configuration file path instead of `/etc/zram-config.json`
     ;
 
     const args = std.process.argsAlloc(alloc) catch |err| {
