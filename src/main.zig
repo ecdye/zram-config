@@ -316,6 +316,74 @@ fn create_target(alloc: Allocator) void {
     };
 }
 
+fn create_service(alloc: Allocator) void {
+    var zc = load_zc_json(alloc) catch |err| {
+        log.err("failed to load {s}: {t}", .{ zc_json, err });
+        return;
+    };
+    defer zc.deinit();
+
+    const service_f = "/etc/systemd/system/zram-config.service";
+    const s_f = std.fs.createFileAbsoluteZ(service_f, .{}) catch |err| {
+        log.err("failed to create service file: {t}", .{err});
+        return;
+    };
+    _ = s_f.write(
+        \\[Unit]
+        \\Description=zram-config
+        \\Documentation=https://github.com/ecdye/zram-config/blob/main/README.md
+        \\DefaultDependencies=no
+        \\Before=basic.target rsyslog.service syslog-ng.service syslog.target systemd-journald.service sysinit.target shutdown.target
+        \\Conflicts=shutdown.target reboot.target halt.target
+        \\IgnoreOnIsolate=yes
+        \\After=local-fs.target
+        \\
+    ) catch |err| {
+        log.err("failed to write to file: {t}", .{err});
+        return;
+    };
+
+    var mounts_list = std.ArrayList([]const u8).empty;
+    defer mounts_list.deinit(alloc);
+    for (zc.dirs.items) |dir| {
+        mounts_list.append(alloc, dir.target_d) catch |err| {
+            log.err("failed to append to mounts: {t}", .{err});
+            return;
+        };
+    }
+    mounts_list.append(alloc, config.ZRAM_DIR) catch |err| {
+        log.err("failed to append to mounts: {t}", .{err});
+        return;
+    };
+    const mounts = std.mem.join(alloc, " ", mounts_list.items) catch |err| {
+        log.err("failed to join mounts list: {t}", .{err});
+        return;
+    };
+    defer alloc.free(mounts);
+    const required = std.fmt.allocPrint(alloc,
+        \\RequiresMountsFor={s}
+        \\
+        \\[Service]
+        \\Type=oneshot
+        \\TimeoutStopSec=240
+        \\RemainAfterExit=yes
+        \\ExecStart=/usr/local/bin/zram-config "start"
+        \\ExecStop=/usr/local/bin/zram-config "stop"
+        \\
+        \\[Install]
+        \\WantedBy=sysinit.target
+        \\
+    , .{mounts}) catch |err| {
+        log.err("failed to format rest of service: {t}", .{err});
+        return;
+    };
+    defer alloc.free(required);
+    _ = s_f.write(required) catch |err| {
+        log.err("failed to write to file: {t}", .{err});
+        return;
+    };
+}
+
 fn init_zram_config_lib(alloc: Allocator, zz: *zram) !void {
     zz.* = try zram.init(alloc);
 }
@@ -337,6 +405,7 @@ pub fn main() void {
         \\    start     start zram-config with configuration at `/etc/zram-config.json`
         \\    stop      stop the currently running zram-config instance
         \\    create    create a default `/etc/zram-config.json` config file
+        \\    service   create a SystemD service file
         \\    target    create SystemD target file for proper ordering on startup
     ;
     const help_start =
@@ -389,6 +458,9 @@ pub fn main() void {
             break;
         } else if (std.mem.eql(u8, arg, "create")) {
             create_config(alloc);
+            break;
+        } else if (std.mem.eql(u8, arg, "service")) {
+            create_service(alloc);
             break;
         } else if (std.mem.eql(u8, arg, "target")) {
             create_target(alloc);
