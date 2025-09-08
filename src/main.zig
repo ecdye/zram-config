@@ -67,9 +67,6 @@ fn start_zram_config(gpa: Allocator, zz: *zram) void {
         return;
     };
     defer zc.deinit();
-    for (zc.dirs.items) |dir| {
-        log.debug("dir: {s}", .{dir.target_d});
-    }
 
     if (zc.version != 2) {
         log.warn("unsupported config file version, errors may occur", .{});
@@ -83,7 +80,10 @@ fn start_zram_config(gpa: Allocator, zz: *zram) void {
     };
     defer ac.deinit();
 
-    for (zc.swaps.items) |swap| {
+    swap: for (zc.swaps.items) |swap| {
+        for (ac.entries.items) |ac_ent| {
+            if (ac_ent.swap) break :swap;
+        }
         const dev = zz.*.add_config_device(swap.alg, swap.disk_s, swap.mem_l) catch |err| {
             log.err("failed to configure zram swap device: {t}", .{err});
             return;
@@ -106,7 +106,12 @@ fn start_zram_config(gpa: Allocator, zz: *zram) void {
         };
         log.info("add zram device number: {d}, swap", .{dev});
     }
-    for (zc.dirs.items) |dir| {
+    dir: for (zc.dirs.items) |dir| {
+        for (ac.entries.items) |ac_ent| {
+            if (ac_ent.t_dir) |t_dir| {
+                if (std.mem.eql(u8, t_dir, dir.target_d)) break :dir;
+            }
+        }
         const dev = zz.*.add_config_device(dir.alg, dir.disk_s, dir.mem_l) catch |err| {
             log.err("failed to configure zram device: {t}", .{err});
             return;
