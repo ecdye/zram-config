@@ -30,7 +30,7 @@ fi
 if [[ $1 != "custom" ]]; then
     git -C "$BASEDIR" fetch origin
     git -C "$BASEDIR" clean --force -x -d
-    git -C "$BASEDIR" reset --hard --recurse-submodules origin main
+    git -C "$BASEDIR" reset --hard --recurse-submodules origin/main
     git -C "$BASEDIR" submodule update --init --recursive
 fi
 
