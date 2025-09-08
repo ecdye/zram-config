@@ -6,3 +6,6 @@ Wants=zsync.timer
 [Service]
 Type=oneshot
 ExecStart=/usr/local/sbin/zram-config "sync" 
+
+# Example for sync only one single target
+# ExecStart=/usr/local/sbin/zram-config "sync" "/example/targetfolder"
