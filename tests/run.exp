@@ -41,6 +41,8 @@ expect {
 
 # Install tests
 expect "pi@raspberrypi:~$ "
+send "/opt/zig/bin/zig version\r"
+expect "pi@raspberrypi:~$ "
 send "sudo /opt/zram-config/install.bash\r"
 expect "pi@raspberrypi:~$ "
 send "/opt/zram-config/tests/test-zram-devices.bash\r"
