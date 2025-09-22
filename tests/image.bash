@@ -18,6 +18,36 @@ imageFile() {
     fi
 }
 
+downloadZig() {
+    local PUBKEY="RWSGOq2NVecA2UPNdBUZykf1CCb147pkmdtYxgb3Ti+JO/wCYvhbAb/U"
+
+    local TARBALL_NAME="zig-arm-linux-0.15.1.tar.xz"
+    local MIRRORS_URL="https://ziglang.org/download/community-mirrors.txt"
+
+    # Fetch mirrors list and shuffle
+    mapfile -t SHUFFLED < <(curl -fsSL "$MIRRORS_URL" | shuf)
+
+    for MIRROR in "${SHUFFLED[@]}"; do
+        echo "Trying mirror: $MIRROR"
+        TAR_URL="${MIRROR%/}/${TARBALL_NAME}?source=zram-config"
+        SIG_URL="${MIRROR%/}/${TARBALL_NAME}.minisig?source=zram-config"
+
+        if curl -fLo "$TARBALL_NAME" "$TAR_URL"; then
+            if curl -fLo "$TARBALL_NAME.minisig" "$SIG_URL"; then
+                if minisign -Vm "$TARBALL_NAME" -P "$PUBKEY"; then
+                    echo "✅ Successfully fetched and verified Zig!"
+                    tar -xf "$TARBALL_NAME" && rm $TARBALL_NAME
+                    mkdir -p tests/fs/opt
+                    mv "${TARBALL_NAME%.tar.xz}" "tests/fs/opt/zig"
+                    break
+                else
+                    echo "❌ Verification failed for $MIRROR"
+                fi
+            fi
+        fi
+    done
+}
+
 if [[ $1 == "setup" ]]; then
     if ! [[ -f $3 ]]; then
         curl -s -L "https://downloads.raspberrypi.org/raspios_lite_armhf_latest" -o "$2"
@@ -31,6 +61,7 @@ if [[ $1 == "setup" ]]; then
     imageFile "mount" "$3"
     sed -i -e "s|DATESED|$(date)|" tests/run.exp
     rsync -avr --exclude="*.img" --exclude="*.sig" --exclude="tests/fs" --exclude="tests/dtb" --exclude="tests/kernel" ./ tests/fs/opt/zram-config
+    downloadZig
     systemd-nspawn --directory="tests/fs" /opt/zram-config/tests/install-packages.bash
     echo "set enable-bracketed-paste off" >> tests/fs/etc/inputrc  # Prevents weird character output
     cp tests/fs/boot/kernel* tests/kernel
