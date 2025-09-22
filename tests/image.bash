@@ -23,7 +23,7 @@ imageFile() {
 downloadZig() {
     local PUBKEY="RWSGOq2NVecA2UPNdBUZykf1CCb147pkmdtYxgb3Ti+JO/wCYvhbAb/U"
 
-    local TARBALL_NAME="zig-arm-linux-0.15.1.tar.xz"
+    local TARBALL_NAME="zig-aarch64-linux-0.15.1.tar.xz"
     local MIRRORS_URL="https://ziglang.org/download/community-mirrors.txt"
 
     # Fetch mirrors list and shuffle
@@ -52,8 +52,8 @@ downloadZig() {
 
 if [[ $1 == "setup" ]]; then
     if ! [[ -f $3 ]]; then
-        curl -s -L "https://downloads.raspberrypi.org/raspios_lite_armhf_latest" -o "$2"
-        curl -s "$(curl "https://downloads.raspberrypi.org/raspios_lite_armhf_latest" -s -L -I  -o /dev/null -w '%{url_effective}')".sig -o "${2}.sig"
+        curl -s -L "$4" -o "$2"
+        curl -s -L "${4}.sig" -o "${2}.sig"
         gpg -q --keyserver keyserver.ubuntu.com --recv-key 0x8738CD6B956F460C
         gpg -q --trust-model always --verify "${2}.sig" "$2"
         xz "$2" -d
