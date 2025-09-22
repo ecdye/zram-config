@@ -57,5 +57,5 @@ jobs:
          if: always()
          uses: actions/upload-artifact@v5
          with:
-           name: logs.tar.gz
-           path: logs.tar.gz
+           name: zig-build.log
+           path: zig-build.log
