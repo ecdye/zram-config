@@ -30,7 +30,7 @@ jobs:
          id: setup
          run: |
            sudo apt-get update
-           sudo apt-get install --yes expect systemd-container qemu-user-static qemu-utils qemu-system-arm libfdt-dev binfmt-support
+           sudo apt-get install --yes expect systemd-container qemu-user-static qemu-utils qemu-system-arm libfdt-dev binfmt-support minisign
            echo "imagexz=$(basename "$(curl "https://downloads.raspberrypi.org/raspios_lite_armhf_latest" -s -L -I  -o /dev/null -w '%{url_effective}')")" >> $GITHUB_OUTPUT
            echo "image=$(echo "$(basename "$(curl "https://downloads.raspberrypi.org/raspios_lite_armhf_latest" -s -L -I  -o /dev/null -w '%{url_effective}')")" | sed -e 's/.xz//')" >> $GITHUB_OUTPUT
        - name: Cache Raspberry Pi OS 32bit image
