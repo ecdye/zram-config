@@ -31,15 +31,19 @@ jobs:
          run: |
            sudo apt-get update
            sudo apt-get install --yes expect systemd-container qemu-user-static qemu-utils qemu-system-arm libfdt-dev binfmt-support minisign
-           echo "imagexz=$(basename "$(curl "https://downloads.raspberrypi.org/raspios_lite_armhf_latest" -s -L -I  -o /dev/null -w '%{url_effective}')")" >> $GITHUB_OUTPUT
-           echo "image=$(echo "$(basename "$(curl "https://downloads.raspberrypi.org/raspios_lite_armhf_latest" -s -L -I  -o /dev/null -w '%{url_effective}')")" | sed -e 's/.xz//')" >> $GITHUB_OUTPUT
-       - name: Cache Raspberry Pi OS 32bit image
+           imageurl="$(curl "https://downloads.raspberrypi.org/raspios_lite_arm64_latest" -s -L -I  -o /dev/null -w '%{url_effective}')"
+           imagexz="$(basename "$imageurl")"
+           image="$(echo "$imagexz" | sed -e 's/.xz//')"
+           echo "imageurl=$imageurl" >> $GITHUB_OUTPUT
+           echo "imagexz=$imagexz" >> $GITHUB_OUTPUT
+           echo "image=$image" >> $GITHUB_OUTPUT
+       - name: Cache Raspberry Pi OS 64bit image
          uses: actions/cache@v4
          with:
            path: ${{ steps.setup.outputs.image }}
            key: ${{ steps.setup.outputs.image }}
        - name: Build image
-         run: sudo -E ./tests/image.bash "setup" "${{ steps.setup.outputs.imagexz }}" "${{ steps.setup.outputs.image }}"
+         run: sudo -E ./tests/image.bash "setup" "${{ steps.setup.outputs.imagexz }}" "${{ steps.setup.outputs.image }}" "${{ steps.setup.outputs.imageurl }}"
          shell: bash
        - name: Run tests
          run: |
