@@ -6,7 +6,7 @@ apt-get --quiet update
 apt-get --quiet install --yes gcc meson libc6-dev minisign
 apt-get --quiet autoremove --yes
 
-PUBKEY="RWQf6LRCGA7bXxEXc0cEpg8gyY1WB7rkQnvEhYL+4w3RSiWYvYmZq0lV"
+PUBKEY="RWSGOq2NVecA2UPNdBUZykf1CCb147pkmdtYxgb3Ti+JO/wCYvhbAb/U"
 
 TARBALL_NAME="zig-arm-linux-0.15.1.tar.xz"
 MIRRORS_URL="https://ziglang.org/download/community-mirrors.txt"
@@ -16,8 +16,8 @@ mapfile -t SHUFFLED < <(curl -fsSL "$MIRRORS_URL" | shuf)
 
 for MIRROR in "${SHUFFLED[@]}"; do
     echo "Trying mirror: $MIRROR"
-    TAR_URL="${MIRROR%/}/${TARBALL_NAME}?source=my_automation_name"
-    SIG_URL="${MIRROR%/}/${TARBALL_NAME}.minisig?source=my_automation_name"
+    TAR_URL="${MIRROR%/}/${TARBALL_NAME}?source=zram-config"
+    SIG_URL="${MIRROR%/}/${TARBALL_NAME}.minisig?source=zram-config"
 
     if curl -fLo "$TARBALL_NAME" "$TAR_URL"; then
         if curl -fLo "$TARBALL_NAME.minisig" "$SIG_URL"; then
@@ -26,14 +26,13 @@ for MIRROR in "${SHUFFLED[@]}"; do
                 tar -xf "$TARBALL_NAME"
                 mv "${TARBALL_NAME%.tar.xz}" "/opt/zig"
                 /opt/zig/bin/zig version
+                break
             else
                 echo "❌ Verification failed for $MIRROR"
             fi
         fi
     fi
 done
-
-echo "All mirrors failed." >&2
 
 systemctl mask rpi-eeprom-update.service hciuart.service systemd-logind.service
 rm -f /var/lib/apt/lists/lock
