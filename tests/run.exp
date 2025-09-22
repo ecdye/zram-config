@@ -41,9 +41,15 @@ expect {
 
 # Install tests
 expect "pi@raspberrypi:~$ "
-send "/opt/zig/bin/zig version\r"
+send "/opt/zig/zig version\r"
 expect "pi@raspberrypi:~$ "
-send "sudo /opt/zram-config/install.bash\r"
+send "sudo /opt/zig/zig build --build-file /opt/zram-config/build.zig -Doptimize=ReleaseFast install --prefix /sbin\r"
+expect "pi@raspberrypi:~$ "
+send "sudo /sbin/zram-config create\r"
+expect "pi@raspberrypi:~$ "
+send "sudo /sbin/zram-config service\r"
+expect "pi@raspberrypi:~$ "
+send "sudo systemctl daemon-reload && sudo systemctl enable --now zram-config.service\r"
 expect "pi@raspberrypi:~$ "
 send "/opt/zram-config/tests/test-zram-devices.bash\r"
 expect {
@@ -56,9 +62,9 @@ expect {
   }
 }
 
-# Uninstall tests
+# Stop tests
 expect "pi@raspberrypi:~$ "
-send "sudo /opt/zram-config/uninstall.bash\r"
+send "sudo systemctl disable --now zram-config.service\r"
 expect "pi@raspberrypi:~$ "
 send "/opt/zram-config/tests/test-zram-devices.bash removal\r"
 expect {
