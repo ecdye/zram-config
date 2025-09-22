@@ -41,9 +41,7 @@ expect {
 
 # Install tests
 expect "pi@raspberrypi:~$ "
-send "/opt/zig/zig version\r"
-expect "pi@raspberrypi:~$ "
-send "sudo /opt/zig/zig build --build-file /opt/zram-config/build.zig -Doptimize=ReleaseFast --summary all install --prefix /usr &> /var/log/zig-build.log\r"
+send "sudo bash -c '/opt/zig/zig build --build-file /opt/zram-config/build.zig -Doptimize=ReleaseFast --summary all install --prefix /usr &> /var/log/zig-build.log'\r"
 expect "pi@raspberrypi:~$ "
 send "sudo /sbin/zram-config create\r"
 expect "pi@raspberrypi:~$ "
