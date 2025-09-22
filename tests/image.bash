@@ -5,6 +5,8 @@ imageFile() {
 
     if [[ $1 == "mount" ]]; then
         loopPrefix="$(kpartx -asv "$2" | grep -oE "loop([0-9]+)" | head -n 1)"
+        e2fsck -y -f "/dev/mapper/${loopPrefix}p2"
+        resize2fs "/dev/mapper/${loopPrefix}p2"
 
         mkdir -p tests/{fs,kernel,dtb}
         mount -o rw -t ext4 "/dev/mapper/${loopPrefix}p2" "tests/fs"
