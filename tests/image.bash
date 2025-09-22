@@ -38,7 +38,7 @@ downloadZig() {
                     echo "✅ Successfully fetched and verified Zig!"
                     tar -xf "$TARBALL_NAME" && rm $TARBALL_NAME
                     mkdir -p tests/fs/opt
-                    mv "${TARBALL_NAME%.tar.xz}" "tests/fs/opt/zig"
+                    mv "${TARBALL_NAME%.tar.xz}/" "tests/fs/opt/zig"
                     break
                 else
                     echo "❌ Verification failed for $MIRROR"
@@ -56,6 +56,8 @@ if [[ $1 == "setup" ]]; then
         gpg -q --trust-model always --verify "${2}.sig" "$2"
         xz "$2" -d
     fi
+    qemu-img resize "$3" "+512M"
+    echo ", +" | sfdisk -N 2 "$3"
     qemu-img resize -f raw "$3" 4G
     echo ", +" | sfdisk -N 2 "$3"
     imageFile "mount" "$3"
