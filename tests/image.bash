@@ -56,9 +56,7 @@ if [[ $1 == "setup" ]]; then
         gpg -q --trust-model always --verify "${2}.sig" "$2"
         xz "$2" -d
     fi
-    qemu-img resize "$3" "+512M"
-    echo ", +" | sfdisk -N 2 "$3"
-    qemu-img resize -f raw "$3" 4G
+    qemu-img resize -f raw "$3" 8G
     echo ", +" | sfdisk -N 2 "$3"
     imageFile "mount" "$3"
     sed -i -e "s|DATESED|$(date)|" tests/run.exp
