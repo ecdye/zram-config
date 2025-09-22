@@ -23,7 +23,7 @@ imageFile() {
 downloadZig() {
     local PUBKEY="RWSGOq2NVecA2UPNdBUZykf1CCb147pkmdtYxgb3Ti+JO/wCYvhbAb/U"
 
-    local TARBALL_NAME="zig-aarch64-linux-0.15.1.tar.xz"
+    local TARBALL_NAME="zig-arm-linux-0.15.1.tar.xz"
     local MIRRORS_URL="https://ziglang.org/download/community-mirrors.txt"
 
     # Fetch mirrors list and shuffle
