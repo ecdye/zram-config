@@ -147,6 +147,11 @@ pub fn config_device(
     mem_l: []const u8,
 ) !void {
     const alloc = self.arena.allocator();
+
+    // Make sure that the device is really clean before configuring it.
+    // Especially important on dirty reboots (eg. sudden power loss).
+    try helpers.zblock_config_write(alloc, dev, "reset", "1");
+
     try helpers.zblock_config_write(alloc, dev, "comp_algorithm", alg);
     try helpers.zblock_config_write(alloc, dev, "disksize", disk_s);
     try helpers.zblock_config_write(alloc, dev, "mem_limit", mem_l);
