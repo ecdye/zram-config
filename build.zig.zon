@@ -2,7 +2,7 @@
     .name = .zram_config,
 
     // This is a [Semantic Version](https://semver.org/).
-    .version = "0.0.0",
+    .version = "2.0.0-alpha",
 
     .fingerprint = 0x3595d9324b9fef7b, // Changing this has security and trust implications.
 
