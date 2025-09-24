@@ -47,7 +47,7 @@ send "sudo /usr/bin/zram-config create\r"
 expect "pi@raspberrypi:~$ "
 send "sudo /usr/bin/zram-config service\r"
 expect "pi@raspberrypi:~$ "
-send "sudo systemctl daemon-reload && sudo systemctl enable --now zram-config.service\r"
+send "sudo /usr/bin/zram-config start\r"
 expect "pi@raspberrypi:~$ "
 send "/opt/zram-config/tests/test-zram-devices.bash\r"
 expect {
@@ -62,7 +62,7 @@ expect {
 
 # Stop tests
 expect "pi@raspberrypi:~$ "
-send "sudo systemctl disable --now zram-config.service\r"
+send "sudo /usr/bin/zram-config stop\r"
 expect "pi@raspberrypi:~$ "
 send "/opt/zram-config/tests/test-zram-devices.bash removal\r"
 expect {
