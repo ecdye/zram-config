@@ -77,7 +77,7 @@ if [[ $1 == "setup" ]]; then
 elif [[ $1 == "copy-logs" ]]; then
     imageFile "mount" "$2"
     # cp tests/fs/opt/zram-config/logs.tar.gz logs.tar.gz
-    cp tests/fs/var/log/zig-build.log zig.build.log
+    cp tests/fs/var/log/zig-build.log zig-build.log
     imageFile "umount" "$2"
 fi
 
