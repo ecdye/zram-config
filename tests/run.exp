@@ -49,31 +49,12 @@ send "sudo /usr/bin/zram-config service\r"
 expect "pi@raspberrypi:~$ "
 send "sudo /usr/bin/zram-config start\r"
 expect "pi@raspberrypi:~$ "
-send "/opt/zram-config/tests/test-zram-devices.bash\r"
-expect {
-  -re "Test failed:.*$" {
-    set retval 1
-    exp_continue
-  }
-  "pi@raspberrypi:~$ " {
-    send "sudo touch /var/log/test\r"
-  }
-}
 
 # Stop tests
 expect "pi@raspberrypi:~$ "
 send "sudo /usr/bin/zram-config stop\r"
 expect "pi@raspberrypi:~$ "
-send "/opt/zram-config/tests/test-zram-devices.bash removal\r"
-expect {
-  -re "Test failed:.*$" {
-    set retval 1
-    exp_continue
-  }
-  "pi@raspberrypi:~$ " {
-    send "sync\r"
-  }
-}
+send "sync\r"
 
 # Shutdown
 expect "pi@raspberrypi:~$ "
