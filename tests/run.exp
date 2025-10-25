@@ -5,7 +5,7 @@ set timeout -1
 set loginUser "pi"
 set loginPassword "raspberry"
 
-spawn qemu-system-aarch64 -machine "raspi3b" -cpu cortex-a53 -m 1G -drive "format=raw,file=raspios.img" -dtb "./custom.dtb" -kernel "./tests/kernel/kernel8.img" -append "loglevel=0 quiet console=ttyAMA0,115200 root=/dev/mmcblk0p2 rootfstype=ext4 fsck.repair=yes rootwait init=/bin/bash modprobe.blacklist=raspberrypi-exp-gpio,bcm2835_vchiq,bcm2835_power,raspberrypi-cpufreq" -nographic -serial mon:stdio
+spawn qemu-system-aarch64 -machine "raspi3b" -cpu cortex-a53 -m 1G -drive "format=raw,file=raspios.img" -dtb "./custom.dtb" -kernel "./tests/kernel/kernel8.img" -append "loglevel=0 quiet console=ttyAMA0,115200 root=/dev/mmcblk0p2 rootfstype=ext4 fsck.repair=yes rootwait init=/bin/bash modprobe.blacklist=raspberrypi-exp-gpio,bcm2835_vchiq,bcm2835_power,raspberrypi-cpufreq mmc_core.blacklist=mmc1" -nographic -serial mon:stdio
 
 # Setup user
 expect "root@(none):/# "
