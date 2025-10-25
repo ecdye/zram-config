@@ -19,6 +19,8 @@ send "$loginPassword\r"
 expect "root@(none):/# "
 send "sync\r"
 expect "root@(none):/# "
+send "uname -a; ls /boot; cat /boot/cmdline.txt; cat /etc/os-release; ls /lib/modules\r"
+expect "root@(none):/# "
 send "exec /sbin/init\r"
 
 # Login process
