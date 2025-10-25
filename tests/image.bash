@@ -73,6 +73,7 @@ if [[ $1 == "setup" ]]; then
     make
     sudo make install
     dtmerge tests/fs/boot/bcm2710-rpi-3-b-plus.dtb custom.dtb tests/fs/boot/overlays/disable-bt.dtbo uart0=on
+    dtmerge custom.dtb custom-mmc.dtb tests/disable-mmc1.dtbo
     imageFile "umount" "$3"
 elif [[ $1 == "copy-logs" ]]; then
     imageFile "mount" "$2"
