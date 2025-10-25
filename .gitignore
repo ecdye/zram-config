@@ -6,3 +6,4 @@
 *.o
 zig-out
 .zig-cache
+scratch/
