@@ -5,7 +5,7 @@ set timeout -1
 set loginUser "pi"
 set loginPassword "raspberry"
 
-spawn 'bash'
+spawn bash
 
 # Setup user
 # expect "root@(none):/# "
