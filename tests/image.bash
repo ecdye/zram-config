@@ -23,7 +23,7 @@ imageFile() {
 downloadZig() {
     local PUBKEY="RWSGOq2NVecA2UPNdBUZykf1CCb147pkmdtYxgb3Ti+JO/wCYvhbAb/U"
 
-    local TARBALL_NAME="zig-aarch64-linux-0.15.1.tar.xz"
+    local TARBALL_NAME="zig-x86_64-linux-0.15.1.tar.xz"
     local MIRRORS_URL="https://ziglang.org/download/community-mirrors.txt"
 
     # Fetch mirrors list and shuffle
@@ -39,8 +39,7 @@ downloadZig() {
                 if minisign -Vm "$TARBALL_NAME" -P "$PUBKEY"; then
                     echo "✅ Successfully fetched and verified Zig!"
                     tar -xf "$TARBALL_NAME" && rm $TARBALL_NAME
-                    mkdir -p tests/fs/opt
-                    mv "${TARBALL_NAME%.tar.xz}/" "tests/fs/opt/zig"
+                    mv "${TARBALL_NAME%.tar.xz}/" "/opt"
                     break
                 else
                     echo "❌ Verification failed for $MIRROR"
@@ -75,11 +74,13 @@ if [[ $1 == "setup" ]]; then
     dtmerge tests/fs/boot/bcm2710-rpi-3-b-plus.dtb custom.dtb tests/fs/boot/overlays/disable-bt.dtbo uart0=on
     dtmerge custom.dtb custom-mmc.dtb tests/disable-mmc1.dtbo
     imageFile "umount" "$3"
+elif [[ $1 == "zig" ]]; then
+    downloadZig
 elif [[ $1 == "copy-logs" ]]; then
-    imageFile "mount" "$2"
+    # imageFile "mount" "$2"
     # cp tests/fs/opt/zram-config/logs.tar.gz logs.tar.gz
-    cp tests/fs/var/log/zig-build.log zig-build.log
-    imageFile "umount" "$2"
+    cp /var/log/zig-build.log zig-build.log
+    # imageFile "umount" "$2"
 fi
 
 # vim: ts=4 sts=4 sw=4 et

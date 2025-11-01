@@ -5,61 +5,57 @@ set timeout -1
 set loginUser "pi"
 set loginPassword "raspberry"
 
-spawn qemu-system-aarch64 -machine "raspi3b" -cpu cortex-a53 -m 1G -drive "format=raw,file=raspios.img" -dtb "./custom-mmc.dtb" -kernel "./tests/kernel/kernel8.img" -append "loglevel=0 quiet console=ttyAMA0,115200 root=/dev/mmcblk0p2 rootfstype=ext4 fsck.repair=yes rootwait init=/bin/bash" -nographic -serial mon:stdio
+spawn 'bash'
 
 # Setup user
-expect "root@(none):/# "
-send "mount -o remount,rw /dev/mmcblk0p2 /\r"
-expect "root@(none):/# "
-send "passwd pi\r"
-expect "New password:"
-send "$loginPassword\r"
-expect "Retype new password:"
-send "$loginPassword\r"
-expect "root@(none):/# "
-send "sync\r"
-expect "root@(none):/# "
-send "uname -a; ls /boot; cat /boot/cmdline.txt; cat /etc/os-release; ls /lib/modules\r"
-expect "root@(none):/# "
-send "exec /sbin/init\r"
-
-# Login process
-expect {
-  "raspberrypi login: " {
-    send "$loginUser\r"
-    exp_continue
-  }
-  "Password: " {
-    send "$loginPassword\r"
-    exp_continue
-  }
-  "pi@raspberrypi:~$ " {
-    send "sudo date -s \"DATESED\"\r"
-  }
-  "Login incorrect" {
-    exit 1
-  }
-}
+# expect "root@(none):/# "
+# send "mount -o remount,rw /dev/mmcblk0p2 /\r"
+# expect "root@(none):/# "
+# send "passwd pi\r"
+# expect "New password:"
+# send "$loginPassword\r"
+# expect "Retype new password:"
+# send "$loginPassword\r"
+# expect "root@(none):/# "
+# send "sync\r"
+# expect "root@(none):/# "
+# send "uname -a; ls /boot; cat /boot/cmdline.txt; cat /etc/os-release; ls /lib/modules\r"
+# expect "root@(none):/# "
+# send "exec /sbin/init\r"
+#
+# # Login process
+# expect {
+#   "raspberrypi login: " {
+#     send "$loginUser\r"
+#     exp_continue
+#   }
+#   "Password: " {
+#     send "$loginPassword\r"
+#     exp_continue
+#   }
+#   "pi@raspberrypi:~$ " {
+#     send "sudo date -s \"DATESED\"\r"
+#   }
+#   "Login incorrect" {
+#     exit 1
+#   }
+# }
 
 # Install tests
-expect "pi@raspberrypi:~$ "
+expect "$ "
 send "sudo bash -c '/opt/zig/zig build --build-file /opt/zram-config/build.zig -Doptimize=ReleaseFast --summary all install --prefix /usr &> /var/log/zig-build.log'\r"
-expect "pi@raspberrypi:~$ "
+expect "$ "
 send "sudo /usr/bin/zram-config create\r"
-expect "pi@raspberrypi:~$ "
+expect "$ "
 send "sudo /usr/bin/zram-config service\r"
-expect "pi@raspberrypi:~$ "
+expect "$ "
 send "sudo /usr/bin/zram-config start\r"
-expect "pi@raspberrypi:~$ "
+expect "$ "
 
 # Stop tests
-expect "pi@raspberrypi:~$ "
+expect "$ "
 send "sudo /usr/bin/zram-config stop\r"
-expect "pi@raspberrypi:~$ "
-send "sync\r"
 
 # Shutdown
-expect "pi@raspberrypi:~$ "
-send "sudo shutdown -h now\r"
 
 exit $retval
