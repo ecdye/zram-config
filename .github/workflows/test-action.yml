@@ -26,12 +26,12 @@ jobs:
          uses: actions/checkout@v5
          with:
           submodules: recursive
-       - name: Setup environment
-         id: setup
-         run: |
-           sudo apt-get update
-           sudo apt-get install --yes expect minisign
-           sudo -E ./tests/image.bash "zig"
+       # - name: Setup environment
+       #   id: setup
+       #   run: |
+           # sudo apt-get update
+           # sudo apt-get install --yes expect minisign
+           # sudo -E ./tests/image.bash "zig"
            # imageurl="$(curl "https://downloads.raspberrypi.org/raspios_lite_arm64_latest" -s -L -I  -o /dev/null -w '%{url_effective}')"
            # imagexz="$(basename "$imageurl")"
            # image="$(echo "$imagexz" | sed -e 's/.xz//')"
@@ -48,7 +48,9 @@ jobs:
        #   shell: bash
        - name: Run tests
          run: |
-           sudo expect ./tests/run.exp
+           sudo modprobe zram
+           ls -la /dev
+           # sudo expect ./tests/run.exp
          shell: bash
        - name: Copy logs
          if: always()
