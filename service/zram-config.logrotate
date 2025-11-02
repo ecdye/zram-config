@@ -1,9 +1,0 @@
-/usr/local/share/zram-config/log/zram-config.log
-{
-	rotate 5
-	weekly
-	missingok
-	notifempty
-	compress
-	delaycompress
-}
