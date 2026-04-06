@@ -14,7 +14,7 @@ jobs:
     timeout-minutes: 90
     env:
       KERNEL_SUBMODULE_PATH: linux
-      OUT_DIR: /tmp/zram-config-ci
+      OUT_DIR: ${{ runner.temp }}/zram-config-ci
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
