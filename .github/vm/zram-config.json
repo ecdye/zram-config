@@ -1,0 +1,22 @@
+{
+	"version": 2,
+	"dirs": [
+		{
+			"alg": "lzo",
+			"mem_l": "32M",
+			"disk_s": "96M",
+			"target_d": "/persistent/test-target",
+			"oldlog_d": null
+		}
+	],
+	"swaps": [
+		{
+			"alg": "lzo",
+			"mem_l": "64M",
+			"disk_s": "192M",
+			"swap_p": 75,
+			"swap_n": "150",
+			"page_c": "0"
+		}
+	]
+}

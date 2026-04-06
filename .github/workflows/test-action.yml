@@ -1,0 +1,67 @@
+name: Test
+
+on:
+  pull_request:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      KERNEL_SUBMODULE_PATH: linux
+      OUT_DIR: ${{ runner.temp }}/zram-config-ci
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          submodules: recursive
+      - name: Setup Zig
+        uses: mlugg/setup-zig@v2
+        with:
+          version: 0.15.2
+      - name: Validate kernel submodule
+        run: |
+          if [[ ! -f "${KERNEL_SUBMODULE_PATH}/Makefile" ]]; then
+            echo "::error::expected a Linux kernel submodule at ${KERNEL_SUBMODULE_PATH}"
+            echo "::error::add the kernel source as a git submodule before relying on this workflow"
+            exit 1
+          fi
+        shell: bash
+      - name: Install test dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes \
+            bc \
+            bison \
+            build-essential \
+            busybox-static \
+            cpio \
+            dwarves \
+            e2fsprogs \
+            flex \
+            kmod \
+            libelf-dev \
+            libssl-dev \
+            qemu-system-x86 \
+            zstd
+        shell: bash
+      - name: Run Zig tests
+        run: zig build test
+        shell: bash
+      - name: Build VM artifacts
+        run: sudo --preserve-env=PATH,OUT_DIR,KERNEL_SUBMODULE_PATH bash .github/scripts/build-vm-assets.bash
+        shell: bash
+      - name: Run QEMU integration test
+        run: sudo --preserve-env=OUT_DIR bash .github/scripts/run-qemu-tests.bash
+        shell: bash
+      - name: Upload VM log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: qemu-log
+          path: ${{ env.OUT_DIR }}/qemu.log
