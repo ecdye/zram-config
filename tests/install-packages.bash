@@ -19,6 +19,11 @@ echo "pi:raspberry" | chpasswd
 echo "pi ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/010_pi-nopasswd
 chmod 440 /etc/sudoers.d/010_pi-nopasswd
 systemctl disable userconfig.service
+
+# Raspberry Pi OS Trixie sets up its own zram swap through rpi-swap; turn it off
+# so the only zram devices in the guest are the ones zram-config creates.
+mkdir -p /etc/rpi/swap.conf.d
+printf '[Main]\nMechanism=none\n' > /etc/rpi/swap.conf.d/99-disable-for-tests.conf
 rm -f /var/lib/apt/lists/lock
 rm -f /var/cache/apt/archives/lock
 rm -f /var/lib/dpkg/lock*
