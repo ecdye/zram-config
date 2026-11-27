@@ -34,12 +34,10 @@ if [[ $1 == "setup" ]]; then
     systemd-nspawn --directory="tests/fs" /opt/zram-config/tests/install-packages.bash
     echo "set enable-bracketed-paste off" >> tests/fs/etc/inputrc  # Prevents weird character output
     cp tests/fs/boot/kernel* tests/kernel
-    # Compile a customized DTB
-    git clone https://github.com/raspberrypi/utils.git
-    cmake utils/dtmerge
-    make
-    sudo make install
-    dtmerge tests/fs/boot/bcm2710-rpi-3-b-plus.dtb custom.dtb tests/fs/boot/overlays/disable-bt.dtbo uart0=on
+    # Build a DTB with the PL011 UART on the serial console (disable-bt) and the
+    # Wi-Fi SDIO controller disabled, since QEMU does not emulate it.
+    fdtoverlay -i tests/fs/boot/bcm2710-rpi-3-b-plus.dtb -o custom.dtb tests/fs/boot/overlays/disable-bt.dtbo
+    fdtput -t s custom.dtb /soc/mmcnr@7e300000 status disabled
     imageFile "umount" "$3"
 elif [[ $1 == "copy-logs" ]]; then
     imageFile "mount" "$2"
