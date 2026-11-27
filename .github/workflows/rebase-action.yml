@@ -26,5 +26,10 @@ jobs:
           git config --global user.name 'Ethan Dye'
           git config --global user.email 'mrtops03@gmail.com'
           git checkout openHAB
-          git rebase main
+          # Tag pushes check out a detached HEAD with no local main branch
+          if ! git rebase origin/main; then
+            git rebase --abort
+            echo "::error::openHAB does not rebase cleanly onto main; port the conflicting commits by hand."
+            exit 1
+          fi
           git push --force-with-lease
