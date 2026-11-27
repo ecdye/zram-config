@@ -35,7 +35,7 @@ else
 fi
 rm -f /etc/logrotate.d/zram-config
 rm -f /etc/ztab
-rm -rf /usr/local/lib/zram-config
+rm -rf /usr/local/lib/zram-config /run/zram-config
 rm -rf /usr/local/share/zram-config
 rm -f /var/log/zram-config
 rm -f /usr/local/share/man/man1/zram-config.1
